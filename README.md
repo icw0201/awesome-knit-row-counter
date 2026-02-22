@@ -1,5 +1,5 @@
 <div align="center">
-<img width="750" height="250" alt="헤더" src="https://github.com/user-attachments/assets/6ac810c9-0abf-4fcd-97ed-523af40bfbd8" />
+<img width="750" height="250" alt="헤더" src="https://github.com/user-attachments/assets/5af4bbbd-7119-4dd3-9761-63efbf32dd7d" />
 
 
 # 어쩜! 단수 카운터
@@ -78,6 +78,9 @@
 편물 앞뒤 체크 : 앞뒤 표시 마스코트 '방향이'로 편물의 앞 뒤를 설정할 수 있고, 이후 카운터 증감에 따라 자동으로 앞 뒷면을 알려줍니다. 더불어 도안 읽을 방향도 표시됩니다.  
 보조 카운터 : 카운터 화면에 작은 보조 카운터를 제공해, 필요한 경우 사용할 수 있습니다. (경사뜨기, 코 세기 등)  
 목표 단수 설정 : 목표 단수를 설정해, 완성까지 얼마나 남았는지 한눈에 확인할 수 있습니다.  
+타이머 : 카운터별 소요 시간을 측정할 수 있습니다.  
+알림 단 : 카운터 상단 어쩌미 활성 아이콘을 길게 눌러 알림 단 규칙을 설정할 수 있습니다. 잊으면 안되는 늘림과 줄임 단, 꽈배기 단 등에 활용해 보세요!  
+활동 기록 : 카운터를 조작한 활동 기록을 확인할 수 있습니다. 방금 눌렀던가? 깜빡할 걱정은 이제 그만!  
 작은 화면 대응 : 분할 화면이나 팝업화면에도 최적화되어 그래픽 깨짐 없이 모든 기능을 사용할 수 있습니다. 영상을 시청하거나 도안을 보면서도 이용해 보세요.  
 완료 카운터 표시 : 목록에서 완성한 편물을 한눈에 확인할 수 있습니다.
 
@@ -89,12 +92,13 @@
   <img width="50%" alt="상세 1 x1" src="https://github.com/user-attachments/assets/cf3ca745-640e-43a5-a3ed-e218ecd7a2d0" />
 </div>
 <p float="left">
-  <img width="32%" alt="상세 2 x1" src="https://github.com/user-attachments/assets/26a2cda4-9aba-4a31-bd54-f2bd61e7eda8" />
-  <img width="32%" alt="상세 3 x1" src="https://github.com/user-attachments/assets/07b5cf8f-de89-4688-8580-1ab2068440cf" />
+  <img width="32%" alt="상세 2" src="https://github.com/user-attachments/assets/f1e92d52-6c36-4e3c-88c1-7bf20425e652" />
+  <img width="32%" alt="상세 3" src="https://github.com/user-attachments/assets/116dde76-b72f-4964-9122-c20faa250c41" />
   <img width="32%" alt="상세 4 x1" src="https://github.com/user-attachments/assets/5ea94d48-b7e6-4c91-b6c4-11db5800afab" />
 </p>
 <p float="left">
-  <img width="32%" alt="상세 5 x1" src="https://github.com/user-attachments/assets/c142cef3-fb64-4f3d-9de4-da2d03bc5e6e" />
+  <img width="32%" alt="상세 5" src="https://github.com/user-attachments/assets/f39bc87d-17fe-4c54-b2d2-99323e3bf1a2" />
   <img width="32%" alt="상세 6 x1" src="https://github.com/user-attachments/assets/dc106926-79ea-4ec0-adce-2a677b21c3e6" />
-  <img width="32%" alt="상세 7 x1" src="https://github.com/user-attachments/assets/f0ec4a13-8816-4de1-952b-c4073f0d129e" />
+  <img width="32%" alt="상세 7" src="https://github.com/user-attachments/assets/48ccf8fd-8ab8-49bd-a13a-dc7771495aac" />
+
 </p>

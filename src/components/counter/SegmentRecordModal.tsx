@@ -49,24 +49,26 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
       >
         {sectionRecords.length > 0 ? (
           <View className="flex-row items-center justify-between">
-            {/* 3개 기록 묶음 - 80% 너비, x축 중앙 정렬 */}
+            {/* 3개 기록 묶음 - 80% 너비, x축 중앙 정렬 / 내부 텍스트는 왼쪽 정렬 */}
             <View className="flex-[0.8] items-center">
-              {sectionRecords.map((record, index) => {
-                // 첫 번째: black, 두 번째: darkgray, 세 번째: mediumgray
-                const textColorClass = index === 0 ? 'text-black' : index === 1 ? 'text-darkgray' : 'text-mediumgray';
-                return (
-                  <View key={index}>
-                    <Text
-                      className={`text-sm font-bold ${textColorClass}`}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                      allowFontScaling={false}
-                    >
-                      {record.time} {getEditContentText(record)}
-                    </Text>
-                  </View>
-                );
-              })}
+              <View className="w-full items-start">
+                {sectionRecords.map((record, index) => {
+                  // 첫 번째: black, 두 번째: darkgray, 세 번째: mediumgray
+                  const textColorClass = index === 0 ? 'text-black' : index === 1 ? 'text-darkgray' : 'text-mediumgray';
+                  return (
+                    <View key={index} className="w-full">
+                      <Text
+                        className={`text-sm font-bold ${textColorClass}`}
+                        numberOfLines={1}
+                        ellipsizeMode="tail"
+                        allowFontScaling={false}
+                      >
+                        {record.time} {getEditContentText(record)}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
             </View>
             {/* 실행 취소 버튼 - 20% 너비 */}
             <View className="flex-[0.2] items-end">
