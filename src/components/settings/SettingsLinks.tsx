@@ -10,6 +10,9 @@ import {
 } from '@constants/storeUrls';
 import IconBox from './IconBox';
 
+/** getInstallerPackageName 대기 최대 시간 (멈춤 방지) */
+const INSTALLER_TIMEOUT_MS = 2500;
+
 interface SettingsLinksProps {}
 
 /**
@@ -22,21 +25,31 @@ const SettingsLinks: React.FC<SettingsLinksProps> = () => {
    */
   const handlePress = async (type: 'review' | 'contact') => {
     if (type === 'review') {
+      const installer = await Promise.race([
+        DeviceInfo.getInstallerPackageName(),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('installer timeout')), INSTALLER_TIMEOUT_MS)
+        ),
+      ]).catch(() => null);
+
+      const isOneStore = installer === ONE_STORE_INSTALLER_PACKAGE;
+
+      if (isOneStore) {
+        Linking.openURL(ONE_STORE_URL).catch(() => {});
+        return;
+      }
+
+      // 플레이스토어 또는 설치처 미확인: 인앱 리뷰 시도 후, 안 되면 링크로 폴백
       try {
         if (InAppReview.isAvailable()) {
           await InAppReview.RequestInAppReview();
-          return;
+          return; // 인앱 리뷰 성공 시 링크는 열지 않음
         }
-      } catch (error) {
-        // In-App Review 호출 실패 시 스토어 링크로 폴백
+      } catch {
+        // In-App Review 실패 시 아래 폴백으로 진행
       }
 
-      const installer = await DeviceInfo.getInstallerPackageName().catch(() => null);
-      const reviewUrl =
-        installer === ONE_STORE_INSTALLER_PACKAGE ? ONE_STORE_URL : PLAY_STORE_URL;
-      Linking.openURL(reviewUrl).catch(() => {
-        // 에러 처리 (필요시 추가)
-      });
+      Linking.openURL(PLAY_STORE_URL).catch(() => {});
     } else if (type === 'contact') {
       // 문의 이메일 링크
       const subject = encodeURIComponent('어쩜! 단수 카운터 문의');
