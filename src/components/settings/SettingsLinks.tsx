@@ -1,40 +1,20 @@
 // src/components/settings/SettingsLinks.tsx
 import React from 'react';
 import { View, Linking } from 'react-native';
-import DeviceInfo from 'react-native-device-info';
 import InAppReview from 'react-native-in-app-review';
-import {
-  ONE_STORE_INSTALLER_PACKAGE,
-  ONE_STORE_URL,
-  PLAY_STORE_URL,
-} from '@constants/storeUrls';
+import { PLAY_STORE_URL } from '@constants/storeUrls';
 import IconBox from './IconBox';
-
-/** getInstallerPackageName 대기 최대 시간 (멈춤 방지) */
-const INSTALLER_TIMEOUT_MS = 2500;
 
 interface SettingsLinksProps {}
 
 /**
  * 설정 화면의 외부 링크 버튼들을 묶은 컴포넌트
+ * - 기본: 플레이스토어 기준 (인앱 리뷰 시도 → 실패 시 스토어 링크)
+ * - 원스토어 AAB 빌드 시: handleReviewPress를 아래 주석 블록 코드로 교체 후 빌드
  */
 const SettingsLinks: React.FC<SettingsLinksProps> = () => {
+  // 플레이스토어용: 인앱 리뷰 시도 후, 안 되면 스토어 링크로 폴백
   const handleReviewPress = async () => {
-    const installer = await Promise.race([
-      DeviceInfo.getInstallerPackageName(),
-      new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error('installer timeout')), INSTALLER_TIMEOUT_MS)
-      ),
-    ]).catch(() => null);
-
-    const isOneStore = installer === ONE_STORE_INSTALLER_PACKAGE;
-
-    if (isOneStore) {
-      Linking.openURL(ONE_STORE_URL).catch(() => {});
-      return;
-    }
-
-    // 플레이스토어 또는 설치처 미확인: 인앱 리뷰 시도 후, 안 되면 링크로 폴백
     try {
       if (InAppReview.isAvailable()) {
         await InAppReview.RequestInAppReview();
@@ -43,9 +23,17 @@ const SettingsLinks: React.FC<SettingsLinksProps> = () => {
     } catch {
       // In-App Review 실패 시 아래 폴백으로 진행
     }
-
     Linking.openURL(PLAY_STORE_URL).catch(() => {});
   };
+
+  /*
+   * [원스토어 AAB 빌드 시] 위 handleReviewPress 대신 아래를 사용 (링크로만 이동)
+   * storeUrls에서 ONE_STORE_URL import 추가 후:
+   *
+   * const handleReviewPress = () => {
+   *   Linking.openURL(ONE_STORE_URL).catch(() => {});
+   * };
+   */
 
   const handleContactPress = () => {
     const subject = encodeURIComponent('어쩜! 단수 카운터 문의');
