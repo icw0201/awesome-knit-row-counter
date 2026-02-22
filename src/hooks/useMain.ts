@@ -164,8 +164,14 @@ export const useMain = () => {
 
     removeItem(itemToDelete.id);
     resetDeleteModalState();
-    setItems(prev => prev.filter(item => item.id !== itemToDelete.id));
-  }, [itemToDelete, resetDeleteModalState, setItems]);
+
+    const nextItems = items.filter((item) => item.id !== itemToDelete.id);
+    setItems(nextItems);
+    // 삭제 후 목록이 비면 편집할 항목이 없으므로 edit 모드 자동 해제
+    if (nextItems.length === 0) {
+      setIsEditMode(false);
+    }
+  }, [itemToDelete, items, resetDeleteModalState, setItems, setIsEditMode]);
 
   const handleSortSelect = useCallback((_option: string) => {
     // 정렬 설정이 storage에 저장되었으므로, 현재 items를 다시 정렬하여 즉시 반영
