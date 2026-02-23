@@ -100,6 +100,7 @@ const CounterDetail = () => {
     toggleWay,
     toggleTimerIsActive,
     toggleTimerIsPlaying,
+    handleTimerResetConfirm,
     setErrorModalVisible,
     setActiveModal,
     // 보조 카운터 관련
@@ -259,6 +260,7 @@ const CounterDetail = () => {
                 timerIsPlaying={counter.timerIsPlaying ?? false}
                 elapsedTime={counter.elapsedTime ?? 0}
                 onPress={toggleTimerIsPlaying}
+                onLongPress={() => setActiveModal('timerReset')}
               />
             )}
           </View>
@@ -359,6 +361,7 @@ const CounterDetail = () => {
         onClose={handleClose}
         onEditConfirm={handleEditConfirm}
         onResetConfirm={handleResetConfirm}
+        onTimerResetConfirm={handleTimerResetConfirm}
         onErrorModalClose={() => setErrorModalVisible(false)}
         onTargetCountConfirm={handleTargetCountConfirm}
         onSubEditConfirm={handleSubEditConfirm}
