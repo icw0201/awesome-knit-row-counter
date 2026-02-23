@@ -9,7 +9,6 @@ interface TimeDisplayProps {
   timerIsPlaying: boolean;
   elapsedTime: number; // 소요 시간 (초 단위, 0 ~ 35999999, 최대 9999:59:59)
   onPress: () => void;
-  /** 길게 누르면 호출 (예: 타이머 초기화 확인 모달 열기). 있으면 길게 누를 때만 호출되고 짧게 누르면 onPress만 동작 */
   onLongPress?: () => void;
 }
 

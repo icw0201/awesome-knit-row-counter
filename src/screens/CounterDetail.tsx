@@ -10,7 +10,6 @@ import { RootStackParamList } from '@navigation/AppNavigator';
 import { getHeaderRightWithActivateInfoSettings } from '@navigation/HeaderOptions';
 
 import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal } from '@components/counter';
-import { ConfirmModal } from '@components/common/modals';
 import Tooltip from '@components/common/Tooltip';
 import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, ScreenSize } from '@constants/screenSizeConfig';
 import { getTooltipEnabledSetting } from '@storage/settings';
@@ -124,7 +123,6 @@ const CounterDetail = () => {
   } = useCounter({ counterId });
 
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
-  const [showTimerResetModal, setShowTimerResetModal] = useState(false);
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
   const imageWidth = iconSize * 1.4;
@@ -262,7 +260,7 @@ const CounterDetail = () => {
                 timerIsPlaying={counter.timerIsPlaying ?? false}
                 elapsedTime={counter.elapsedTime ?? 0}
                 onPress={toggleTimerIsPlaying}
-                onLongPress={() => setShowTimerResetModal(true)}
+                onLongPress={() => setActiveModal('timerReset')}
               />
             )}
           </View>
@@ -350,20 +348,6 @@ const CounterDetail = () => {
         centerY={subModalCenterY}
       />
 
-      {/* 타이머 초기화 확인 모달 */}
-      <ConfirmModal
-        visible={showTimerResetModal}
-        onClose={() => setShowTimerResetModal(false)}
-        title="타이머 초기화"
-        description="정말 타이머를 초기화하시겠습니까? 초기화 후에는 복구가 불가능합니다."
-        cancelText="취소"
-        confirmText="확인"
-        onConfirm={() => {
-          handleTimerResetConfirm();
-          setShowTimerResetModal(false);
-        }}
-      />
-
       {/* 모달들 */}
       <CounterModals
         activeModal={activeModal}
@@ -377,6 +361,7 @@ const CounterDetail = () => {
         onClose={handleClose}
         onEditConfirm={handleEditConfirm}
         onResetConfirm={handleResetConfirm}
+        onTimerResetConfirm={handleTimerResetConfirm}
         onErrorModalClose={() => setErrorModalVisible(false)}
         onTargetCountConfirm={handleTargetCountConfirm}
         onSubEditConfirm={handleSubEditConfirm}

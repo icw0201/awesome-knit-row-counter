@@ -23,7 +23,7 @@ interface UseCounterReturn {
   way: Way;
   currentCount: string;
   currentTargetCount: string;
-  activeModal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | null;
+  activeModal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | 'timerReset' | null;
   errorModalVisible: boolean;
   errorMessage: string;
 
@@ -49,7 +49,7 @@ interface UseCounterReturn {
   handleTimerResetConfirm: () => void;
   showErrorModal: (message: string) => void;
   setErrorModalVisible: (visible: boolean) => void;
-  setActiveModal: (modal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | null) => void;
+  setActiveModal: (modal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | 'timerReset' | null) => void;
 
   // 보조 카운터 액션 함수들
   handleSubAdd: () => void;
@@ -88,7 +88,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
   const [counter, setCounter] = useState<Counter | null>(null);
 
   // 모달 상태 관리
-  const [activeModal, setActiveModal] = useState<'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | null>(null);
+  const [activeModal, setActiveModal] = useState<'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | 'timerReset' | null>(null);
   const [currentCount, setCurrentCount] = useState('');
   const [currentTargetCount, setCurrentTargetCount] = useState('');
   const [errorModalVisible, setErrorModalVisible] = useState(false);
