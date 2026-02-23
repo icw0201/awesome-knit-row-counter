@@ -241,14 +241,6 @@ const CounterDetail = () => {
           onPress={handleTargetCountOpen}
         />
 
-        {/* 프로그레스 바 아래 툴팁 (COMPACT 화면에서는 비표시) */}
-        {screenSize !== ScreenSize.COMPACT && tooltipEnabled && (
-          <Tooltip
-            text="바를 눌러 목표 단수 설정하기"
-            containerClassName={`absolute left-0 right-0 items-center z-50 ${screenSize === ScreenSize.SMALL ? 'top-7' : 'top-9'}`}
-          />
-        )}
-
         {/* 헤더 활성 아이콘 안내 툴팁 (헤더 대신 화면 위층에 표시) */}
         {screenSize !== ScreenSize.COMPACT && tooltipEnabled && (
           <Tooltip

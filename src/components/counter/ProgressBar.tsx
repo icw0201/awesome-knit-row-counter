@@ -2,6 +2,7 @@
 import React from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { ScreenSize, getProgressBarHeightClass } from '@constants/screenSizeConfig';
+import FlagIcon from '@assets/images/flag.svg';
 
 interface ProgressBarProps {
   count: number;
@@ -20,9 +21,14 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ count, targetCount, screenSiz
 
   const percentage = targetCount > 0 ? (count / targetCount) * 100 : null;
   const percentageText = percentage !== null ? `${percentage.toFixed(1)}%` : null;
+  const isZeroState = targetCount === 0;
 
-  // 프로그레스 바의 너비 계산 (100%를 넘어가도 표시)
-  const progressWidth = percentage !== null ? Math.min((width * percentage) / 100, width) : 0;
+  // 프로그레스 바의 너비 계산 (목표 0일 때 2%, 그 외 100%를 넘어가도 표시)
+  const progressWidth = isZeroState
+    ? width * 0.02
+    : percentage !== null
+      ? Math.min((width * percentage) / 100, width)
+      : 0;
   const isFullWidth = percentage !== null && percentage >= 100;
 
   // 텍스트가 들어갈 수 있는 최소 너비 (대략적으로 "100.0%" 정도를 고려)
@@ -36,32 +42,48 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ count, targetCount, screenSiz
   // 프로그레스 바와 텍스트 내용
   const content = (
     <>
-      {/* 프로그레스 바 (왼쪽부터 채워지는 부분) */}
-      {percentage !== null && progressWidth > 0 && (
+      {/* 프로그레스 바 (왼쪽부터 채워지는 부분, 목표 0일 때는 2% 표시) */}
+      {progressWidth > 0 && (
         <View
           className={`absolute left-0 top-0 bottom-0 bg-red-orange-300 ${isFullWidth ? '' : 'rounded-tr-2xl rounded-br-2xl'}`}
           style={{ width: progressWidth }}
         />
       )}
 
-      {/* 백분율 텍스트 - compact 화면에서는 표시하지 않음, 목표 단수가 있을 때만 표시 */}
-      {percentageText && targetCount > 0 && !isCompact && (
+      {/* 백분율 텍스트 - compact에서는 미표시. 목표 0일 때는 깃발+안내 문구, 바가 넓으면 바 안에, 짧으면 바 오른쪽에 */}
+      {!isCompact && (isZeroState || (percentageText && targetCount > 0)) && (
         <View
-          className="absolute left-0 top-0 bottom-0 justify-center"
+          className="absolute top-0 bottom-0 flex-row items-center"
           style={{
-            width: isProgressBarWideEnough ? progressWidth : undefined,
-            paddingRight: isProgressBarWideEnough ? 8 : 0,
-            paddingLeft: isProgressBarWideEnough ? 0 : 8,
+            left: isZeroState || isProgressBarWideEnough ? 0 : progressWidth,
+            right: isZeroState || isProgressBarWideEnough ? undefined : 0,
+            width: isZeroState ? undefined : isProgressBarWideEnough ? progressWidth : undefined,
+            paddingRight: isZeroState ? 8 : isProgressBarWideEnough ? 8 : 0,
+            paddingLeft: isZeroState ? 8 : isProgressBarWideEnough ? 0 : 8,
           }}
           pointerEvents="none"
         >
-          <Text
-            className="text-black text-xs font-bold"
-            numberOfLines={1}
-            style={{ textAlign: isProgressBarWideEnough ? 'right' : 'left' }}
-          >
-            {percentageText}
-          </Text>
+          {isZeroState ? (
+            <>
+              <View className="mr-1.5">
+                <FlagIcon width={18} height={18} />
+              </View>
+              <Text className="text-darkgray text-xs font-bold" numberOfLines={1}>
+                터치하여 목표치를 설정해 주세요
+              </Text>
+            </>
+          ) : (
+            <Text
+              className="text-black text-xs font-bold"
+              numberOfLines={1}
+              style={{
+                flex: 1,
+                textAlign: isProgressBarWideEnough ? 'right' : 'left',
+              }}
+            >
+              {percentageText}
+            </Text>
+          )}
         </View>
       )}
     </>
