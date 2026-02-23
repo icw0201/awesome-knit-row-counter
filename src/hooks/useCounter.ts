@@ -46,6 +46,7 @@ interface UseCounterReturn {
   toggleWay: () => void;
   toggleTimerIsActive: () => void;
   toggleTimerIsPlaying: () => void;
+  handleTimerResetConfirm: () => void;
   showErrorModal: (message: string) => void;
   setErrorModalVisible: (visible: boolean) => void;
   setActiveModal: (modal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | null) => void;
@@ -438,6 +439,17 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     const newTimerIsPlaying = !counter.timerIsPlaying;
     updateItem(counter.id, { timerIsPlaying: newTimerIsPlaying });
     setCounter({ ...counter, timerIsPlaying: newTimerIsPlaying });
+  }, [counter]);
+
+  /**
+   * 타이머 초기화 확인 시 elapsedTime을 0으로 리셋
+   */
+  const handleTimerResetConfirm = useCallback(() => {
+    if (!counter) {
+      return;
+    }
+    updateItem(counter.id, { elapsedTime: 0 });
+    setCounter({ ...counter, elapsedTime: 0 });
   }, [counter]);
 
   /**
@@ -949,6 +961,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     toggleWay,
     toggleTimerIsActive,
     toggleTimerIsPlaying,
+    handleTimerResetConfirm,
     showErrorModal,
     setErrorModalVisible,
     setActiveModal,
