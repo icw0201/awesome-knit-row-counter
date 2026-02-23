@@ -1,8 +1,8 @@
 // src/screens/CounterDetail.tsx
 
-import { useLayoutEffect, useCallback, useState } from 'react';
+import { useLayoutEffect, useCallback, useState, useRef } from 'react';
 import { View, Text, useWindowDimensions, Animated, LayoutChangeEvent } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@navigation/AppNavigator';
@@ -13,7 +13,7 @@ import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubC
 import Tooltip from '@components/common/Tooltip';
 import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, ScreenSize } from '@constants/screenSizeConfig';
 import { getTooltipEnabledSetting } from '@storage/settings';
-import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
+import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
 
@@ -44,9 +44,29 @@ const CounterDetail = () => {
   const insets = useSafeAreaInsets();
   const ESTIMATED_HEADER_HEIGHT = 56;
   const [layoutHeight, setLayoutHeight] = useState(0);
-  // ScreenSize 판정은 헤더 표시/숨김에 영향을 받지 않는 window 기준 높이로 고정
-  const screenSizeJudgeHeight = height - insets.bottom;
+  const [layoutWidth, setLayoutWidth] = useState(0);
+  // screenSize 판정: layoutHeight를 "window 높이"로 정규화하여 사용.
+  // 헤더 유무에 따라 layoutHeight가 ~56px 달라지므로, 이전 렌더의 screenSize를
+  // 참조하여 헤더가 표시된 상태였으면 헤더 높이를 더해 일관된 기준 높이를 산출.
+  // 이를 통해 COMPACT↔SMALL 경계에서의 무한 토글(깜빡임)을 방지하면서도
+  // onLayout 기반이라 Dimensions stale 문제도 회피
+  const prevScreenSizeRef = useRef<ScreenSize | null>(null);
+  let screenSizeJudgeHeight: number;
+  if (layoutHeight > 0) {
+    const headerWasShown =
+      prevScreenSizeRef.current !== null &&
+      prevScreenSizeRef.current !== ScreenSize.COMPACT;
+    screenSizeJudgeHeight = layoutHeight + (headerWasShown ? ESTIMATED_HEADER_HEIGHT : 0);
+  } else {
+    // 첫 onLayout 전: stale height가 작을 수 있으므로 최소 LARGE(501)를 보장.
+    // COMPACT→LARGE 전환 시 headerShown 타이밍 차이로 콘텐츠가 헤더와 겹치는 문제 방지.
+    // 실제 작은 화면이면 onLayout 후 LARGE→COMPACT로 전환 (이 방향은 안전)
+    screenSizeJudgeHeight = Math.max(height - insets.bottom, 501);
+  }
   const screenSize = getScreenSize(screenSizeJudgeHeight);
+  prevScreenSizeRef.current = screenSize;
+  // onLayout 기반 가로. Dimensions stale 방지 (세로와 동일한 이유)
+  const resolvedWidth = layoutWidth > 0 ? layoutWidth : width;
   // 모달/메인 배치는 실제 렌더 높이(onLayout)를 기준으로 계산.
   // onLayout 전 초기값: 헤더 표시 시 예상 헤더 높이를 빼서 점프 완화
   const contentAreaHeight = layoutHeight > 0
@@ -108,8 +128,9 @@ const CounterDetail = () => {
   const imageHeight = iconSize * (90 / 189) * 1.4;
   const hasParent = !!counter?.parentProjectId;
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
-    const { height: nextHeight } = event.nativeEvent.layout;
+    const { height: nextHeight, width: nextWidth } = event.nativeEvent.layout;
     setLayoutHeight((prev) => (prev !== nextHeight ? nextHeight : prev));
+    setLayoutWidth((prev) => (prev !== nextWidth ? nextWidth : prev));
   }, []);
 
   const { timerEndPercent, contentStartPercent, contentEndPercent } =
@@ -122,7 +143,7 @@ const CounterDetail = () => {
     segmentModalWidth,
     segmentModalHeight,
     segmentModalCenterY,
-  } = getCounterDetailModalLayout(contentAreaHeight, width, screenSize);
+  } = getCounterDetailModalLayout(contentAreaHeight, resolvedWidth, screenSize);
   const { showTimeDisplay, showCounterActions, shouldStartContentFromTop } =
     getCounterDetailVisibility({
       screenSize,
@@ -144,7 +165,7 @@ const CounterDetail = () => {
   const digitCount = Math.max(1, String(counter?.count ?? 0).length);
   const CHAR_WIDTH_RATIO = 0.6; // 숫자 1글자 너비 ≈ fontSize * 비율
   const maxFontSizeByHeight = countSectionHeightPx * 0.8;
-  const maxFontSizeByWidth = (width * 0.5) / (digitCount * CHAR_WIDTH_RATIO);
+  const maxFontSizeByWidth = (resolvedWidth * 0.5) / (digitCount * CHAR_WIDTH_RATIO);
   const countTextFontSizePx = Math.max(0, Math.min(maxFontSizeByHeight, maxFontSizeByWidth));
 
   /**
@@ -182,7 +203,7 @@ const CounterDetail = () => {
           hasParent ? undefined : () => navigation.navigate('InfoScreen', { itemId: counter.id })
         ),
     });
-  }, [navigation, counter, mascotIsActive, screenSize, width, toggleMascotIsActive, toggleTimerIsActive, hasParent]);
+  }, [navigation, counter, mascotIsActive, screenSize, resolvedWidth, toggleMascotIsActive, toggleTimerIsActive, hasParent]);
 
 
   // 카운터 데이터가 없으면 렌더링하지 않음
@@ -191,7 +212,12 @@ const CounterDetail = () => {
   }
 
   return (
-    <SafeAreaView style={screenStyles.flex1} edges={safeAreaEdges}>
+    <SafeAreaView
+      style={screenStyles.flex1}
+      edges={screenSize === ScreenSize.COMPACT
+        ? (['left', 'right', 'bottom', 'top'] as Edge[])
+        : (['left', 'right', 'bottom'] as Edge[])}
+    >
       <View className="flex-1 bg-white" onLayout={handleLayout}>
 
       {/* 좌우 터치 레이어 */}
@@ -228,7 +254,7 @@ const CounterDetail = () => {
           <Tooltip
             text="길게 눌러 어쩌미 알림 단 설정하기"
             containerClassName="absolute right-3 top-2 z-50"
-            targetAnchorX={hasParent ? width - 65 : width - 103}
+            targetAnchorX={hasParent ? resolvedWidth - 65 : resolvedWidth - 103}
           />
         )}
 
