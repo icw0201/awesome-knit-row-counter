@@ -50,11 +50,13 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ count, targetCount, screenSiz
         />
       )}
 
-      {/* 백분율 텍스트 - compact에서는 미표시. 목표 0일 때는 깃발+안내 문구, 그 외에는 백분율 */}
+      {/* 백분율 텍스트 - compact에서는 미표시. 목표 0일 때는 깃발+안내 문구, 바가 넓으면 바 안에, 짧으면 바 오른쪽에 */}
       {!isCompact && (isZeroState || (percentageText && targetCount > 0)) && (
         <View
-          className="absolute left-0 top-0 bottom-0 flex-row items-center"
+          className="absolute top-0 bottom-0 flex-row items-center"
           style={{
+            left: isZeroState || isProgressBarWideEnough ? 0 : progressWidth,
+            right: isZeroState || isProgressBarWideEnough ? undefined : 0,
             width: isZeroState ? undefined : isProgressBarWideEnough ? progressWidth : undefined,
             paddingRight: isZeroState ? 8 : isProgressBarWideEnough ? 8 : 0,
             paddingLeft: isZeroState ? 8 : isProgressBarWideEnough ? 0 : 8,
