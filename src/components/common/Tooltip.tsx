@@ -22,7 +22,6 @@ const Tooltip: React.FC<TooltipProps> = ({ text, containerClassName, targetAncho
   useEffect(() => {
     if (AUTO_HIDE_MS > 0) {
       const t = setTimeout(() => {
-        // 페이드아웃: 지정 시간 동안 opacity를 1 → 0으로 감소시킵니다.
         Animated.timing(opacity, {
           toValue: 0,
           duration: FADE_OUT_MS,
@@ -36,6 +35,20 @@ const Tooltip: React.FC<TooltipProps> = ({ text, containerClassName, targetAncho
       return () => clearTimeout(t);
     }
   }, [AUTO_HIDE_MS, FADE_OUT_MS, opacity]);
+
+  // targetAnchorX가 바뀌면(ex: onLayout으로 resolvedWidth 갱신)
+  // measureInWindow로 화살표 위치를 재계산
+  useEffect(() => {
+    if (!targetAnchorX || !bodyRef.current) {
+      return;
+    }
+    bodyRef.current.measureInWindow((x, _y, w) => {
+      if (x === undefined || w === undefined) { return; }
+      const raw = targetAnchorX - x;
+      const clamped = Math.max(ARROW_HALF_WIDTH, Math.min(w - ARROW_HALF_WIDTH, raw));
+      setArrowLeftPx(clamped);
+    });
+  }, [targetAnchorX]);
 
   if (!visible) {
     return null;
