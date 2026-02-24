@@ -4,7 +4,7 @@ import { ConfirmModal, CounterEditModal } from '@components/common/modals';
 import { SubCounterRuleModal } from '@components/counter';
 
 interface CounterModalsProps {
-  activeModal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | null;
+  activeModal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | 'timerReset' | null;
   errorModalVisible: boolean;
   errorMessage: string;
   currentCount: string;
@@ -15,6 +15,7 @@ interface CounterModalsProps {
   onClose: () => void;
   onEditConfirm: (value: string) => void;
   onResetConfirm: () => void;
+  onTimerResetConfirm: () => void;
   onErrorModalClose: () => void;
   onTargetCountConfirm: (value: string) => void;
   onSubEditConfirm: (value: string) => void;
@@ -38,6 +39,7 @@ const CounterModals: React.FC<CounterModalsProps> = ({
   onClose,
   onEditConfirm,
   onResetConfirm,
+  onTimerResetConfirm,
   onErrorModalClose,
   onTargetCountConfirm,
   onSubEditConfirm,
@@ -73,6 +75,17 @@ const CounterModals: React.FC<CounterModalsProps> = ({
         onConfirm={onTargetCountConfirm}
         initialValue={currentTargetCount}
         title="목표 단수 설정 (0 입력 시 목표 없음)"
+      />
+
+      {/* 타이머 초기화 확인 모달 */}
+      <ConfirmModal
+        visible={activeModal === 'timerReset'}
+        onClose={onClose}
+        title="타이머 초기화"
+        description="정말 타이머를 초기화하시겠습니까? 초기화 후에는 복구가 불가능합니다."
+        cancelText="취소"
+        confirmText="확인"
+        onConfirm={onTimerResetConfirm}
       />
 
       {/* 범위 초과 경고 모달 */}

@@ -93,7 +93,7 @@
 </div>
 <p float="left">
   <img width="32%" alt="상세 2" src="https://github.com/user-attachments/assets/f1e92d52-6c36-4e3c-88c1-7bf20425e652" />
-  <img width="32%" alt="상세 3" src="https://github.com/user-attachments/assets/116dde76-b72f-4964-9122-c20faa250c41" />
+  <img width="32%" alt="상세 3" src="https://github.com/user-attachments/assets/0eccf898-e8bd-482d-9093-424bce4cc230" />
   <img width="32%" alt="상세 4 x1" src="https://github.com/user-attachments/assets/5ea94d48-b7e6-4c91-b6c4-11db5800afab" />
 </p>
 <p float="left">

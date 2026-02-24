@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Text, View, LayoutChangeEvent, Pressable } from 'react-native';
 import { ScreenSize, getTimeDisplayTextClass } from '@constants/screenSizeConfig';
 import { formatElapsedTime } from '@utils/timeUtils';
@@ -9,16 +9,19 @@ interface TimeDisplayProps {
   timerIsPlaying: boolean;
   elapsedTime: number; // 소요 시간 (초 단위, 0 ~ 35999999, 최대 9999:59:59)
   onPress: () => void;
+  onLongPress?: () => void;
 }
 
 /**
  * 시간 표시 컴포넌트
  * DSEG7Classic 폰트를 사용하여 시간을 표시합니다.
  */
-const TimeDisplay: React.FC<TimeDisplayProps> = ({ screenSize, timerIsPlaying, elapsedTime, onPress }) => {
+const TimeDisplay: React.FC<TimeDisplayProps> = ({ screenSize, timerIsPlaying, elapsedTime, onPress, onLongPress }) => {
   // 깎인 모서리 크기 (픽셀 단위)
   const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [showColon, setShowColon] = useState(true);
+  // 길게 누른 경우 onPress(일시정지/재생)가 함께 호출되지 않도록
+  const longPressHandledRef = useRef(false);
 
   /**
    * 콜론 깜빡임 효과
@@ -61,9 +64,25 @@ const TimeDisplay: React.FC<TimeDisplayProps> = ({ screenSize, timerIsPlaying, e
   const { hours, minutes, seconds } = formatElapsedTime(elapsedTime);
   const colonStyle = timerIsPlaying && !showColon ? { color: 'transparent' } : undefined;
 
+  const handlePress = () => {
+    if (longPressHandledRef.current) {
+      longPressHandledRef.current = false;
+      return;
+    }
+    onPress();
+  };
+
+  const handleLongPress = () => {
+    if (onLongPress) {
+      longPressHandledRef.current = true;
+      onLongPress();
+    }
+  };
+
   return (
     <Pressable
-      onPress={onPress}
+      onPress={handlePress}
+      onLongPress={onLongPress ? handleLongPress : undefined}
       className={`items-center justify-center ${paddingClass} relative`}
       onLayout={onLayout}
     >
