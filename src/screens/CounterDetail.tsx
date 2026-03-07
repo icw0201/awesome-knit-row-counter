@@ -15,6 +15,7 @@ import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, Scree
 import { getTooltipEnabledSetting } from '@storage/settings';
 import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
+import { useVoiceCommands } from '@hooks/useVoiceCommands';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
 
 
@@ -123,6 +124,12 @@ const CounterDetail = () => {
   } = useCounter({ counterId });
 
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
+  const [isScreenFocused, setIsScreenFocused] = useState(true);
+  const [voiceRecognizedText, setVoiceRecognizedText] = useState<string>('');
+  const [voiceError, setVoiceError] = useState<string>('');
+
+  /** 화면 포커스 중일 때만 계속 듣고, "연지" → 감소, "곤지" → 증가 */
+  useVoiceCommands(!!counter && isScreenFocused, handleAdd, handleSubtract, setVoiceRecognizedText, setVoiceError);
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
   const imageWidth = iconSize * 1.4;
@@ -175,8 +182,11 @@ const CounterDetail = () => {
    */
   useFocusEffect(
     useCallback(() => {
-      // 툴팁 표시 설정 로드
       setTooltipEnabled(getTooltipEnabledSetting());
+      setIsScreenFocused(true);
+      return () => {
+        setIsScreenFocused(false);
+      };
     }, [])
   );
 
@@ -241,6 +251,18 @@ const CounterDetail = () => {
           screenSize={screenSize}
           onPress={handleTargetCountOpen}
         />
+
+        {/* 음성 인식 결과 표시 (연지/곤지 테스트용) */}
+        <View className="absolute left-2 right-2 z-40 rounded px-2 py-1.5 bg-lightgray min-h-[32px] justify-center" style={{ top: progressBarHeightPx + 8 }}>
+          <Text className="text-xs text-darkgray">음성 인식</Text>
+          {voiceError ? (
+            <Text className="text-xs text-red-orange-500" numberOfLines={2}>에러: {voiceError}</Text>
+          ) : (
+            <Text className="text-sm text-black" numberOfLines={2}>
+              {voiceRecognizedText || '(듣는 중…)'}
+            </Text>
+          )}
+        </View>
 
         {/* 헤더 활성 아이콘 안내 툴팁 (헤더 대신 화면 위층에 표시) */}
         {screenSize !== ScreenSize.COMPACT && tooltipEnabled && (
