@@ -48,6 +48,10 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>카운터를 음성으로 증가·감소하기 위해 마이크를 사용합니다.</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>「연지」「곤지」 음성 명령으로 카운터를 조작하기 위해 음성 인식을 사용합니다.</string>
 	<key>UIAppFonts</key>
 	<array>
 		<string>DSEG7Classic-Bold.ttf</string>
