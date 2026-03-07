@@ -29,13 +29,33 @@ if (fs.existsSync(buildGradlePath)) {
   }
 }
 
-// 2) VoiceModule.java: getName() "RCTVoice" → "Voice"
+// 2) VoiceModule.java: getName() "RCTVoice" → "Voice" + addListener/removeListeners stub (RN 0.69+ NativeEventEmitter 요구)
 const voiceModulePath = path.join(root, 'android', 'src', 'main', 'java', 'com', 'wenkesj', 'voice', 'VoiceModule.java');
 if (fs.existsSync(voiceModulePath)) {
   let content = fs.readFileSync(voiceModulePath, 'utf8');
+  let changed = false;
   if (content.includes('return "RCTVoice"')) {
     content = content.replace('return "RCTVoice"', 'return "Voice"');
+    changed = true;
+  }
+  if (!content.includes('public void addListener(String eventName)')) {
+    const stub = `
+  @ReactMethod
+  public void addListener(String eventName) {
+    // RN 0.69+ NativeEventEmitter
+  }
+
+  @ReactMethod
+  public void removeListeners(double count) {
+    // RN 0.69+ NativeEventEmitter
+  }
+
+`;
+    content = content.replace(/(public String getName\(\) \{\s+return "Voice";\s+\})\s+(\@ReactMethod\s+public void startSpeech)/, `$1${stub}  $2`);
+    changed = true;
+  }
+  if (changed) {
     fs.writeFileSync(voiceModulePath, content);
-    console.log('Patched @react-native-voice/voice VoiceModule.java getName() → "Voice"');
+    console.log('Patched @react-native-voice/voice VoiceModule.java (getName + addListener/removeListeners)');
   }
 }
