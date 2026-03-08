@@ -4,10 +4,17 @@ import { useEffect, useRef } from 'react';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 
 const LOCALE = 'ko-KR';
-const KEYWORDS_ADD = ['증가', '올려', '더해', '더하기'];
-const KEYWORDS_SUBTRACT = ['감소', '내려', '빼', '빼기'];
+const KEYWORDS_ADD = ['곤지', '군지', '건지'];
+const KEYWORDS_SUBTRACT = ['연지', '현지', '연기'];
+const KEYWORD_SET_ADD = new Set(KEYWORDS_ADD);
+const KEYWORD_SET_SUBTRACT = new Set(KEYWORDS_SUBTRACT);
 const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
 const DEBUG_TAG = '[useVoiceCommands]';
+const DEFAULT_RESTART_DELAY_MS = 1200;
+const BUSY_RESTART_DELAY_MS = 8000;
+const IDLE_RECYCLE_MS = 30000;
+const IDLE_RESTART_DELAY_MS = 1500;
+const START_WATCHDOG_MS = 5000;
 
 const ERROR_MESSAGES: Record<string, string> = {
   aborted: '음성 인식이 중단되었습니다',
@@ -30,6 +37,38 @@ function getErrorMessage(event: { error: string; message?: string }): string {
     return msg;
   }
   return ERROR_MESSAGES[event.error] ?? event.error ?? 'Unknown error';
+}
+
+function normalizeTranscriptWords(text: string): string[] {
+  return text
+    .toLowerCase()
+    .replace(/[^0-9a-zA-Z가-힣\s]+/g, ' ')
+    .split(/\s+/)
+    .map((word) => word.trim())
+    .filter(Boolean);
+}
+
+function getCommonPrefixLength(previousWords: string[], nextWords: string[]): number {
+  const maxLength = Math.min(previousWords.length, nextWords.length);
+  let index = 0;
+
+  while (index < maxLength && previousWords[index] === nextWords[index]) {
+    index += 1;
+  }
+
+  return index;
+}
+
+function getWordAction(word: string): 'add' | 'subtract' | null {
+  if (KEYWORD_SET_ADD.has(word)) {
+    return 'add';
+  }
+
+  if (KEYWORD_SET_SUBTRACT.has(word)) {
+    return 'subtract';
+  }
+
+  return null;
 }
 
 /**
@@ -61,14 +100,6 @@ export function useVoiceCommands(
     }
 
     let cancelled = false;
-    let lastActionTime = 0;
-    const ACTION_DEBOUNCE_MS = 1200;
-    const DEFAULT_RESTART_DELAY_MS = 1200;
-    const BUSY_RESTART_DELAY_MS = 8000;
-    const IDLE_RECYCLE_MS = 30000;
-    const IDLE_RESTART_DELAY_MS = 1500;
-    const START_WATCHDOG_MS = 5000;
-
     let restartTimeout: ReturnType<typeof setTimeout> | null = null;
     let startWatchdogTimeout: ReturnType<typeof setTimeout> | null = null;
     let idleRecycleTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -77,9 +108,8 @@ export function useVoiceCommands(
     let ignoreNextAbortedError = false;
     let ignoreNextNoSpeechError = false;
     let nextRestartDelayMs = DEFAULT_RESTART_DELAY_MS;
-    let startAttemptCount = 0;
     let lastActivityAt = Date.now();
-    let environmentProbeStarted = false;
+    let lastTranscriptWords: string[] = [];
 
     const logState = (message: string, extra?: Record<string, unknown>) => {
       if (!__DEV__) {
@@ -98,17 +128,36 @@ export function useVoiceCommands(
       console.log(`${DEBUG_TAG} ${message} ${JSON.stringify(snapshot)}`);
     };
 
-    const tryRunKeywordAction = (text: string): boolean => {
-      const normalized = text.toLowerCase().trim();
-      if (KEYWORDS_ADD.some((keyword) => normalized.includes(keyword))) {
-        onAddRef.current();
-        return true;
+    const resetTranscriptTracking = () => {
+      lastTranscriptWords = [];
+    };
+
+    const runActionsFromTranscript = (text: string) => {
+      const nextWords = normalizeTranscriptWords(text);
+      const commonPrefixLength = getCommonPrefixLength(lastTranscriptWords, nextWords);
+      const newWords = nextWords.slice(commonPrefixLength);
+
+      if (__DEV__ && commonPrefixLength < lastTranscriptWords.length) {
+        logState('transcript revised', {
+          previousWords: lastTranscriptWords,
+          nextWords,
+          commonPrefixLength,
+        });
       }
-      if (KEYWORDS_SUBTRACT.some((keyword) => normalized.includes(keyword))) {
-        onSubtractRef.current();
-        return true;
-      }
-      return false;
+
+      lastTranscriptWords = nextWords;
+
+      newWords.forEach((word) => {
+        const action = getWordAction(word);
+        if (action === 'add') {
+          onAddRef.current();
+          return;
+        }
+
+        if (action === 'subtract') {
+          onSubtractRef.current();
+        }
+      });
     };
 
     const clearRestartTimeout = () => {
@@ -132,6 +181,12 @@ export function useVoiceCommands(
       }
     };
 
+    const clearAllTimeouts = () => {
+      clearRestartTimeout();
+      clearStartWatchdog();
+      clearIdleRecycleTimeout();
+    };
+
     const touchActivity = (source: string) => {
       lastActivityAt = Date.now();
       logState('activity', { source });
@@ -139,12 +194,6 @@ export function useVoiceCommands(
     };
 
     const probeRecognitionEnvironment = async () => {
-      if (environmentProbeStarted) {
-        return;
-      }
-
-      environmentProbeStarted = true;
-
       try {
         const availableServices =
           ExpoSpeechRecognitionModule.getSpeechRecognitionServices();
@@ -254,14 +303,12 @@ export function useVoiceCommands(
         return;
       }
 
-      startAttemptCount += 1;
       isStarting = true;
-      clearRestartTimeout();
-      clearStartWatchdog();
-      clearIdleRecycleTimeout();
+      resetTranscriptTracking();
+      clearAllTimeouts();
       onErrorRef.current?.('');
       onRecognizedRef.current?.('마이크 준비 중...');
-      logState('startListening begin', { attempt: startAttemptCount });
+      logState('startListening begin');
 
       try {
         const permissions = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
@@ -316,7 +363,7 @@ export function useVoiceCommands(
         }
 
         logState('calling ExpoSpeechRecognitionModule.start', {
-          attempt: startAttemptCount,
+          keywords: [...KEYWORDS_ADD, ...KEYWORDS_SUBTRACT],
         });
         ExpoSpeechRecognitionModule.start({
           lang: LOCALE,
@@ -406,10 +453,7 @@ export function useVoiceCommands(
           touchActivity(event.isFinal ? 'result-final' : 'result-partial');
           onRecognizedRef.current?.(transcript);
           onErrorRef.current?.('');
-          const recentlyActed = Date.now() - lastActionTime < ACTION_DEBOUNCE_MS;
-          if (!recentlyActed && tryRunKeywordAction(transcript)) {
-            lastActionTime = Date.now();
-          }
+          runActionsFromTranscript(transcript);
         }
       }
     );
@@ -491,6 +535,7 @@ export function useVoiceCommands(
       () => {
         clearStartWatchdog();
         clearIdleRecycleTimeout();
+        resetTranscriptTracking();
         isStarting = false;
         isRecognizing = false;
         logState('event:end');
@@ -509,9 +554,8 @@ export function useVoiceCommands(
     return () => {
       cancelled = true;
       ignoreNextAbortedError = true;
-      clearRestartTimeout();
-      clearStartWatchdog();
-      clearIdleRecycleTimeout();
+      resetTranscriptTracking();
+      clearAllTimeouts();
       logState('cleanup abort');
       startSubscription.remove();
       speechStartSubscription.remove();
