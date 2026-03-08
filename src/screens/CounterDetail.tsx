@@ -128,7 +128,7 @@ const CounterDetail = () => {
   const [voiceRecognizedText, setVoiceRecognizedText] = useState<string>('');
   const [voiceError, setVoiceError] = useState<string>('');
 
-  /** 화면 포커스 중일 때만 계속 듣고, "연지" → 감소, "곤지" → 증가 */
+  /** 화면 포커스 중일 때만 계속 듣고, "감소" 계열 → 감소, "증가" 계열 → 증가 */
   useVoiceCommands(!!counter && isScreenFocused, handleAdd, handleSubtract, setVoiceRecognizedText, setVoiceError);
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
@@ -252,9 +252,9 @@ const CounterDetail = () => {
           onPress={handleTargetCountOpen}
         />
 
-        {/* 음성 인식 결과 표시 (연지/곤지 테스트용) */}
+        {/* 음성 인식 결과 표시 (증가/감소) */}
         <View className="absolute left-2 right-2 z-40 rounded px-2 py-1.5 bg-lightgray min-h-[32px] justify-center" style={{ top: progressBarHeightPx + 8 }}>
-          <Text className="text-xs text-darkgray">음성 인식</Text>
+          <Text className="text-xs text-darkgray">Voice</Text>
           {voiceError ? (
             <Text className="text-xs text-red-orange-500" numberOfLines={2}>에러: {voiceError}</Text>
           ) : (

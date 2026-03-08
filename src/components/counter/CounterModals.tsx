@@ -1,7 +1,7 @@
 // src/components/counter/CounterModals.tsx
 import React from 'react';
 import { ConfirmModal, CounterEditModal } from '@components/common/modals';
-import { SubCounterRuleModal } from '@components/counter';
+import SubCounterRuleModal from './SubCounterRuleModal';
 
 interface CounterModalsProps {
   activeModal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | 'timerReset' | null;
