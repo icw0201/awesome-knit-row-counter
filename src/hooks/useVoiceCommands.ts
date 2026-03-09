@@ -311,18 +311,6 @@ export function useVoiceCommands(
       logState('startListening begin');
 
       try {
-        const permissions = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-        if (cancelled || !enabledRef.current) {
-          isStarting = false;
-          return;
-        }
-
-        if (!permissions.granted) {
-          isStarting = false;
-          onErrorRef.current?.('마이크 권한이 필요합니다');
-          return;
-        }
-
         if (!ExpoSpeechRecognitionModule.isRecognitionAvailable()) {
           isStarting = false;
           onErrorRef.current?.('음성 인식을 사용할 수 없습니다');
