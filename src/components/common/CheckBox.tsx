@@ -10,7 +10,6 @@ import clsx from 'clsx';
  * @param label - 체크박스 옆에 표시될 텍스트 라벨 (선택사항)
  * @param checked - 체크박스의 체크 상태 (true: 체크됨, false: 체크 안됨)
  * @param onToggle - 체크박스 클릭 시 실행될 콜백 함수
- * @param disabled - 체크박스 비활성화 여부 (기본값: false)
  * @param size - 체크박스 크기 ('base' | 'xs'), 기본값: 'base'
  * @param children - 체크박스 왼쪽에 표시할 추가 요소 (선택사항)
  */
@@ -18,7 +17,6 @@ interface CheckBoxProps {
   label?: string;
   checked: boolean;
   onToggle: () => void;
-  disabled?: boolean;
   size?: 'base' | 'xs';
   children?: React.ReactNode;
 }
@@ -26,12 +24,11 @@ interface CheckBoxProps {
 /**
  * 체크박스 컴포넌트
  * 라벨과 함께 표시되는 체크박스로, 클릭 시 상태를 토글할 수 있습니다.
- * 비활성화 상태일 때는 클릭이 불가능합니다.
  */
-const CheckBox: React.FC<CheckBoxProps> = ({ label, checked, onToggle, disabled = false, size = 'base', children }) => {
+const CheckBox: React.FC<CheckBoxProps> = ({ label, checked, onToggle, size = 'base', children }) => {
   // 체크박스 색상 설정
   const activeColor = colorStyles.vivid.container; // 활성화 상태일 때의 배경색 (체크된 상태)
-  const inactiveColor = 'bg-red-orange-100'; // 비활성화 상태일 때의 배경색 (체크되지 않은 상태)
+  const inactiveColor = 'bg-red-orange-100'; // 체크되지 않은 상태일 때의 배경색
 
   // 사이즈에 따른 스타일 설정
   const isXs = size === 'xs';
@@ -49,11 +46,9 @@ const CheckBox: React.FC<CheckBoxProps> = ({ label, checked, onToggle, disabled 
 
   return (
     <TouchableOpacity
-      onPress={disabled ? undefined : onToggle} // 비활성화 상태일 때는 onPress 이벤트를 무시
-      activeOpacity={0.7} // 터치 시 투명도 효과
-      className={clsx(
-        label ? `flex-row items-center justify-between ${paddingClass}` : ''
-      )}
+      onPress={onToggle}
+      activeOpacity={0.7}
+      className={clsx(label ? `flex-row items-center justify-between ${paddingClass}` : '')}
     >
       {/* 체크박스 라벨 텍스트 - label이 있을 때만 표시 */}
       {label && (

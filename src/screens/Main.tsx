@@ -33,7 +33,6 @@ const Main = () => {
     handleSortSelect,
   } = useMain();
 
-
   return (
     <SafeAreaView style={screenStyles.flex1} className={isEditMode ? 'bg-red-orange-400' : undefined} edges={safeAreaEdges}>
       {/* 아이템 목록 스크롤뷰 */}
