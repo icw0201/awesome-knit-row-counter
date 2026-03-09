@@ -7,6 +7,7 @@ interface CounterModalsProps {
   activeModal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | 'timerReset' | null;
   errorModalVisible: boolean;
   errorMessage: string;
+  voicePermissionModalVisible: boolean;
   currentCount: string;
   currentTargetCount: string;
   subCount: number;
@@ -17,6 +18,8 @@ interface CounterModalsProps {
   onResetConfirm: () => void;
   onTimerResetConfirm: () => void;
   onErrorModalClose: () => void;
+  onVoicePermissionModalClose: () => void;
+  onOpenVoicePermissionSettings: () => void;
   onTargetCountConfirm: (value: string) => void;
   onSubEditConfirm: (value: string) => void;
   onSubResetConfirm: () => void;
@@ -31,6 +34,7 @@ const CounterModals: React.FC<CounterModalsProps> = ({
   activeModal,
   errorModalVisible,
   errorMessage,
+  voicePermissionModalVisible,
   currentCount,
   currentTargetCount,
   subCount,
@@ -41,6 +45,8 @@ const CounterModals: React.FC<CounterModalsProps> = ({
   onResetConfirm,
   onTimerResetConfirm,
   onErrorModalClose,
+  onVoicePermissionModalClose,
+  onOpenVoicePermissionSettings,
   onTargetCountConfirm,
   onSubEditConfirm,
   onSubResetConfirm,
@@ -148,6 +154,17 @@ const CounterModals: React.FC<CounterModalsProps> = ({
         onConfirm={onErrorModalClose}
         confirmText="확인"
         cancelText=""
+      />
+
+      {/* 음성 인식 권한 안내 모달 */}
+      <ConfirmModal
+        visible={voicePermissionModalVisible}
+        onClose={onVoicePermissionModalClose}
+        title="음성 인식 권한"
+        description="음성인식 기능을 위해 설정에서 음성 인식 권한을 허용해 주세요"
+        onConfirm={onOpenVoicePermissionSettings}
+        confirmText="설정 열기"
+        cancelText="닫기"
       />
     </>
   );
