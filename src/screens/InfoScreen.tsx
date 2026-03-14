@@ -34,6 +34,7 @@ const InfoScreen = () => {
     notes,
     setNotes,
     isRootLevelItem,
+    itemType,
     // 모달 상태
     showSaveConfirmModal,
     showTitleErrorModal,
@@ -52,6 +53,7 @@ const InfoScreen = () => {
   const startDateInputRef = useRef<TextInputBoxRef>(null);
   const endDateInputRef = useRef<TextInputBoxRef>(null);
   const gaugeInputRef = useRef<TextInputBoxRef>(null);
+  const titleFieldText = itemType === 'counter' ? '카운터명' : '프로젝트명';
 
   return (
     <SafeAreaView style={screenStyles.flex1} edges={safeAreaEdges}>
@@ -64,10 +66,10 @@ const InfoScreen = () => {
           {/* 제목 입력 필드 */}
           <TextInputBox
             ref={titleInputRef}
-            label="이름"
+            label={titleFieldText}
             value={title}
             onChangeText={setTitle}
-            placeholder="프로젝트명 혹은 카운터명"
+            placeholder={titleFieldText}
             type="text"
             required
             returnKeyType={isRootLevelItem ? 'next' : 'done'}

@@ -22,6 +22,7 @@ export const useItemInfo = () => {
   const [needle, setNeedle] = useState('');
   const [notes, setNotes] = useState('');
   const [isRootLevelItem, setIsRootLevelItem] = useState(false);
+  const [itemType, setItemType] = useState<'project' | 'counter'>('counter');
 
   // 초기값 저장 (변경사항 비교용)
   const initialValuesRef = useRef({
@@ -53,6 +54,7 @@ export const useItemInfo = () => {
       return;
     }
 
+    setItemType(item.type);
     setIsRootLevelItem(item.type === 'project' || (item.type === 'counter' && !item.parentProjectId));
 
     // 네비게이션 타이틀 설정
@@ -258,6 +260,7 @@ export const useItemInfo = () => {
     notes,
     setNotes,
     isRootLevelItem,
+    itemType,
     // 모달 상태
     showSaveConfirmModal,
     showTitleErrorModal,
