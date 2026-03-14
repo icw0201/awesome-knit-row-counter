@@ -12,14 +12,13 @@ import { getHeaderRightWithActivateInfoSettings } from '@navigation/HeaderOption
 
 import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal } from '@components/counter';
 import Tooltip from '@components/common/Tooltip';
+import { ADD_KEY_CODES, SUBTRACT_KEY_CODES } from '@constants/hardwareKeyCodes';
 import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, ScreenSize } from '@constants/screenSizeConfig';
 import { getTooltipEnabledSetting } from '@storage/settings';
 import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
 
-const ADD_KEY_CODES = new Set([22, 62, 66]);
-const SUBTRACT_KEY_CODES = new Set([21, 67]);
 type HardwareKeyUpEvent = {
   keyCode: number;
 };

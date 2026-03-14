@@ -1,0 +1,16 @@
+const KEYCODE_DPAD_LEFT = 21;
+const KEYCODE_DPAD_RIGHT = 22;
+const KEYCODE_SPACE = 62;
+const KEYCODE_ENTER = 66;
+const KEYCODE_DEL = 67;
+
+export const ADD_KEY_CODES = new Set([
+  KEYCODE_DPAD_RIGHT,
+  KEYCODE_SPACE,
+  KEYCODE_ENTER,
+]);
+
+export const SUBTRACT_KEY_CODES = new Set([
+  KEYCODE_DPAD_LEFT,
+  KEYCODE_DEL,
+]);
