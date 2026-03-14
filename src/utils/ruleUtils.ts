@@ -97,14 +97,14 @@ export const calculateRulePreview = (
  * @param startNumber 시작단
  * @param endNumber 종료단
  * @param ruleNumber 룰넘버 (몇 단마다)
- * @returns 반복 횟수, 종료단이 없거나 규칙이 없으면 null
+ * @returns 반복 횟수, 종료단이 없으면 null
  */
 export const calculateRuleRepeatCount = (
   startNumber: number,
   endNumber: number,
   ruleNumber: number
 ): number | null => {
-  if (endNumber <= 0 || ruleNumber <= 0) {
+  if (endNumber <= 0) {
     return null;
   }
 
