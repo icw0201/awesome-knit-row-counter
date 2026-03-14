@@ -21,6 +21,7 @@ export const useItemInfo = () => {
   const [yarn, setYarn] = useState('');
   const [needle, setNeedle] = useState('');
   const [notes, setNotes] = useState('');
+  const [isRootLevelItem, setIsRootLevelItem] = useState(false);
 
   // 초기값 저장 (변경사항 비교용)
   const initialValuesRef = useRef({
@@ -51,6 +52,8 @@ export const useItemInfo = () => {
     if (!item) {
       return;
     }
+
+    setIsRootLevelItem(item.type === 'project' || (item.type === 'counter' && !item.parentProjectId));
 
     // 네비게이션 타이틀 설정
     navigation.setOptions({ title: `"${item.title}" 정보` });
@@ -254,6 +257,7 @@ export const useItemInfo = () => {
     setNeedle,
     notes,
     setNotes,
+    isRootLevelItem,
     // 모달 상태
     showSaveConfirmModal,
     showTitleErrorModal,
