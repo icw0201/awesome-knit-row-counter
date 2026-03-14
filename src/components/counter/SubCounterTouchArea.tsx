@@ -11,7 +11,10 @@ interface SubCounterTouchAreaProps {
 
 /**
  * 보조 카운터 터치 영역 컴포넌트
- * 보조모달용 작은 터치 영역 UI (터치 시 색깔 변경)
+ * 보조모달용 작은 터치 영역 UI (누르고 있는 동안 배경색 변경)
+ *
+ * Pressable 대신 responder가 달린 View를 사용해,
+ * 하드웨어 키보드 포커스는 막고 손가락 터치만 받도록 구성한다.
  */
 const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
   handleWidth = 30,
@@ -33,6 +36,8 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
         className={`flex-1 items-start justify-center ${leftPressed ? 'bg-gray-100' : 'bg-transparent'}`}
         focusable={false}
         accessible={false}
+        // 이 터치 레이어를 포커스/접근성 대상에서 제외해
+        // 하드웨어 키보드 입력 시 서브 카운터 영역으로 포커스가 들어오지 않게 한다.
         importantForAccessibility="no-hide-descendants"
         onStartShouldSetResponder={() => true}
         onResponderGrant={() => setLeftPressed(true)}
@@ -55,6 +60,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
         className={`flex-1 items-end justify-center ${rightPressed ? 'bg-gray-100' : 'bg-transparent'}`}
         focusable={false}
         accessible={false}
+        // 오른쪽 영역도 같은 이유로 포커스/접근성 대상에서 제외한다.
         importantForAccessibility="no-hide-descendants"
         onStartShouldSetResponder={() => true}
         onResponderGrant={() => setRightPressed(true)}
