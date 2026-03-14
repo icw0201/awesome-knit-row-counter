@@ -19,11 +19,6 @@ class MainActivity : ReactActivity() {
     super.onCreate(null)
   }
 
-  override fun onKeyDown(keyCode: Int, event: KeyEvent): Boolean {
-    KeyEventModule.getInstance()?.onKeyDownEvent(keyCode, event)
-    return super.onKeyDown(keyCode, event)
-  }
-
   override fun onKeyUp(keyCode: Int, event: KeyEvent): Boolean {
     KeyEventModule.getInstance()?.onKeyUpEvent(keyCode, event)
     return super.onKeyUp(keyCode, event)
