@@ -92,6 +92,14 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
     [setVoiceCommandsPreference]
   );
 
+  /**
+   * 에러 모달 표시
+   */
+  const showErrorModal = useCallback((message: string) => {
+    setErrorMessage(message);
+    setErrorModalVisible(true);
+  }, []);
+
   // 현재 권한 상태를 기준으로 체크박스 노출 상태를 다시 맞춘다.
   const syncVoicePermissionState = useCallback(async () => {
     try {
@@ -109,8 +117,9 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
       setVoicePermissionDenied(
         getVoiceRecognitionPermissionStatusSetting() === 'denied'
       );
+      showErrorModal('음성 인식 권한을 확인할 수 없습니다.');
     }
-  }, [applyGrantedVoicePermission, setVoiceCommandsPreference]);
+  }, [applyGrantedVoicePermission, setVoiceCommandsPreference, showErrorModal]);
 
   // 체크를 켤 때만 시스템 권한 요청을 시도한다.
   const requestVoicePermission = useCallback(async (): Promise<boolean> => {
@@ -127,29 +136,15 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
     return requestedPermission.granted;
   }, []);
 
-  /**
-   * 에러 모달 표시
-   */
-  const showErrorModal = useCallback((message: string) => {
-    setErrorMessage(message);
-    setErrorModalVisible(true);
-  }, []);
-
   useFocusEffect(
     useCallback(() => {
-      const syncVoicePermissionSafely = () => {
-        syncVoicePermissionState().catch(() => {
-          showErrorModal('음성 인식 권한을 확인할 수 없습니다.');
-        });
-      };
-
       const handleAppStateChange = (nextAppState: AppStateStatus) => {
         if (nextAppState === 'active') {
-          syncVoicePermissionSafely();
+          syncVoicePermissionState();
         }
       };
 
-      syncVoicePermissionSafely();
+      syncVoicePermissionState();
       const appStateSubscription = AppState.addEventListener(
         'change',
         handleAppStateChange
@@ -158,7 +153,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
       return () => {
         appStateSubscription.remove();
       };
-    }, [showErrorModal, syncVoicePermissionState])
+    }, [syncVoicePermissionState])
   );
 
   /**

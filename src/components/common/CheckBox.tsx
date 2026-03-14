@@ -49,6 +49,11 @@ const CheckBox: React.FC<CheckBoxProps> = ({ label, checked, onToggle, size = 'b
       onPress={onToggle}
       activeOpacity={0.7}
       className={clsx(label ? `flex-row items-center justify-between ${paddingClass}` : '')}
+      accessible={true}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked: !!checked }}
+      accessibilityLabel={label ?? '선택'}
+      accessibilityHint="탭하여 선택하거나 해제합니다"
     >
       {/* 체크박스 라벨 텍스트 - label이 있을 때만 표시 */}
       {label && (

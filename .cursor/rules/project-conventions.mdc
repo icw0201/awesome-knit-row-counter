@@ -9,8 +9,8 @@ alwaysApply: true
 
 ## 1. 셸 / 터미널
 
-- **Windows PowerShell** 명령어만 사용한다.
-- `bash`, `sh`, `zsh` 등 Unix 셸 문법을 사용하지 않는다.
+- 터미널/CI에서는 **PowerShell**(Windows) 또는 **POSIX 셸**(macOS/Linux: `bash`, `sh`, `zsh` 등)을 사용할 수 있다.
+- 셸 차이가 생기는 작업은 **플랫폼 무관한 방식**을 우선한다: `package.json` 스크립트, Node.js 태스크 러너, 또는 `cross-env` 등으로 환경 변수/경로를 통일한다. 셸 전용 문법은 필요한 경우에만 사용하고, 문서·주석에 실행 환경(예: PowerShell / bash)을 명시한다.
 
 ## 2. 패키지 매니저
 
