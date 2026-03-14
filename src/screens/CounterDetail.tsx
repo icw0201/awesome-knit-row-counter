@@ -127,7 +127,6 @@ const CounterDetail = () => {
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
   const imageWidth = iconSize * 1.4;
   const imageHeight = iconSize * (90 / 189) * 1.4;
-  const hasParent = !!counter?.parentProjectId;
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { height: nextHeight, width: nextWidth } = event.nativeEvent.layout;
     setLayoutHeight((prev) => (prev !== nextHeight ? nextHeight : prev));
@@ -201,10 +200,10 @@ const CounterDetail = () => {
           counter.timerIsActive,
           toggleTimerIsActive,
           counter.id,
-          hasParent ? undefined : () => navigation.navigate('InfoScreen', { itemId: counter.id })
+          () => navigation.navigate('InfoScreen', { itemId: counter.id })
         ),
     });
-  }, [navigation, counter, mascotIsActive, screenSize, resolvedWidth, toggleMascotIsActive, toggleTimerIsActive, hasParent]);
+  }, [navigation, counter, mascotIsActive, screenSize, resolvedWidth, toggleMascotIsActive, toggleTimerIsActive]);
 
 
   // 카운터 데이터가 없으면 렌더링하지 않음
@@ -247,7 +246,7 @@ const CounterDetail = () => {
           <Tooltip
             text="길게 눌러 어쩌미 알림 단 설정하기"
             containerClassName="absolute right-3 top-2 z-50"
-            targetAnchorX={hasParent ? resolvedWidth - 65 : resolvedWidth - 103}
+            targetAnchorX={resolvedWidth - 106}
           />
         )}
 
