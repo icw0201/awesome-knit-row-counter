@@ -1,11 +1,12 @@
 // src/components/counter/CounterTouchArea.tsx
-import React, { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import React from 'react';
+import { View } from 'react-native';
 import { Minus, Plus } from 'lucide-react-native';
 
 interface CounterTouchAreaProps {
   onAdd: () => void;
   onSubtract: () => void;
+  highlightedAction?: 'add' | 'subtract' | null;
 }
 
 /**
@@ -15,21 +16,24 @@ interface CounterTouchAreaProps {
 const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
   onAdd,
   onSubtract,
+  highlightedAction = null,
 }) => {
-  const [leftPressed, setLeftPressed] = useState(false);
-  const [rightPressed, setRightPressed] = useState(false);
+  const isSubtractHighlighted = highlightedAction === 'subtract';
+  const isAddHighlighted = highlightedAction === 'add';
 
   return (
     <View className="absolute top-0 left-0 right-0 bottom-0 flex-row">
       {/* 왼쪽 터치 영역 (감소) - 37% */}
-      <Pressable
-        className={`items-start justify-center ${leftPressed ? 'bg-gray-100' : 'bg-white'}`}
+      <View
+        className={`items-start justify-center ${isSubtractHighlighted ? 'bg-gray-100' : 'bg-white'}`}
         style={{ width: '37%' }}
-        onPress={() => {
-          setLeftPressed(true);
-          onSubtract();
-          setTimeout(() => setLeftPressed(false), 100);
-        }}
+        focusable={false}
+        accessible={false}
+        // 이 오버레이는 화면 전체를 덮는 입력 레이어라 접근성/포커스를 열어두면
+        // 하드웨어 키보드 포커스가 여기로 들어와 잘못된 하이라이트가 생길 수 있다.
+        importantForAccessibility="no-hide-descendants"
+        onStartShouldSetResponder={() => true}
+        onResponderRelease={onSubtract}
       >
         <Minus
           size={60}
@@ -37,17 +41,18 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
           strokeWidth={2}
           className="ml-3"
         />
-      </Pressable>
+      </View>
 
       {/* 오른쪽 터치 영역 (증가) - 63% */}
-      <Pressable
-        className={`items-end justify-center ${rightPressed ? 'bg-red-200' : 'bg-red-100'}`}
+      <View
+        className={`items-end justify-center ${isAddHighlighted ? 'bg-red-200' : 'bg-red-100'}`}
         style={{ width: '63%' }}
-        onPress={() => {
-          setRightPressed(true);
-          onAdd();
-          setTimeout(() => setRightPressed(false), 100);
-        }}
+        focusable={false}
+        accessible={false}
+        // 오른쪽 영역도 같은 이유로 포커스/접근성 대상에서 제외한다.
+        importantForAccessibility="no-hide-descendants"
+        onStartShouldSetResponder={() => true}
+        onResponderRelease={onAdd}
       >
         <Plus
           size={60}
@@ -55,7 +60,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
           strokeWidth={2}
           className="mr-3"
         />
-      </Pressable>
+      </View>
     </View>
   );
 };

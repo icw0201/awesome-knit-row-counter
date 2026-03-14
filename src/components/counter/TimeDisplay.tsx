@@ -85,6 +85,9 @@ const TimeDisplay: React.FC<TimeDisplayProps> = ({ screenSize, timerIsPlaying, e
       onLongPress={onLongPress ? handleLongPress : undefined}
       className={`items-center justify-center ${paddingClass} relative`}
       onLayout={onLayout}
+      focusable={false}
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
     >
       {/* 배경 - SVG로 깎인 모양 구현 */}
       {dimensions.width > 0 && dimensions.height > 0 && (

@@ -157,6 +157,9 @@ export const ModalHandle: React.FC<ModalHandleProps> = ({
           { translateY: -height / 2 },
         ],
       }}
+      focusable={false}
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEndWithCheck}

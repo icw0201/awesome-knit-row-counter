@@ -64,7 +64,12 @@ const CircleIcon: React.FC<CircleIconProps> = ({
   // isButton이 true면 TouchableOpacity로 감싸서 터치 가능하게, false면 단순 컨텐츠 반환
   if (isButton) {
     return (
-      <TouchableOpacity onPress={onPress}>
+      <TouchableOpacity
+        onPress={onPress}
+        focusable={false}
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+      >
         {content}
       </TouchableOpacity>
     );
