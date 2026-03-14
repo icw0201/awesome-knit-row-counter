@@ -1,11 +1,12 @@
 // src/screens/CounterDetail.tsx
 
 import { useLayoutEffect, useCallback, useState, useRef } from 'react';
-import { View, Text, useWindowDimensions, Animated, LayoutChangeEvent } from 'react-native';
+import { View, Text, useWindowDimensions, Animated, LayoutChangeEvent, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@navigation/AppNavigator';
+import KeyEvent from 'react-native-keyevent';
 
 import { getHeaderRightWithActivateInfoSettings } from '@navigation/HeaderOptions';
 
@@ -16,6 +17,12 @@ import { getTooltipEnabledSetting } from '@storage/settings';
 import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
+
+const ADD_KEY_CODES = new Set([22, 62, 66]);
+const SUBTRACT_KEY_CODES = new Set([21, 67]);
+type HardwareKeyUpEvent = {
+  keyCode: number;
+};
 
 
 /**
@@ -123,6 +130,7 @@ const CounterDetail = () => {
   } = useCounter({ counterId });
 
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
+  const sectionModalIsOpen = counter?.sectionModalIsOpen ?? false;
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
   const imageWidth = iconSize * 1.4;
@@ -177,6 +185,41 @@ const CounterDetail = () => {
       // 툴팁 표시 설정 로드
       setTooltipEnabled(getTooltipEnabledSetting());
     }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android') {
+        return undefined;
+      }
+
+      const handleHardwareKeyUp = ({ keyCode }: HardwareKeyUpEvent) => {
+        const isModalBlockingInput =
+          activeModal !== null ||
+          errorModalVisible ||
+          subModalIsOpen ||
+          sectionModalIsOpen;
+
+        if (isModalBlockingInput) {
+          return;
+        }
+
+        if (ADD_KEY_CODES.has(keyCode)) {
+          handleAdd();
+          return;
+        }
+
+        if (SUBTRACT_KEY_CODES.has(keyCode)) {
+          handleSubtract();
+        }
+      };
+
+      KeyEvent.onKeyUpListener(handleHardwareKeyUp);
+
+      return () => {
+        KeyEvent.removeKeyUpListener();
+      };
+    }, [activeModal, errorModalVisible, handleAdd, handleSubtract, sectionModalIsOpen, subModalIsOpen])
   );
 
 
