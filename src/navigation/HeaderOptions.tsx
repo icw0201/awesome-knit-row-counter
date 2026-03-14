@@ -83,7 +83,7 @@ export const getHeaderRightWithActivateInfoSettings = (
   timerIsActive: boolean,
   onTimerPress: () => void,
   counterId: string,
-  onInfoPress?: () => void
+  onInfoPress: () => void
 ): React.JSX.Element => {
   return (
     <View className="flex-row items-center">
@@ -101,12 +101,10 @@ export const getHeaderRightWithActivateInfoSettings = (
         />
       </View>
 
-      {/* Info 버튼 (선택적) */}
-      {onInfoPress && (
-        <TouchableOpacity onPress={onInfoPress} style={{ marginRight: 12 }}>
-          <Info size={26} color="black" />
-        </TouchableOpacity>
-      )}
+      {/* Info 버튼 */}
+      <TouchableOpacity onPress={onInfoPress} style={{ marginRight: 12 }}>
+        <Info size={26} color="black" />
+      </TouchableOpacity>
 
       {/* 설정 */}
       <TouchableOpacity onPress={() => navigation.navigate('Setting')} style={{ marginRight: 4 }}>
