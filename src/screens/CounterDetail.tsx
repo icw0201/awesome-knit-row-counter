@@ -1,6 +1,6 @@
 // src/screens/CounterDetail.tsx
 
-import { useLayoutEffect, useCallback, useState, useRef } from 'react';
+import { useLayoutEffect, useCallback, useEffect, useState, useRef } from 'react';
 import { View, Text, useWindowDimensions, Animated, LayoutChangeEvent } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
@@ -15,6 +15,8 @@ import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, Scree
 import { getTooltipEnabledSetting } from '@storage/settings';
 import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
+import { useVoiceCommands } from '@hooks/useVoiceCommands';
+import { useVoicePermissionGate } from '@hooks/useVoicePermissionGate';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
 
 
@@ -123,6 +125,25 @@ const CounterDetail = () => {
   } = useCounter({ counterId });
 
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
+  const [voiceRecognizedText, setVoiceRecognizedText] = useState<string>('');
+  const [voiceRecognitionError, setVoiceRecognitionError] = useState<string>('');
+  const {
+    isVoiceCommandsActive,
+    voicePermissionModalVisible,
+    voicePermissionError,
+    closeVoicePermissionModal,
+    openVoicePermissionSettings,
+  } = useVoicePermissionGate();
+  const voiceError = voicePermissionError || voiceRecognitionError;
+
+  /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
+  useVoiceCommands(
+    !!counter && isVoiceCommandsActive,
+    handleAdd,
+    handleSubtract,
+    setVoiceRecognizedText,
+    setVoiceRecognitionError
+  );
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
   const imageWidth = iconSize * 1.4;
@@ -168,13 +189,17 @@ const CounterDetail = () => {
   const maxFontSizeByWidth = (resolvedWidth * 0.5) / (digitCount * CHAR_WIDTH_RATIO);
   const countTextFontSizePx = Math.max(0, Math.min(maxFontSizeByHeight, maxFontSizeByWidth));
 
+  useEffect(() => {
+    if (!isVoiceCommandsActive) {
+      setVoiceRecognizedText('');
+    }
+  }, [isVoiceCommandsActive]);
+
   /**
-   * 화면 포커스 시 실행되는 효과
-   * 화면 켜짐 상태 관리만 담당합니다.
+   * 화면 포커스 시 툴팁 설정만 다시 반영한다.
    */
   useFocusEffect(
     useCallback(() => {
-      // 툴팁 표시 설정 로드
       setTooltipEnabled(getTooltipEnabledSetting());
     }, [])
   );
@@ -240,6 +265,18 @@ const CounterDetail = () => {
           screenSize={screenSize}
           onPress={handleTargetCountOpen}
         />
+
+        {/* 음성 인식 결과 표시 (증가/감소) */}
+        <View className="absolute left-2 right-2 z-40 rounded px-2 py-1.5 bg-lightgray min-h-[32px] justify-center" style={{ top: progressBarHeightPx + 8 }}>
+          <Text className="text-xs text-darkgray">Voice</Text>
+          {voiceError ? (
+            <Text className="text-xs text-red-orange-500" numberOfLines={2}>에러: {voiceError}</Text>
+          ) : (
+            <Text className="text-sm text-black" numberOfLines={2}>
+              {voiceRecognizedText || '(듣는 중…)'}
+            </Text>
+          )}
+        </View>
 
         {/* 헤더 활성 아이콘 안내 툴팁 (헤더 대신 화면 위층에 표시) */}
         {screenSize !== ScreenSize.COMPACT && tooltipEnabled && (
@@ -352,6 +389,7 @@ const CounterDetail = () => {
         activeModal={activeModal}
         errorModalVisible={errorModalVisible}
         errorMessage={errorMessage}
+        voicePermissionModalVisible={voicePermissionModalVisible}
         currentCount={currentCount}
         currentTargetCount={currentTargetCount}
         subCount={subCount}
@@ -362,6 +400,8 @@ const CounterDetail = () => {
         onResetConfirm={handleResetConfirm}
         onTimerResetConfirm={handleTimerResetConfirm}
         onErrorModalClose={() => setErrorModalVisible(false)}
+        onVoicePermissionModalClose={closeVoicePermissionModal}
+        onOpenVoicePermissionSettings={openVoicePermissionSettings}
         onTargetCountConfirm={handleTargetCountConfirm}
         onSubEditConfirm={handleSubEditConfirm}
         onSubResetConfirm={handleSubResetConfirm}

@@ -75,3 +75,8 @@ yarn-error.log
 
 # Keystore configuration (보안 파일)
 android/keystore.properties
+
+# Expo
+.expo
+dist/
+web-build/
