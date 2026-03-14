@@ -23,6 +23,7 @@ const SUBTRACT_KEY_CODES = new Set([21, 67]);
 type HardwareKeyUpEvent = {
   keyCode: number;
 };
+type TouchAreaHighlightAction = 'add' | 'subtract' | null;
 
 
 /**
@@ -130,7 +131,9 @@ const CounterDetail = () => {
   } = useCounter({ counterId });
 
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
+  const [touchAreaHighlight, setTouchAreaHighlight] = useState<TouchAreaHighlightAction>(null);
   const sectionModalIsOpen = counter?.sectionModalIsOpen ?? false;
+  const touchAreaHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
   const imageWidth = iconSize * 1.4;
@@ -176,6 +179,26 @@ const CounterDetail = () => {
   const maxFontSizeByWidth = (resolvedWidth * 0.5) / (digitCount * CHAR_WIDTH_RATIO);
   const countTextFontSizePx = Math.max(0, Math.min(maxFontSizeByHeight, maxFontSizeByWidth));
 
+  const flashTouchAreaHighlight = useCallback((action: Exclude<TouchAreaHighlightAction, null>) => {
+    if (touchAreaHighlightTimeoutRef.current) {
+      clearTimeout(touchAreaHighlightTimeoutRef.current);
+    }
+
+    setTouchAreaHighlight(action);
+    touchAreaHighlightTimeoutRef.current = setTimeout(() => {
+      setTouchAreaHighlight(null);
+      touchAreaHighlightTimeoutRef.current = null;
+    }, 100);
+  }, []);
+
+  useLayoutEffect(() => {
+    return () => {
+      if (touchAreaHighlightTimeoutRef.current) {
+        clearTimeout(touchAreaHighlightTimeoutRef.current);
+      }
+    };
+  }, []);
+
   /**
    * 화면 포커스 시 실행되는 효과
    * 화면 켜짐 상태 관리만 담당합니다.
@@ -205,11 +228,13 @@ const CounterDetail = () => {
         }
 
         if (ADD_KEY_CODES.has(keyCode)) {
+          flashTouchAreaHighlight('add');
           handleAdd();
           return;
         }
 
         if (SUBTRACT_KEY_CODES.has(keyCode)) {
+          flashTouchAreaHighlight('subtract');
           handleSubtract();
         }
       };
@@ -219,7 +244,7 @@ const CounterDetail = () => {
       return () => {
         KeyEvent.removeKeyUpListener();
       };
-    }, [activeModal, errorModalVisible, handleAdd, handleSubtract, sectionModalIsOpen, subModalIsOpen])
+    }, [activeModal, errorModalVisible, flashTouchAreaHighlight, handleAdd, handleSubtract, sectionModalIsOpen, subModalIsOpen])
   );
 
 
@@ -264,7 +289,11 @@ const CounterDetail = () => {
       <View className="flex-1 bg-white" onLayout={handleLayout}>
 
       {/* 좌우 터치 레이어 */}
-      <CounterTouchArea onAdd={handleAdd} onSubtract={handleSubtract} />
+      <CounterTouchArea
+        onAdd={handleAdd}
+        onSubtract={handleSubtract}
+        highlightedAction={touchAreaHighlight}
+      />
 
       {/* 중앙 콘텐츠 영역 */}
       <Animated.View
