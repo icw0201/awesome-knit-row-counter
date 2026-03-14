@@ -267,10 +267,7 @@ const CounterDetail = () => {
 
         if (ADD_KEY_CODES.has(keyCode)) {
           handleHighlightedAdd();
-          return;
-        }
-
-        if (SUBTRACT_KEY_CODES.has(keyCode)) {
+        } else if (SUBTRACT_KEY_CODES.has(keyCode)) {
           handleHighlightedSubtract();
         }
       };
