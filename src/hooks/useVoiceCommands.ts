@@ -28,11 +28,15 @@ const ERROR_MESSAGES: Record<string, string> = {
   busy: '음성 인식 서비스를 사용할 수 없어 다시 시도합니다',
   client: '음성 인식 클라이언트 오류가 발생했습니다',
   'speech-timeout': '음성 입력 시간이 초과되었습니다',
+  'server-disconnect': '음성 인식 서버 연결이 끊어졌습니다. 잠시 후 다시 시도합니다.',
   unknown: '알 수 없는 오류가 발생했습니다',
 };
 
 function getErrorMessage(event: { error: string; message?: string }): string {
   const msg = event.message?.trim();
+  if (msg?.toLowerCase().includes('server disconnect')) {
+    return ERROR_MESSAGES['server-disconnect'];
+  }
   if (msg) {
     return msg;
   }
@@ -484,7 +488,13 @@ export function useVoiceCommands(
           return;
         }
 
-        const isBusy = event.error === 'busy' || event.error === 'network';
+        const isServerDisconnect = event.message
+          ?.toLowerCase()
+          .includes('server disconnect');
+        const isBusy =
+          event.error === 'busy' ||
+          event.error === 'network' ||
+          isServerDisconnect;
         if (isBusy) {
           const state = await ExpoSpeechRecognitionModule.getStateAsync().catch(
             () => 'inactive' as const
