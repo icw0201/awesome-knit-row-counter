@@ -132,7 +132,6 @@ const CounterDetail = () => {
 
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
   const [touchAreaHighlight, setTouchAreaHighlight] = useState<TouchAreaHighlightAction>(null);
-  const sectionModalIsOpen = counter?.sectionModalIsOpen ?? false;
   const touchAreaHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
@@ -219,9 +218,7 @@ const CounterDetail = () => {
       const handleHardwareKeyUp = ({ keyCode }: HardwareKeyUpEvent) => {
         const isModalBlockingInput =
           activeModal !== null ||
-          errorModalVisible ||
-          subModalIsOpen ||
-          sectionModalIsOpen;
+          errorModalVisible;
 
         if (isModalBlockingInput) {
           return;
@@ -244,7 +241,7 @@ const CounterDetail = () => {
       return () => {
         KeyEvent.removeKeyUpListener();
       };
-    }, [activeModal, errorModalVisible, flashTouchAreaHighlight, handleAdd, handleSubtract, sectionModalIsOpen, subModalIsOpen])
+    }, [activeModal, errorModalVisible, flashTouchAreaHighlight, handleAdd, handleSubtract])
   );
 
 

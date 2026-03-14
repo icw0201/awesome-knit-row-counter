@@ -1,6 +1,6 @@
 // src/components/counter/SubCounterTouchArea.tsx
 import React, { useState } from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { Minus, Plus } from 'lucide-react-native';
 
 interface SubCounterTouchAreaProps {
@@ -29,16 +29,18 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
       style={{ paddingRight: handleWidth * 0.4 }}
     >
       {/* 왼쪽 영역 (감소) - 투명 배경 */}
-      <Pressable
+      <View
         className={`flex-1 items-start justify-center ${leftPressed ? 'bg-gray-100' : 'bg-transparent'}`}
-        style={{
-          mixBlendMode: leftPressed ? 'multiply' : 'normal',
-        }}
-        onPress={() => {
-          setLeftPressed(true);
+        focusable={false}
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        onStartShouldSetResponder={() => true}
+        onResponderGrant={() => setLeftPressed(true)}
+        onResponderRelease={() => {
+          setLeftPressed(false);
           onSubtract?.();
-          setTimeout(() => setLeftPressed(false), 100);
         }}
+        onResponderTerminate={() => setLeftPressed(false)}
       >
         <Minus
           size={24}
@@ -46,19 +48,21 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
           strokeWidth={2}
           className="ml-3"
         />
-      </Pressable>
+      </View>
 
       {/* 오른쪽 영역 (증가) - 투명 배경 */}
-      <Pressable
+      <View
         className={`flex-1 items-end justify-center ${rightPressed ? 'bg-gray-100' : 'bg-transparent'}`}
-        style={{
-          mixBlendMode: rightPressed ? 'multiply' : 'normal',
-        }}
-        onPress={() => {
-          setRightPressed(true);
+        focusable={false}
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+        onStartShouldSetResponder={() => true}
+        onResponderGrant={() => setRightPressed(true)}
+        onResponderRelease={() => {
+          setRightPressed(false);
           onAdd?.();
-          setTimeout(() => setRightPressed(false), 100);
         }}
+        onResponderTerminate={() => setRightPressed(false)}
       >
         <Plus
           size={24}
@@ -66,7 +70,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
           strokeWidth={2}
           className="mr-3"
         />
-      </Pressable>
+      </View>
     </View>
   );
 };
