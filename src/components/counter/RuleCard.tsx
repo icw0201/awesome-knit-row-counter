@@ -5,7 +5,7 @@ import ColorCompleteIcon from '@assets/images/color_complete.svg';
 import CircleIcon from '@components/common/CircleIcon';
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
 import ColorPicker from '@components/counter/ColorPicker';
-import { calculateRulePreview } from '@utils/ruleUtils';
+import { calculateRulePreview, calculateRuleRepeatCount } from '@utils/ruleUtils';
 import { numberToString } from '@utils/numberUtils';
 
 interface RuleCardProps {
@@ -104,6 +104,7 @@ const renderRulePreview = (
   );
   const hasRuleInput = (start > 0 || end > 0) && rule > 0;
   const rulePreview = hasRuleInput ? calculateRulePreview(start, end, rule, 5) : [];
+  const repeatCount = hasRuleInput ? calculateRuleRepeatCount(start, end, rule) : null;
 
   if (!hasRuleInput && !ruleError) {
     return null;
@@ -113,6 +114,7 @@ const renderRulePreview = (
     hasRuleInput && rulePreview.length > 0
       ? rulePreview.map((n) => `${n}단`).join(', ')
       : '';
+  const previewSuffix = repeatCount !== null ? ` (${repeatCount}회)` : '';
 
   return (
     <View className="mt-2 flex-row items-center">
@@ -123,7 +125,9 @@ const renderRulePreview = (
         ) : (
           previewText && (
             <Text className="text-sm text-darkgray">
-              {previewText}{rulePreview.length === 5 ? '...' : ''}
+              {previewText}
+              {rulePreview.length === 5 ? '...' : ''}
+              {previewSuffix}
             </Text>
           )
         )}
