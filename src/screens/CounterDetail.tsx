@@ -177,6 +177,13 @@ const CounterDetail = () => {
   const maxFontSizeByWidth = (resolvedWidth * 0.5) / (digitCount * CHAR_WIDTH_RATIO);
   const countTextFontSizePx = Math.max(0, Math.min(maxFontSizeByHeight, maxFontSizeByWidth));
 
+  /**
+   * 메인 카운터의 add/subtract 액션이 실행될 때 좌/우 터치 영역 배경을 잠깐 강조한다.
+   *
+   * 이제 터치 입력과 하드웨어 키보드 입력이 모두 이 부모 state를 통해 같은 하이라이트
+   * 경로를 사용한다. 연속 입력 시 이전 timeout을 취소하고 다시 시작해서
+   * 하이라이트가 중간에 예상치 않게 꺼지지 않도록 한다.
+   */
   const flashTouchAreaHighlight = useCallback((action: Exclude<TouchAreaHighlightAction, null>) => {
     if (touchAreaHighlightTimeoutRef.current) {
       clearTimeout(touchAreaHighlightTimeoutRef.current);
@@ -189,6 +196,30 @@ const CounterDetail = () => {
     }, 100);
   }, []);
 
+  /**
+   * 메인 카운터 증가 액션의 공통 진입점.
+   * 터치와 키보드 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
+   */
+  const handleHighlightedAdd = useCallback(() => {
+    flashTouchAreaHighlight('add');
+    handleAdd();
+  }, [flashTouchAreaHighlight, handleAdd]);
+
+  /**
+   * 메인 카운터 감소 액션의 공통 진입점.
+   * 터치와 키보드 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
+   */
+  const handleHighlightedSubtract = useCallback(() => {
+    flashTouchAreaHighlight('subtract');
+    handleSubtract();
+  }, [flashTouchAreaHighlight, handleSubtract]);
+
+  /**
+   * 화면이 사라질 때 남아 있는 하이라이트 timeout을 정리한다.
+   *
+   * 정리하지 않으면 CounterDetail이 언마운트된 뒤에도 timeout 콜백이 실행되어
+   * 이미 사라진 화면의 state를 변경하려고 시도할 수 있다.
+   */
   useLayoutEffect(() => {
     return () => {
       if (touchAreaHighlightTimeoutRef.current) {
@@ -214,33 +245,43 @@ const CounterDetail = () => {
         return undefined;
       }
 
+      /**
+       * 외장 키보드 key up 이벤트를 메인 카운터 액션으로 매핑한다.
+       *
+       * - add 계열 키: 메인 증가 공통 액션 실행
+       * - subtract 계열 키: 메인 감소 공통 액션 실행
+       *
+       * 여기서 key down 대신 key up을 쓰는 이유는,
+       * 키를 길게 누를 때 발생할 수 있는 연속 입력을 줄이고
+       * "키를 뗄 때 1회 실행"이라는 더 안전한 동작을 만들기 위해서다.
+       */
       const handleHardwareKeyUp = ({ keyCode }: HardwareKeyUpEvent) => {
         const isModalBlockingInput =
           activeModal !== null ||
           errorModalVisible;
 
+        // 일반 모달이 열려 있으면 실수로 메인 카운터가 변하지 않도록 차단한다.
         if (isModalBlockingInput) {
           return;
         }
 
         if (ADD_KEY_CODES.has(keyCode)) {
-          flashTouchAreaHighlight('add');
-          handleAdd();
+          handleHighlightedAdd();
           return;
         }
 
         if (SUBTRACT_KEY_CODES.has(keyCode)) {
-          flashTouchAreaHighlight('subtract');
-          handleSubtract();
+          handleHighlightedSubtract();
         }
       };
 
       KeyEvent.onKeyUpListener(handleHardwareKeyUp);
 
       return () => {
+        // 화면 포커스를 잃으면 전역 key up 리스너를 반드시 제거한다.
         KeyEvent.removeKeyUpListener();
       };
-    }, [activeModal, errorModalVisible, flashTouchAreaHighlight, handleAdd, handleSubtract])
+    }, [activeModal, errorModalVisible, handleHighlightedAdd, handleHighlightedSubtract])
   );
 
 
@@ -286,8 +327,8 @@ const CounterDetail = () => {
 
       {/* 좌우 터치 레이어 */}
       <CounterTouchArea
-        onAdd={handleAdd}
-        onSubtract={handleSubtract}
+        onAdd={handleHighlightedAdd}
+        onSubtract={handleHighlightedSubtract}
         highlightedAction={touchAreaHighlight}
       />
 
