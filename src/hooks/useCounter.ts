@@ -9,7 +9,9 @@ import Sound from 'react-native-sound';
 import { getStoredItems, updateItem } from '@storage/storage';
 import { Way, Counter, SectionRecord, EditLogType } from '@storage/types';
 import { getSoundSetting, getVibrationSetting, getAutoPlayElapsedTimeSetting } from '@storage/settings';
-import { getCurrentTime } from '@utils/timeUtils';
+import { getCurrentDate, getCurrentTime } from '@utils/timeUtils';
+
+const MAX_SECTION_RECORDS = 30;
 
 interface UseCounterProps {
   counterId: string;
@@ -453,7 +455,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
   }, [counter]);
 
   /**
-   * 구간 기록 추가 (최신 3개만 유지)
+   * 구간 기록 추가 (최신 30개만 유지)
    * 실행 취소를 위해 이전 상태 정보도 함께 저장
    */
   const addSectionRecord = useCallback((editContent: EditLogType, editedCount: number, editedMainCount?: number): SectionRecord[] => {
@@ -462,6 +464,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     }
 
     const newRecord: SectionRecord = {
+      date: getCurrentDate(),
       time: getCurrentTime(),
       editedCount,
       editedMainCount,
@@ -473,8 +476,8 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
       previousSubRuleIsActive: counter.subRuleIsActive,
     };
     const currentRecords = counter?.sectionRecords ?? [];
-    // 최신 기록을 앞에 추가하고 최신 3개만 유지
-    return [newRecord, ...currentRecords].slice(0, 3);
+    // 최신 기록을 앞에 추가하고 최신 30개만 유지
+    return [newRecord, ...currentRecords].slice(0, MAX_SECTION_RECORDS);
   }, [counter]);
 
   /**

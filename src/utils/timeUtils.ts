@@ -45,3 +45,27 @@ export const getCurrentTime = (): string => {
   return `${hours}:${minutes}:${seconds}`;
 };
 
+/**
+ * 현재 날짜를 yyyyMMdd 형식으로 반환합니다.
+ * @returns 현재 날짜 문자열 (yyyyMMdd 형식)
+ */
+export const getCurrentDate = (): string => {
+  const now = new Date();
+  const year = String(now.getFullYear());
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}${month}${day}`;
+};
+
+/**
+ * yyyyMMdd 형식의 날짜를 YYYY/MM/DD 형식으로 변환합니다.
+ * 형식이 올바르지 않으면 원본 문자열을 반환합니다.
+ */
+export const formatCompactDate = (date: string): string => {
+  if (!/^\d{8}$/.test(date)) {
+    return date;
+  }
+
+  return `${date.slice(0, 4)}/${date.slice(4, 6)}/${date.slice(6, 8)}`;
+};
+

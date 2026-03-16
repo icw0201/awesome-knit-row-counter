@@ -51,6 +51,7 @@ export type RepeatRule = {
 
 // 구간 기록 타입
 export type SectionRecord = {
+  date: string;          // 날짜 (yyyyMMdd 형식)
   time: string;          // 시간 (HH:MM:SS 형식)
   editedCount: number;   // 편집 후 코수
   editedMainCount?: number; // 편집 후 단수 (단수 관련 편집 시에만 저장)
@@ -86,7 +87,7 @@ export type Counter = {
   mascotIsActive: boolean;       // 마스코트 활성화 여부
   wayIsChange: boolean;          // 마스코트 앞뒤 변경 여부
   repeatRules: RepeatRule[];     // 반복 규칙 배열 (여러 개 가능)
-  // 구간 기록 필드 (최신 3개만 저장)
+  // 구간 기록 필드 (최신 30개만 저장)
   sectionRecords: SectionRecord[]; // 구간 기록 배열
   sectionModalIsOpen: boolean;     // 구간 기록 모달 열림 여부
   updatedAt?: number;            // 마지막 업데이트 시각 (epoch ms)
