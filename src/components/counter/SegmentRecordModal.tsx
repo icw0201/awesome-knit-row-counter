@@ -1,10 +1,12 @@
-import React from 'react';
-import { View, Text, DimensionValue } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { View, Text, DimensionValue, Pressable } from 'react-native';
 import { SlideModal } from '@components/common/modals/SlideModal/SlideModal';
 import { ScreenSize, SEGMENT_UNDO_ICON_SIZE } from '@constants/screenSizeConfig';
 import { SectionRecord } from '@storage/types';
 import { getEditContentText } from '@utils/sectionRecordUtils';
+import { formatCompactDate } from '@utils/timeUtils';
 import CircleIcon from '@components/common/CircleIcon';
+import RecordListModal from './RecordListModal';
 
 // ===== 타입 정의 =====
 interface SegmentRecordModalProps {
@@ -31,65 +33,88 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
   centerY,
   sectionRecords = [],
 }) => {
+  const [showAllRecordsModal, setShowAllRecordsModal] = useState(false);
+
+  const recentRecords = useMemo(() => sectionRecords.slice(0, 3), [sectionRecords]);
+  const allRecords = useMemo(
+    () =>
+      sectionRecords.map(
+        (record) => `${formatCompactDate(record.date)} ${record.time} ${getEditContentText(record)}`
+      ),
+    [sectionRecords]
+  );
+
   return (
-    <SlideModal
-      isOpen={isOpen}
-      onToggle={onToggle}
-      height={height}
-      width={width}
-      handleWidth={handleWidth}
-      backgroundColor="white"
-      padding={0}
-      centerY={centerY}
-    >
-      {/* 콘텐츠 영역 */}
-      <View
-        className="flex-1 justify-center px-4"
-        style={{ paddingLeft: handleWidth + 16 }}
+    <>
+      <SlideModal
+        isOpen={isOpen}
+        onToggle={onToggle}
+        height={height}
+        width={width}
+        handleWidth={handleWidth}
+        backgroundColor="white"
+        padding={0}
+        centerY={centerY}
       >
-        {sectionRecords.length > 0 ? (
-          <View className="flex-row items-center justify-between">
-            {/* 3개 기록 묶음 - 80% 너비, x축 중앙 정렬 / 내부 텍스트는 왼쪽 정렬 */}
-            <View className="flex-[0.8] items-center">
-              <View className="w-full items-start">
-                {sectionRecords.map((record, index) => {
-                  // 첫 번째: black, 두 번째: darkgray, 세 번째: mediumgray
-                  const textColorClass = index === 0 ? 'text-black' : index === 1 ? 'text-darkgray' : 'text-mediumgray';
-                  return (
-                    <View key={index} className="w-full">
-                      <Text
-                        className={`text-sm font-bold ${textColorClass}`}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        allowFontScaling={false}
-                      >
-                        {record.time} {getEditContentText(record)}
-                      </Text>
-                    </View>
-                  );
-                })}
+        {/* 콘텐츠 영역 */}
+        <View
+          className="flex-1 justify-center px-4"
+          style={{ paddingLeft: handleWidth + 16 }}
+        >
+          {sectionRecords.length > 0 ? (
+            <View className="flex-row items-center justify-between">
+              {/* 최신 3개 기록 요약 - 터치 시 전체 기록 모달 표시 */}
+              <Pressable
+                className="flex-[0.8] items-center"
+                onPress={() => setShowAllRecordsModal(true)}
+              >
+                <View className="w-full items-start">
+                  {recentRecords.map((record, index) => {
+                    // 첫 번째: black, 두 번째: darkgray, 세 번째: mediumgray
+                    const textColorClass = index === 0 ? 'text-black' : index === 1 ? 'text-darkgray' : 'text-mediumgray';
+                    return (
+                      <View key={index} className="w-full">
+                        <Text
+                          className={`text-sm font-bold ${textColorClass}`}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                          allowFontScaling={false}
+                        >
+                          {record.time} {getEditContentText(record)}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </Pressable>
+              {/* 실행 취소 버튼 - 20% 너비 */}
+              <View className="flex-[0.2] items-end">
+                <CircleIcon
+                  size={SEGMENT_UNDO_ICON_SIZE}
+                  iconName="eraser"
+                  colorStyle="light"
+                  isButton
+                  onPress={onUndo}
+                />
               </View>
             </View>
-            {/* 실행 취소 버튼 - 20% 너비 */}
-            <View className="flex-[0.2] items-end">
-              <CircleIcon
-                size={SEGMENT_UNDO_ICON_SIZE}
-                iconName="eraser"
-                colorStyle="light"
-                isButton
-                onPress={onUndo}
-              />
+          ) : (
+            <View className="items-center justify-center">
+              <Text className="text-sm text-darkgray" allowFontScaling={false}>
+                활동 기록이 없습니다
+              </Text>
             </View>
-          </View>
-        ) : (
-          <View className="items-center justify-center">
-            <Text className="text-sm text-darkgray" allowFontScaling={false}>
-              활동 기록이 없습니다
-            </Text>
-          </View>
-        )}
-      </View>
-    </SlideModal>
+          )}
+        </View>
+      </SlideModal>
+
+      <RecordListModal
+        visible={showAllRecordsModal}
+        onClose={() => setShowAllRecordsModal(false)}
+        title="활동 기록(최신 30개)"
+        records={allRecords}
+      />
+    </>
   );
 };
 
