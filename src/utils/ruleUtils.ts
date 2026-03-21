@@ -91,6 +91,30 @@ export const calculateRulePreview = (
   return results;
 };
 
+/**
+ * 규칙 반복 횟수 계산
+ * 종료단이 있는 경우 전체 몇 회 반복되는지 반환합니다.
+ * @param startNumber 시작단
+ * @param endNumber 종료단
+ * @param ruleNumber 룰넘버 (몇 단마다)
+ * @returns 반복 횟수, 종료단이 없으면 null
+ */
+export const calculateRuleRepeatCount = (
+  startNumber: number,
+  endNumber: number,
+  ruleNumber: number
+): number | null => {
+  if (endNumber <= 0) {
+    return null;
+  }
+
+  if (startNumber > 0) {
+    return Math.floor((endNumber - startNumber) / ruleNumber) + 1;
+  }
+
+  return Math.floor(endNumber / ruleNumber);
+};
+
 /** 색상 우선순위: 2단계씩 건너뛰며 (1,3,5,7,9,11 → 2, 4,6,8,10) */
 // 100번 컬러(index 1)는 배경색과 동일하여 제거
 const COLOR_PRIORITY_INDICES = [0, 2, 4, 6, 8, 10, 3, 5, 7, 9];

@@ -33,6 +33,8 @@ const InfoScreen = () => {
     setNeedle,
     notes,
     setNotes,
+    isRootLevelItem,
+    itemType,
     // 모달 상태
     showSaveConfirmModal,
     showTitleErrorModal,
@@ -51,6 +53,7 @@ const InfoScreen = () => {
   const startDateInputRef = useRef<TextInputBoxRef>(null);
   const endDateInputRef = useRef<TextInputBoxRef>(null);
   const gaugeInputRef = useRef<TextInputBoxRef>(null);
+  const titleFieldText = itemType === 'counter' ? '카운터명' : '프로젝트명';
 
   return (
     <SafeAreaView style={screenStyles.flex1} edges={safeAreaEdges}>
@@ -63,83 +66,89 @@ const InfoScreen = () => {
           {/* 제목 입력 필드 */}
           <TextInputBox
             ref={titleInputRef}
-            label="이름"
+            label={titleFieldText}
             value={title}
             onChangeText={setTitle}
-            placeholder="프로젝트명 혹은 카운터명"
+            placeholder={titleFieldText}
             type="text"
             required
-            returnKeyType="next"
-            onSubmitEditing={() => startDateInputRef.current?.focus()}
-            blurOnSubmit={false}
+            returnKeyType={isRootLevelItem ? 'next' : 'done'}
+            onSubmitEditing={
+              isRootLevelItem ? () => startDateInputRef.current?.focus() : undefined
+            }
+            blurOnSubmit={!isRootLevelItem}
           />
 
-          {/* 날짜 입력 필드들 (좌우 배치) */}
-          <View className="flex-row justify-between">
-            <View className="flex-1 mr-2">
+          {isRootLevelItem && (
+            <>
+              {/* 날짜 입력 필드들 (좌우 배치) */}
+              <View className="flex-row justify-between">
+                <View className="flex-1 mr-2">
+                  <TextInputBox
+                    ref={startDateInputRef}
+                    label="시작일"
+                    value={startDate}
+                    onChangeText={setStartDate}
+                    placeholder="yyyy.mm.dd"
+                    type="date"
+                    returnKeyType="next"
+                    onSubmitEditing={() => endDateInputRef.current?.focus()}
+                    blurOnSubmit={false}
+                  />
+                </View>
+                <View className="flex-1 ml-2">
+                  <TextInputBox
+                    ref={endDateInputRef}
+                    label="종료일"
+                    value={endDate}
+                    onChangeText={setEndDate}
+                    placeholder="yyyy.mm.dd"
+                    type="date"
+                    returnKeyType="next"
+                    onSubmitEditing={() => gaugeInputRef.current?.focus()}
+                    blurOnSubmit={false}
+                  />
+                </View>
+              </View>
+
+              {/* 게이지 입력 필드 */}
               <TextInputBox
-                ref={startDateInputRef}
-                label="시작일"
-                value={startDate}
-                onChangeText={setStartDate}
-                placeholder="yyyy.mm.dd"
-                type="date"
-                returnKeyType="next"
-                onSubmitEditing={() => endDateInputRef.current?.focus()}
-                blurOnSubmit={false}
+                ref={gaugeInputRef}
+                label="게이지"
+                value={gauge}
+                onChangeText={setGauge}
+                placeholder="게이지"
+                type="longText"
               />
-            </View>
-            <View className="flex-1 ml-2">
+
+              {/* 실 정보 입력 필드 */}
               <TextInputBox
-                ref={endDateInputRef}
-                label="종료일"
-                value={endDate}
-                onChangeText={setEndDate}
-                placeholder="yyyy.mm.dd"
-                type="date"
-                returnKeyType="next"
-                onSubmitEditing={() => gaugeInputRef.current?.focus()}
-                blurOnSubmit={false}
+                label="실"
+                value={yarn}
+                onChangeText={setYarn}
+                placeholder="사용한 실"
+                type="longText"
               />
-            </View>
-          </View>
 
-          {/* 게이지 입력 필드 */}
-          <TextInputBox
-            ref={gaugeInputRef}
-            label="게이지"
-            value={gauge}
-            onChangeText={setGauge}
-            placeholder="게이지"
-            type="longText"
-          />
+              {/* 바늘 정보 입력 필드 */}
+              <TextInputBox
+                label="바늘"
+                value={needle}
+                onChangeText={setNeedle}
+                placeholder="사용한 바늘"
+                type="longText"
+              />
 
-          {/* 실 정보 입력 필드 */}
-          <TextInputBox
-            label="실"
-            value={yarn}
-            onChangeText={setYarn}
-            placeholder="사용한 실"
-            type="longText"
-          />
-
-          {/* 바늘 정보 입력 필드 */}
-          <TextInputBox
-            label="바늘"
-            value={needle}
-            onChangeText={setNeedle}
-            placeholder="사용한 바늘"
-            type="longText"
-          />
-
-          {/* 기타 메모 입력 필드 */}
-          <TextInputBox
-            label="기타"
-            value={notes}
-            onChangeText={setNotes}
-            placeholder="기타 정보"
-            type="longText"
-          />
+              {/* 기타 메모 입력 필드 */}
+              <TextInputBox
+                label="기타"
+                value={notes}
+                onChangeText={setNotes}
+                placeholder="기타 정보"
+                type="longText"
+              />
+            </>
+          )}
 
           {/* 하단 액션 버튼들 */}
           <View className="flex-row justify-evenly mt-2">

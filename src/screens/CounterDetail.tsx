@@ -1,16 +1,18 @@
 // src/screens/CounterDetail.tsx
 
 import { useLayoutEffect, useCallback, useEffect, useState, useRef } from 'react';
-import { View, Text, useWindowDimensions, Animated, LayoutChangeEvent } from 'react-native';
+import { View, Text, useWindowDimensions, Animated, LayoutChangeEvent, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@navigation/AppNavigator';
+import KeyEvent from 'react-native-keyevent';
 
 import { getHeaderRightWithActivateInfoSettings } from '@navigation/HeaderOptions';
 
 import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal } from '@components/counter';
 import Tooltip from '@components/common/Tooltip';
+import { ADD_KEY_CODES, SUBTRACT_KEY_CODES } from '@constants/hardwareKeyCodes';
 import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, ScreenSize } from '@constants/screenSizeConfig';
 import { getTooltipEnabledSetting } from '@storage/settings';
 import { screenStyles } from '@styles/screenStyles';
@@ -18,6 +20,11 @@ import { useCounter } from '@hooks/useCounter';
 import { useVoiceCommands } from '@hooks/useVoiceCommands';
 import { useVoicePermissionGate } from '@hooks/useVoicePermissionGate';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
+
+type HardwareKeyUpEvent = {
+  keyCode: number;
+};
+type TouchAreaHighlightAction = 'add' | 'subtract' | null;
 
 
 /**
@@ -144,11 +151,12 @@ const CounterDetail = () => {
     setVoiceRecognizedText,
     setVoiceRecognitionError
   );
+  const [touchAreaHighlight, setTouchAreaHighlight] = useState<TouchAreaHighlightAction>(null);
+  const touchAreaHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
   const imageWidth = iconSize * 1.4;
   const imageHeight = iconSize * (90 / 189) * 1.4;
-  const hasParent = !!counter?.parentProjectId;
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { height: nextHeight, width: nextWidth } = event.nativeEvent.layout;
     setLayoutHeight((prev) => (prev !== nextHeight ? nextHeight : prev));
@@ -197,12 +205,106 @@ const CounterDetail = () => {
   }, [isVoiceCommandsActive]);
 
   /**
-   * 화면 포커스 시 툴팁 설정만 다시 반영한다.
+   * 메인 카운터의 add/subtract 액션이 실행될 때 좌/우 터치 영역 배경을 잠깐 강조한다.
+   *
+   * 이제 터치 입력과 하드웨어 키보드 입력이 모두 이 부모 state를 통해 같은 하이라이트
+   * 경로를 사용한다. 연속 입력 시 이전 timeout을 취소하고 다시 시작해서
+   * 하이라이트가 중간에 예상치 않게 꺼지지 않도록 한다.
+   */
+  const flashTouchAreaHighlight = useCallback((action: Exclude<TouchAreaHighlightAction, null>) => {
+    if (touchAreaHighlightTimeoutRef.current) {
+      clearTimeout(touchAreaHighlightTimeoutRef.current);
+    }
+
+    setTouchAreaHighlight(action);
+    touchAreaHighlightTimeoutRef.current = setTimeout(() => {
+      setTouchAreaHighlight(null);
+      touchAreaHighlightTimeoutRef.current = null;
+    }, 100);
+  }, []);
+
+  /**
+   * 메인 카운터 증가 액션의 공통 진입점.
+   * 터치와 키보드 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
+   */
+  const handleHighlightedAdd = useCallback(() => {
+    flashTouchAreaHighlight('add');
+    handleAdd();
+  }, [flashTouchAreaHighlight, handleAdd]);
+
+  /**
+   * 메인 카운터 감소 액션의 공통 진입점.
+   * 터치와 키보드 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
+   */
+  const handleHighlightedSubtract = useCallback(() => {
+    flashTouchAreaHighlight('subtract');
+    handleSubtract();
+  }, [flashTouchAreaHighlight, handleSubtract]);
+
+  /**
+   * 화면이 사라질 때 남아 있는 하이라이트 timeout을 정리한다.
+   *
+   * 정리하지 않으면 CounterDetail이 언마운트된 뒤에도 timeout 콜백이 실행되어
+   * 이미 사라진 화면의 state를 변경하려고 시도할 수 있다.
+   */
+  useLayoutEffect(() => {
+    return () => {
+      if (touchAreaHighlightTimeoutRef.current) {
+        clearTimeout(touchAreaHighlightTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  /**
+   * 화면 포커스 시 실행되는 효과
+   * 툴팁 설정만 다시 반영한다.
    */
   useFocusEffect(
     useCallback(() => {
       setTooltipEnabled(getTooltipEnabledSetting());
     }, [])
+  );
+
+  useFocusEffect(
+    useCallback(() => {
+      if (Platform.OS !== 'android') {
+        return undefined;
+      }
+
+      /**
+       * 외장 키보드 key up 이벤트를 메인 카운터 액션으로 매핑한다.
+       *
+       * - add 계열 키: 메인 증가 공통 액션 실행
+       * - subtract 계열 키: 메인 감소 공통 액션 실행
+       *
+       * 여기서 key down 대신 key up을 쓰는 이유는,
+       * 키를 길게 누를 때 발생할 수 있는 연속 입력을 줄이고
+       * "키를 뗄 때 1회 실행"이라는 더 안전한 동작을 만들기 위해서다.
+       */
+      const handleHardwareKeyUp = ({ keyCode }: HardwareKeyUpEvent) => {
+        const isModalBlockingInput =
+          activeModal !== null ||
+          errorModalVisible;
+
+        // 일반 모달이 열려 있으면 실수로 메인 카운터가 변하지 않도록 차단한다.
+        if (isModalBlockingInput) {
+          return;
+        }
+
+        if (ADD_KEY_CODES.has(keyCode)) {
+          handleHighlightedAdd();
+        } else if (SUBTRACT_KEY_CODES.has(keyCode)) {
+          handleHighlightedSubtract();
+        }
+      };
+
+      KeyEvent.onKeyUpListener(handleHardwareKeyUp);
+
+      return () => {
+        // 화면 포커스를 잃으면 전역 key up 리스너를 반드시 제거한다.
+        KeyEvent.removeKeyUpListener();
+      };
+    }, [activeModal, errorModalVisible, handleHighlightedAdd, handleHighlightedSubtract])
   );
 
 
@@ -226,10 +328,10 @@ const CounterDetail = () => {
           counter.timerIsActive,
           toggleTimerIsActive,
           counter.id,
-          hasParent ? undefined : () => navigation.navigate('InfoScreen', { itemId: counter.id })
+          () => navigation.navigate('InfoScreen', { itemId: counter.id })
         ),
     });
-  }, [navigation, counter, mascotIsActive, screenSize, resolvedWidth, toggleMascotIsActive, toggleTimerIsActive, hasParent]);
+  }, [navigation, counter, mascotIsActive, screenSize, resolvedWidth, toggleMascotIsActive, toggleTimerIsActive]);
 
 
   // 카운터 데이터가 없으면 렌더링하지 않음
@@ -247,7 +349,11 @@ const CounterDetail = () => {
       <View className="flex-1 bg-white" onLayout={handleLayout}>
 
       {/* 좌우 터치 레이어 */}
-      <CounterTouchArea onAdd={handleAdd} onSubtract={handleSubtract} />
+      <CounterTouchArea
+        onAdd={handleHighlightedAdd}
+        onSubtract={handleHighlightedSubtract}
+        highlightedAction={touchAreaHighlight}
+      />
 
       {/* 중앙 콘텐츠 영역 */}
       <Animated.View
@@ -284,7 +390,7 @@ const CounterDetail = () => {
           <Tooltip
             text="길게 눌러 어쩌미 알림 단 설정하기"
             containerClassName="absolute right-3 top-2 z-50"
-            targetAnchorX={hasParent ? resolvedWidth - 65 : resolvedWidth - 103}
+            targetAnchorX={resolvedWidth - 106}
           />
         )}
 
