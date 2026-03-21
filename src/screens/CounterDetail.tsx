@@ -135,11 +135,13 @@ const CounterDetail = () => {
   const [voiceRecognizedText, setVoiceRecognizedText] = useState<string>('');
   const [voiceRecognitionError, setVoiceRecognitionError] = useState<string>('');
   const {
+    isVoiceCommandsEnabled,
     isVoiceCommandsActive,
     voicePermissionModalVisible,
     voicePermissionError,
     closeVoicePermissionModal,
     openVoicePermissionSettings,
+    toggleVoiceCommands,
   } = useVoicePermissionGate();
   const voiceError = voicePermissionError || voiceRecognitionError;
 
@@ -327,11 +329,22 @@ const CounterDetail = () => {
           toggleMascotIsActive,
           counter.timerIsActive,
           toggleTimerIsActive,
+          isVoiceCommandsEnabled,
+          toggleVoiceCommands,
           counter.id,
           () => navigation.navigate('InfoScreen', { itemId: counter.id })
         ),
     });
-  }, [navigation, counter, mascotIsActive, screenSize, resolvedWidth, toggleMascotIsActive, toggleTimerIsActive]);
+  }, [
+    navigation,
+    counter,
+    isVoiceCommandsEnabled,
+    mascotIsActive,
+    screenSize,
+    toggleMascotIsActive,
+    toggleTimerIsActive,
+    toggleVoiceCommands,
+  ]);
 
 
   // 카운터 데이터가 없으면 렌더링하지 않음

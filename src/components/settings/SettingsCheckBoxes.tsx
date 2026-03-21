@@ -1,8 +1,7 @@
 // src/components/settings/SettingsCheckBoxes.tsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, AppState, Linking, type AppStateStatus } from 'react-native';
-import { CommonActions, useNavigation, useFocusEffect } from '@react-navigation/native';
-import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+import { View } from 'react-native';
+import { CommonActions, useNavigation } from '@react-navigation/native';
 
 import CheckBox from '@components/common/CheckBox';
 import { ConfirmModal } from '@components/common/modals';
@@ -18,10 +17,6 @@ import {
   setTooltipEnabledSetting,
   getAutoPlayElapsedTimeSetting,
   setAutoPlayElapsedTimeSetting,
-  getVoiceCommandsEnabledSetting,
-  setVoiceCommandsEnabledSetting,
-  getVoiceRecognitionPermissionStatusSetting,
-  setVoiceRecognitionPermissionStatusSetting,
 } from '@storage/settings';
 
 interface SettingsCheckBoxesProps {}
@@ -39,10 +34,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
   const [screenAwake, setScreenAwake] = useState(true);
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
   const [autoPlayElapsedTime, setAutoPlayElapsedTime] = useState(true);
-  const [voiceCommandsEnabled, setVoiceCommandsEnabled] = useState(false);
-  const [voicePermissionDenied, setVoicePermissionDenied] = useState(false);
-  const [voicePermissionModalVisible, setVoicePermissionModalVisible] =
-    useState(false);
   const [resetConfirm, setResetConfirm] = useState(false);
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
@@ -55,42 +46,11 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
     setScreenAwake(getScreenAwakeSetting());
     setTooltipEnabled(getTooltipEnabledSetting());
     setAutoPlayElapsedTime(getAutoPlayElapsedTimeSetting());
-    setVoiceCommandsEnabled(getVoiceCommandsEnabledSetting());
-    setVoicePermissionDenied(
-      getVoiceRecognitionPermissionStatusSetting() === 'denied'
-    );
   }, []);
 
   useEffect(() => {
     loadStoredSettings();
   }, [loadStoredSettings]);
-
-  // 음성 기능 체크 상태와 저장값을 항상 같은 값으로 맞춘다.
-  const setVoiceCommandsPreference = useCallback((enabled: boolean) => {
-    setVoiceCommandsEnabled(enabled);
-    setVoiceCommandsEnabledSetting(enabled);
-  }, []);
-
-  // 권한이 허용되면 저장된 설정값 또는 요청 직후 상태를 그대로 복원한다.
-  const applyGrantedVoicePermission = useCallback(
-    (enabled: boolean) => {
-      setVoiceRecognitionPermissionStatusSetting('granted');
-      setVoicePermissionDenied(false);
-      setVoiceCommandsPreference(enabled);
-    },
-    [setVoiceCommandsPreference]
-  );
-
-  // 권한이 거절되면 기능을 끄고, 필요할 때만 설정 이동 모달을 연다.
-  const applyDeniedVoicePermission = useCallback(
-    (showModal = false) => {
-      setVoiceRecognitionPermissionStatusSetting('denied');
-      setVoicePermissionDenied(true);
-      setVoiceCommandsPreference(false);
-      setVoicePermissionModalVisible(showModal);
-    },
-    [setVoiceCommandsPreference]
-  );
 
   /**
    * 에러 모달 표시
@@ -99,62 +59,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
     setErrorMessage(message);
     setErrorModalVisible(true);
   }, []);
-
-  // 현재 권한 상태를 기준으로 체크박스 노출 상태를 다시 맞춘다.
-  const syncVoicePermissionState = useCallback(async () => {
-    try {
-      const permission = await ExpoSpeechRecognitionModule.getPermissionsAsync();
-
-      if (permission.granted) {
-        applyGrantedVoicePermission(getVoiceCommandsEnabledSetting());
-        return;
-      }
-
-      const isDenied = getVoiceRecognitionPermissionStatusSetting() === 'denied';
-      setVoicePermissionDenied(isDenied);
-      setVoiceCommandsPreference(false);
-    } catch {
-      setVoicePermissionDenied(
-        getVoiceRecognitionPermissionStatusSetting() === 'denied'
-      );
-      showErrorModal('음성 인식 권한을 확인할 수 없습니다.');
-    }
-  }, [applyGrantedVoicePermission, setVoiceCommandsPreference, showErrorModal]);
-
-  // 체크를 켤 때만 시스템 권한 요청을 시도한다.
-  const requestVoicePermission = useCallback(async (): Promise<boolean> => {
-    const currentPermission =
-      await ExpoSpeechRecognitionModule.getPermissionsAsync();
-
-    if (currentPermission.granted) {
-      return true;
-    }
-
-    const requestedPermission =
-      await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-
-    return requestedPermission.granted;
-  }, []);
-
-  useFocusEffect(
-    useCallback(() => {
-      const handleAppStateChange = (nextAppState: AppStateStatus) => {
-        if (nextAppState === 'active') {
-          syncVoicePermissionState();
-        }
-      };
-
-      syncVoicePermissionState();
-      const appStateSubscription = AppState.addEventListener(
-        'change',
-        handleAppStateChange
-      );
-
-      return () => {
-        appStateSubscription.remove();
-      };
-    }, [syncVoicePermissionState])
-  );
 
   /**
    * 소리 설정 토글 처리
@@ -199,41 +103,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
     const newValue = !autoPlayElapsedTime;
     setAutoPlayElapsedTime(newValue);
     setAutoPlayElapsedTimeSetting(newValue);
-  };
-
-  /**
-   * 음성 인식 단수 증감 설정 토글 처리
-   */
-  const handleVoiceCommandsToggle = async () => {
-    if (voicePermissionDenied) {
-      setVoicePermissionModalVisible(true);
-      return;
-    }
-
-    if (voiceCommandsEnabled) {
-      setVoiceCommandsPreference(false);
-      return;
-    }
-
-    try {
-      const granted = await requestVoicePermission();
-
-      if (granted) {
-        applyGrantedVoicePermission(true);
-        return;
-      }
-
-      applyDeniedVoicePermission(true);
-    } catch {
-      setVoiceCommandsPreference(false);
-      showErrorModal('음성 인식 권한을 확인할 수 없습니다.');
-    }
-  };
-
-  const handleOpenVoicePermissionSettings = () => {
-    Linking.openSettings().catch(() => {
-      showErrorModal('설정 화면을 열 수 없습니다.');
-    });
   };
 
   /**
@@ -304,11 +173,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
           onToggle={handleAutoPlayElapsedTimeToggle}
         />
         <CheckBox
-          label="음성 인식 단수 증감"
-          checked={voiceCommandsEnabled}
-          onToggle={handleVoiceCommandsToggle}
-        />
-        <CheckBox
           label="초기화하기"
           checked={resetConfirm}
           onToggle={handleResetToggle}
@@ -335,18 +199,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
         onConfirm={() => setErrorModalVisible(false)}
         confirmText="확인"
         cancelText=""
-      />
-
-      <ConfirmModal
-        visible={voicePermissionModalVisible}
-        onClose={() => setVoicePermissionModalVisible(false)}
-        title="음성 인식 권한"
-        description={
-          '해당 기능을 사용하시려면 앱 권한을 "앱 사용 중에만 허용"으로 설정해주세요'
-        }
-        onConfirm={handleOpenVoicePermissionSettings}
-        confirmText="설정 열기"
-        cancelText="닫기"
       />
     </>
   );

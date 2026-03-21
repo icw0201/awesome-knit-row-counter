@@ -38,6 +38,20 @@ export function useVoicePermissionGate() {
     setVoicePermissionError('');
   }, []);
 
+  const requestVoicePermission = useCallback(async (): Promise<boolean> => {
+    const currentPermission =
+      await ExpoSpeechRecognitionModule.getPermissionsAsync();
+
+    if (currentPermission.granted) {
+      return true;
+    }
+
+    const requestedPermission =
+      await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+
+    return requestedPermission.granted;
+  }, []);
+
   const syncVoicePermission = useCallback(async () => {
     // 권한 팝업이 열리고 닫히는 동안 AppState 이벤트가 다시 들어올 수 있어
     // 동일한 권한 요청 흐름이 중복 실행되지 않도록 막는다.
@@ -123,12 +137,50 @@ export function useVoicePermissionGate() {
     setVoicePermissionModalVisible(false);
   }, []);
 
+  const toggleVoiceCommands = useCallback(async () => {
+    if (voiceCommandsEnabled) {
+      setVoiceCommandsEnabledSetting(false);
+      setVoiceCommandsEnabled(false);
+      setVoicePermissionError('');
+      return;
+    }
+
+    if (getVoiceRecognitionPermissionStatusSetting() === 'denied') {
+      setVoicePermissionModalVisible(true);
+      return;
+    }
+
+    try {
+      const granted = await requestVoicePermission();
+
+      if (granted) {
+        applyGrantedVoicePermission(true);
+        return;
+      }
+
+      applyDeniedVoicePermission(true);
+    } catch {
+      setVoiceCommandsEnabledSetting(false);
+      setVoiceCommandsEnabled(false);
+      setVoicePermissionGranted(false);
+      setVoicePermissionModalVisible(true);
+      setVoicePermissionError('음성 인식 권한을 확인할 수 없습니다');
+    }
+  }, [
+    applyDeniedVoicePermission,
+    applyGrantedVoicePermission,
+    requestVoicePermission,
+    voiceCommandsEnabled,
+  ]);
+
   return {
+    isVoiceCommandsEnabled: voiceCommandsEnabled && voicePermissionGranted,
     isVoiceCommandsActive:
       isScreenFocused && voiceCommandsEnabled && voicePermissionGranted,
     voicePermissionModalVisible,
     voicePermissionError,
     closeVoicePermissionModal,
     openVoicePermissionSettings,
+    toggleVoiceCommands,
   };
 }
