@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 import { Text, View } from 'react-native';
 import { ScrollModal } from '@components/common/modals';
 
@@ -24,14 +24,18 @@ const RecordListModal: React.FC<RecordListModalProps> = ({
     >
       {records.length > 0 ? (
         records.map((record, index) => (
-          <View
-            key={`${record}-${index}`}
-            className={index === 2 ? 'border-b border-red-orange-400 py-1.5 pb-2 mb-1.5' : 'py-1.5'}
-          >
-            <Text className="text-sm text-black">
-              {record}
-            </Text>
-          </View>
+          <Fragment key={`${record}-${index}`}>
+            <View className="py-1.5">
+              <Text className="text-sm text-black">
+                {record}
+              </Text>
+            </View>
+            {index === 2 && (
+              <View className="my-1.5">
+                <View className="h-px w-4/5 self-center bg-red-orange-400" />
+              </View>
+            )}
+          </Fragment>
         ))
       ) : (
         <Text className="py-3 text-center text-sm text-darkgray">활동 기록이 없습니다</Text>
