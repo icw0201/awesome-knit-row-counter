@@ -178,6 +178,8 @@ const RuleCard: React.FC<RuleCardProps> = ({
     setMessageLastLine(null);
   }, [message]);
 
+  const viewRepeatCount = calculateRuleRepeatCount(startNumber, endNumber, ruleNumber);
+
   const handleEditClick = () => {
     setIsEditMode(true);
   };
@@ -273,6 +275,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
               {startNumber > 0 ? `${startNumber}단부터 ` : ''}
               {endNumber > 0 ? `${endNumber}단까지 ` : ''}
               {ruleNumber}단마다
+              {viewRepeatCount !== null ? ` (${viewRepeatCount}회)` : ''}
             </Text>
           </View>
           <View className="flex-shrink-0 ml-2">
