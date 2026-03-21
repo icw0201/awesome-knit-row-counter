@@ -374,38 +374,42 @@ const RuleCard: React.FC<RuleCardProps> = ({
           <Text className="text-base text-black">단까지</Text>
         </View>
         {/* 단마다 반복 규칙 */}
-        <View className="flex-row items-center mb-0">
+        <View className="flex-row items-start mb-0">
           {/* 정렬을 위한 투명한 "규칙 :" 텍스트 */}
           <Text className="text-base font-extrabold text-black mr-2 opacity-0">규칙 :</Text>
-          <View className="mr-2 w-18">
-            <TextInputBox
-              ref={ruleNumberInputRef}
-              label=""
-              value={editRuleNumber}
-              onChangeText={setEditRuleNumber}
-              type="number"
-              containerClassName="mb-0"
-              returnKeyType="next"
-              onSubmitEditing={() => repeatCountInputRef.current?.focus()}
-              blurOnSubmit={false}
-            />
+          <View className="flex-1 min-w-0 flex-row flex-wrap items-start">
+            <View className="mr-2 w-18">
+              <TextInputBox
+                ref={ruleNumberInputRef}
+                label=""
+                value={editRuleNumber}
+                onChangeText={setEditRuleNumber}
+                type="number"
+                containerClassName="mb-0"
+                returnKeyType="next"
+                onSubmitEditing={() => repeatCountInputRef.current?.focus()}
+                blurOnSubmit={false}
+              />
+            </View>
+            <Text className="self-center text-base text-black mr-2">단마다 반복 규칙</Text>
+            <View className="flex-row items-center flex-shrink-0">
+              <Text className="text-base text-black mr-2">(</Text>
+              <View className="mr-2 w-18">
+                <TextInputBox
+                  ref={repeatCountInputRef}
+                  label=""
+                  value={editRepeatCount}
+                  onChangeText={setEditRepeatCount}
+                  type="number"
+                  containerClassName="mb-0"
+                  returnKeyType="done"
+                  onSubmitEditing={() => repeatCountInputRef.current?.blur()}
+                  blurOnSubmit={true}
+                />
+              </View>
+              <Text className="text-base text-black">회 반복)</Text>
+            </View>
           </View>
-          <Text className="text-base text-black mr-2">단마다 반복 규칙</Text>
-          <Text className="text-base text-black mr-2">(</Text>
-          <View className="mr-2 w-18">
-            <TextInputBox
-              ref={repeatCountInputRef}
-              label=""
-              value={editRepeatCount}
-              onChangeText={setEditRepeatCount}
-              type="number"
-              containerClassName="mb-0"
-              returnKeyType="done"
-              onSubmitEditing={() => repeatCountInputRef.current?.blur()}
-              blurOnSubmit={true}
-            />
-          </View>
-          <Text className="text-base text-black">회 반복)</Text>
         </View>
 
         {/* 규칙 미리보기 / 에러 표시 */}
