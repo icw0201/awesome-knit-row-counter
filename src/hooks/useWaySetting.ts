@@ -12,6 +12,7 @@ export type RuleConfirmData = {
   message: string;
   startNumber: number;
   endNumber: number;
+  repeatCount: number;
   ruleNumber: number;
   color: string; // 색상 (필수)
 };
@@ -98,6 +99,7 @@ export const useWaySetting = () => {
       message: data.message,
       startNumber: data.startNumber,
       endNumber: data.endNumber,
+      repeatCount: data.repeatCount,
       ruleNumber: data.ruleNumber,
       color: data.color,
     };

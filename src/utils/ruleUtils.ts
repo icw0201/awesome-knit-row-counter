@@ -8,7 +8,7 @@ import { RED_ORANGE_SWATCHES } from '@constants/colors';
  * @returns 규칙이 적용되는 단이면 true, 아니면 false
  */
 export const isRuleApplied = (count: number, rule: RepeatRule): boolean => {
-  const { startNumber, endNumber, ruleNumber } = rule;
+  const { startNumber, endNumber, repeatCount = 0, ruleNumber } = rule;
 
   // 규칙이 입력되지 않았으면 false
   if (ruleNumber === 0) {
@@ -19,6 +19,15 @@ export const isRuleApplied = (count: number, rule: RepeatRule): boolean => {
     // 시작단과 종료단 둘 다 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     let current = startNumber;
     while (current <= endNumber) {
+      if (current === count) {
+        return true;
+      }
+      current += ruleNumber;
+    }
+  } else if (startNumber > 0 && repeatCount > 0) {
+    // 시작단과 반복 횟수가 있는 경우: 시작단 포함, repeatCount 횟수만큼 적용
+    let current = startNumber;
+    for (let i = 0; i < repeatCount; i++) {
       if (current === count) {
         return true;
       }
@@ -38,6 +47,15 @@ export const isRuleApplied = (count: number, rule: RepeatRule): boolean => {
       }
       current += ruleNumber;
     }
+  } else if (repeatCount > 0) {
+    // 반복 횟수만 있는 경우: ruleNumber부터 repeatCount 횟수만큼 적용
+    let current = ruleNumber;
+    for (let i = 0; i < repeatCount; i++) {
+      if (current === count) {
+        return true;
+      }
+      current += ruleNumber;
+    }
   }
 
   return false;
@@ -50,13 +68,15 @@ export const isRuleApplied = (count: number, rule: RepeatRule): boolean => {
  * @param endNumber 종료단
  * @param ruleNumber 룰넘버 (몇 단마다)
  * @param maxCount 최대 반환 개수 (기본값: 5)
+ * @param repeatCount 반복 횟수
  * @returns 규칙이 적용되는 단들의 배열
  */
 export const calculateRulePreview = (
   startNumber: number,
   endNumber: number,
   ruleNumber: number,
-  maxCount: number = 5
+  maxCount: number = 5,
+  repeatCount: number = 0
 ): number[] => {
   // 규칙이 입력되지 않았으면 빈 배열 반환
   if (ruleNumber === 0) {
@@ -69,6 +89,13 @@ export const calculateRulePreview = (
     // 시작단과 종료단 둘 다 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     let current = startNumber;
     while (current <= endNumber && results.length < maxCount) {
+      results.push(current);
+      current += ruleNumber;
+    }
+  } else if (startNumber > 0 && repeatCount > 0) {
+    // 시작단과 반복 횟수가 있는 경우: 시작단 포함, repeatCount 횟수만큼 적용
+    let current = startNumber;
+    for (let i = 0; i < repeatCount && results.length < maxCount; i++) {
       results.push(current);
       current += ruleNumber;
     }
@@ -86,6 +113,13 @@ export const calculateRulePreview = (
       results.push(current);
       current += ruleNumber;
     }
+  } else if (repeatCount > 0) {
+    // 반복 횟수만 있는 경우: ruleNumber부터 repeatCount 횟수만큼 적용
+    let current = ruleNumber;
+    for (let i = 0; i < repeatCount && results.length < maxCount; i++) {
+      results.push(current);
+      current += ruleNumber;
+    }
   }
 
   return results;
@@ -97,13 +131,19 @@ export const calculateRulePreview = (
  * @param startNumber 시작단
  * @param endNumber 종료단
  * @param ruleNumber 룰넘버 (몇 단마다)
- * @returns 반복 횟수, 종료단이 없으면 null
+ * @param repeatCount 반복 횟수
+ * @returns 반복 횟수, 종료단과 반복 횟수가 모두 없으면 null
  */
 export const calculateRuleRepeatCount = (
   startNumber: number,
   endNumber: number,
-  ruleNumber: number
+  ruleNumber: number,
+  repeatCount: number = 0
 ): number | null => {
+  if (repeatCount > 0) {
+    return repeatCount;
+  }
+
   if (endNumber <= 0) {
     return null;
   }

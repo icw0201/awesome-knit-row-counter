@@ -61,6 +61,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
       message: r.message,
       startNumber: r.startNumber,
       endNumber: r.endNumber,
+      repeatCount: r.repeatCount ?? 0,
       ruleNumber: r.ruleNumber,
     }))
   );

@@ -12,10 +12,11 @@ interface RuleCardProps {
   message: string;
   startNumber: number;
   endNumber: number;
+  repeatCount: number;
   ruleNumber: number;
   color: string; // 색상 (hex 값, 예: '#fc3e39', 필수)
   onDelete?: () => void;
-  onConfirm?: (data: { message: string; startNumber: number; endNumber: number; ruleNumber: number; color: string }) => void;
+  onConfirm?: (data: { message: string; startNumber: number; endNumber: number; repeatCount: number; ruleNumber: number; color: string }) => void;
   isEditable?: boolean; // 편집 가능 여부
 }
 
@@ -82,8 +83,9 @@ type ValidateRuleFunction = (
   trimmedMessage: string,
   start: string | number,
   end: string | number,
-  rule: string | number
-) => { error: string | null; start: number; end: number; rule: number };
+  rule: string | number,
+  repeatCount: string | number
+) => { error: string | null; start: number; end: number; rule: number; repeatCount: number };
 
 /**
  * 규칙 미리보기 렌더링
@@ -94,17 +96,19 @@ const renderRulePreview = (
   editStartNumber: string,
   editEndNumber: string,
   editRuleNumber: string,
+  editRepeatCount: string,
   validateRule: ValidateRuleFunction
 ) => {
-  const { error: ruleError, start, end, rule } = validateRule(
+  const { error: ruleError, start, end, rule, repeatCount } = validateRule(
     editMessage.trim(),
     editStartNumber,
     editEndNumber,
-    editRuleNumber
+    editRuleNumber,
+    editRepeatCount
   );
-  const hasRuleInput = (start > 0 || end > 0) && rule > 0;
-  const rulePreview = hasRuleInput ? calculateRulePreview(start, end, rule, 5) : [];
-  const repeatCount = hasRuleInput ? calculateRuleRepeatCount(start, end, rule) : null;
+  const hasRuleInput = (start > 0 || end > 0 || repeatCount > 0) && rule > 0;
+  const rulePreview = hasRuleInput ? calculateRulePreview(start, end, rule, 5, repeatCount) : [];
+  const totalRepeatCount = hasRuleInput ? calculateRuleRepeatCount(start, end, rule, repeatCount) : null;
 
   if (!hasRuleInput && !ruleError) {
     return null;
@@ -114,7 +118,9 @@ const renderRulePreview = (
     hasRuleInput && rulePreview.length > 0
       ? rulePreview.map((n) => `${n}단`).join(', ')
       : '';
-  const previewSuffix = repeatCount !== null ? ` (${repeatCount}회)` : '';
+  const hasMorePreviewItems =
+    totalRepeatCount !== null ? totalRepeatCount > rulePreview.length : rulePreview.length === 5;
+  const previewSuffix = totalRepeatCount !== null ? ` (${totalRepeatCount}회)` : '';
 
   return (
     <View className="mt-2 flex-row items-center">
@@ -126,7 +132,7 @@ const renderRulePreview = (
           previewText && (
             <Text className="text-sm text-darkgray">
               {previewText}
-              {rulePreview.length === 5 ? '...' : ''}
+              {hasMorePreviewItems ? '...' : ''}
               {previewSuffix}
             </Text>
           )
@@ -144,6 +150,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
   message,
   startNumber,
   endNumber,
+  repeatCount,
   ruleNumber,
   color,
   onDelete,
@@ -154,6 +161,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
   const [editMessage, setEditMessage] = useState(message);
   const [editStartNumber, setEditStartNumber] = useState(numberToString(startNumber));
   const [editEndNumber, setEditEndNumber] = useState(numberToString(endNumber));
+  const [editRepeatCount, setEditRepeatCount] = useState(numberToString(repeatCount));
   const [editRuleNumber, setEditRuleNumber] = useState(numberToString(ruleNumber));
   const [editColor, setEditColor] = useState(color);
   const [messageLastLine, setMessageLastLine] = useState<MessageLastLine | null>(null);
@@ -163,22 +171,24 @@ const RuleCard: React.FC<RuleCardProps> = ({
   const startNumberInputRef = useRef<TextInputBoxRef>(null);
   const endNumberInputRef = useRef<TextInputBoxRef>(null);
   const ruleNumberInputRef = useRef<TextInputBoxRef>(null);
+  const repeatCountInputRef = useRef<TextInputBoxRef>(null);
 
   // props가 변경되면 내부 state도 업데이트
   useEffect(() => {
     setEditMessage(message);
     setEditStartNumber(numberToString(startNumber));
     setEditEndNumber(numberToString(endNumber));
+    setEditRepeatCount(numberToString(repeatCount));
     setEditRuleNumber(numberToString(ruleNumber));
     setEditColor(color);
-  }, [message, startNumber, endNumber, ruleNumber, color]);
+  }, [message, startNumber, endNumber, repeatCount, ruleNumber, color]);
 
   // 보기 모드 메시지가 바뀌면 마지막 줄 좌표도 초기화
   useEffect(() => {
     setMessageLastLine(null);
   }, [message]);
 
-  const viewRepeatCount = calculateRuleRepeatCount(startNumber, endNumber, ruleNumber);
+  const viewRepeatCount = calculateRuleRepeatCount(startNumber, endNumber, ruleNumber, repeatCount);
 
   const handleEditClick = () => {
     setIsEditMode(true);
@@ -189,7 +199,8 @@ const RuleCard: React.FC<RuleCardProps> = ({
       editMessage.trim(),
       editStartNumber,
       editEndNumber,
-      editRuleNumber
+      editRuleNumber,
+      editRepeatCount
     );
     if (result.error) {
       return;
@@ -199,6 +210,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
       message: editMessage.trim(),
       startNumber: result.start,
       endNumber: result.end,
+      repeatCount: result.repeatCount,
       ruleNumber: result.rule,
       color: editColor,
     });
@@ -218,18 +230,24 @@ const RuleCard: React.FC<RuleCardProps> = ({
     trimmedMessage: string,
     start: string | number,
     end: string | number,
-    rule: string | number
-  ): { error: string | null; start: number; end: number; rule: number } => {
+    rule: string | number,
+    repeatCountValue: string | number
+  ): { error: string | null; start: number; end: number; rule: number; repeatCount: number } => {
     const parsedStart = typeof start === 'string' ? parseInt(start, 10) || 0 : start;
     const parsedEnd = typeof end === 'string' ? parseInt(end, 10) || 0 : end;
     const parsedRule = typeof rule === 'string' ? parseInt(rule, 10) || 0 : rule;
-    const parsed = { start: parsedStart, end: parsedEnd, rule: parsedRule };
+    const parsedRepeatCount =
+      typeof repeatCountValue === 'string' ? parseInt(repeatCountValue, 10) || 0 : repeatCountValue;
+    const parsed = { start: parsedStart, end: parsedEnd, rule: parsedRule, repeatCount: parsedRepeatCount };
 
     if (!trimmedMessage) {
       return { ...parsed, error: '메시지를 입력해 주세요.' };
     }
-    if (parsedStart === 0 && parsedEnd === 0) {
-      return { ...parsed, error: '시작단 혹은 종료단을 설정해 주세요.' };
+    if (parsedEnd > 0 && parsedRepeatCount > 0) {
+      return { ...parsed, error: '종료단과 반복 횟수는 동시에 설정할 수 없습니다.' };
+    }
+    if (parsedStart === 0 && parsedEnd === 0 && parsedRepeatCount === 0) {
+      return { ...parsed, error: '시작단, 종료단 혹은 반복 횟수를 설정해 주세요.' };
     }
     if (parsedRule === 0) {
       return { ...parsed, error: '반복 규칙을 설정해 주세요.' };
@@ -367,16 +385,31 @@ const RuleCard: React.FC<RuleCardProps> = ({
               onChangeText={setEditRuleNumber}
               type="number"
               containerClassName="mb-0"
+              returnKeyType="next"
+              onSubmitEditing={() => repeatCountInputRef.current?.focus()}
+              blurOnSubmit={false}
+            />
+          </View>
+          <Text className="text-base text-black mr-2">단마다 반복 규칙</Text>
+          <Text className="text-base text-black mr-2">(</Text>
+          <View className="mr-2 w-18">
+            <TextInputBox
+              ref={repeatCountInputRef}
+              label=""
+              value={editRepeatCount}
+              onChangeText={setEditRepeatCount}
+              type="number"
+              containerClassName="mb-0"
               returnKeyType="done"
-              onSubmitEditing={() => ruleNumberInputRef.current?.blur()}
+              onSubmitEditing={() => repeatCountInputRef.current?.blur()}
               blurOnSubmit={true}
             />
           </View>
-          <Text className="text-base text-black">단마다 반복 규칙</Text>
+          <Text className="text-base text-black">회 반복)</Text>
         </View>
 
         {/* 규칙 미리보기 / 에러 표시 */}
-        {renderRulePreview(editMessage, editStartNumber, editEndNumber, editRuleNumber, validateRule)}
+        {renderRulePreview(editMessage, editStartNumber, editEndNumber, editRuleNumber, editRepeatCount, validateRule)}
       </View>
 
       {/* 삭제/확인 버튼 */}

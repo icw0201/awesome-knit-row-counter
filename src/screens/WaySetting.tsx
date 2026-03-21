@@ -37,6 +37,7 @@ const NewRuleCard = React.memo<NewRuleCardProps>(({ repeatRules, onConfirm, onCa
       message=""
       startNumber={0}
       endNumber={0}
+      repeatCount={0}
       ruleNumber={0}
       color={defaultColor}
       isEditable={true}
@@ -105,13 +106,14 @@ const WaySetting = () => {
         {repeatRules.map((rule: RepeatRule, index: number) => {
           // 규칙의 모든 속성을 조합하여 안정적인 key 생성
           // 순서가 바뀌지 않으므로 index 없이 속성만으로 key 생성 가능
-          const ruleKey = `rule-${rule.message}-${rule.startNumber}-${rule.endNumber}-${rule.ruleNumber}-${rule.color ?? 'default'}`;
+          const ruleKey = `rule-${rule.message}-${rule.startNumber}-${rule.endNumber}-${rule.repeatCount ?? 0}-${rule.ruleNumber}-${rule.color ?? 'default'}`;
           return (
             <RuleCard
               key={ruleKey}
               message={rule.message}
               startNumber={rule.startNumber}
               endNumber={rule.endNumber}
+              repeatCount={rule.repeatCount ?? 0}
               ruleNumber={rule.ruleNumber}
               color={rule.color}
               isEditable={false}
