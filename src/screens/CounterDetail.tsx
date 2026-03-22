@@ -244,6 +244,16 @@ const CounterDetail = () => {
     handleSubtract();
   }, [flashTouchAreaHighlight, handleSubtract]);
 
+  const handleVoiceHighlightedAdd = useCallback(() => {
+    flashTouchAreaHighlight('add');
+    handleAdd('voice');
+  }, [flashTouchAreaHighlight, handleAdd]);
+
+  const handleVoiceHighlightedSubtract = useCallback(() => {
+    flashTouchAreaHighlight('subtract');
+    handleSubtract('voice');
+  }, [flashTouchAreaHighlight, handleSubtract]);
+
   const flashSubTouchAreaHighlight = useCallback((action: Exclude<SubTouchAreaHighlightAction, null>) => {
     if (subTouchAreaHighlightTimeoutRef.current) {
       clearTimeout(subTouchAreaHighlightTimeoutRef.current);
@@ -264,6 +274,16 @@ const CounterDetail = () => {
   const handleHighlightedSubSubtract = useCallback(() => {
     flashSubTouchAreaHighlight('subtract');
     handleSubSubtract();
+  }, [flashSubTouchAreaHighlight, handleSubSubtract]);
+
+  const handleVoiceHighlightedSubAdd = useCallback(() => {
+    flashSubTouchAreaHighlight('add');
+    handleSubAdd('voice');
+  }, [flashSubTouchAreaHighlight, handleSubAdd]);
+
+  const handleVoiceHighlightedSubSubtract = useCallback(() => {
+    flashSubTouchAreaHighlight('subtract');
+    handleSubSubtract('voice');
   }, [flashSubTouchAreaHighlight, handleSubSubtract]);
 
   const handleVoiceRecognizedTextChange = useCallback((nextText: string) => {
@@ -311,10 +331,10 @@ const CounterDetail = () => {
   /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
   useVoiceCommands(
     !!counter && isVoiceCommandsActive,
-    handleHighlightedAdd,
-    handleHighlightedSubtract,
-    handleHighlightedSubAdd,
-    handleHighlightedSubSubtract,
+    handleVoiceHighlightedAdd,
+    handleVoiceHighlightedSubtract,
+    handleVoiceHighlightedSubAdd,
+    handleVoiceHighlightedSubSubtract,
     handleVoiceRecognizedTextChange,
     setVoiceRecognitionError
   );

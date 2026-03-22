@@ -5,6 +5,7 @@ import { ScreenSize, SEGMENT_UNDO_ICON_SIZE } from '@constants/screenSizeConfig'
 import { SectionRecord } from '@storage/types';
 import { getEditContentText } from '@utils/sectionRecordUtils';
 import CircleIcon from '@components/common/CircleIcon';
+import { Mic } from 'lucide-react-native';
 
 // ===== 타입 정의 =====
 interface SegmentRecordModalProps {
@@ -55,16 +56,24 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
                 {sectionRecords.map((record, index) => {
                   // 첫 번째: black, 두 번째: darkgray, 세 번째: mediumgray
                   const textColorClass = index === 0 ? 'text-black' : index === 1 ? 'text-darkgray' : 'text-mediumgray';
+                  const micColor = index === 0 ? '#111111' : index === 1 ? '#767676' : '#B8B8B8';
                   return (
                     <View key={index} className="w-full">
-                      <Text
-                        className={`text-sm font-bold ${textColorClass}`}
-                        numberOfLines={1}
-                        ellipsizeMode="tail"
-                        allowFontScaling={false}
-                      >
-                        {record.time} {getEditContentText(record)}
-                      </Text>
+                      <View className="max-w-full flex-row items-center self-start">
+                        <Text
+                          className={`shrink text-sm font-bold ${textColorClass}`}
+                          numberOfLines={1}
+                          ellipsizeMode="tail"
+                          allowFontScaling={false}
+                        >
+                          {record.time} {getEditContentText(record)}
+                        </Text>
+                        {record.inputSource === 'voice' && (
+                          <View className="ml-1">
+                            <Mic size={14} color={micColor} strokeWidth={2} />
+                          </View>
+                        )}
+                      </View>
                     </View>
                   );
                 })}
