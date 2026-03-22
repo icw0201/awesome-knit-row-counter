@@ -1,12 +1,13 @@
 // src/components/counter/CounterTouchArea.tsx
 import React from 'react';
-import { View } from 'react-native';
-import { Minus, Plus } from 'lucide-react-native';
+import { View, Text } from 'react-native';
+import { Minus, Plus, Speech } from 'lucide-react-native';
 
 interface CounterTouchAreaProps {
   onAdd: () => void;
   onSubtract: () => void;
   highlightedAction?: 'add' | 'subtract' | null;
+  showVoiceCommandHints?: boolean;
 }
 
 /**
@@ -17,9 +18,11 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
   onAdd,
   onSubtract,
   highlightedAction = null,
+  showVoiceCommandHints = false,
 }) => {
   const isSubtractHighlighted = highlightedAction === 'subtract';
   const isAddHighlighted = highlightedAction === 'add';
+  const voiceHintIconColor = '#767676';
 
   return (
     <View className="absolute top-0 left-0 right-0 bottom-0 flex-row">
@@ -35,12 +38,19 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
         onStartShouldSetResponder={() => true}
         onResponderRelease={onSubtract}
       >
-        <Minus
-          size={60}
-          color="#fc3e39"
-          strokeWidth={2}
-          className="ml-3"
-        />
+        <View className="relative ml-3 items-center">
+          <Minus
+            size={60}
+            color="#fc3e39"
+            strokeWidth={2}
+          />
+          {showVoiceCommandHints && (
+            <View className="absolute top-[68px] flex-row items-center">
+              <Speech size={16} color={voiceHintIconColor} strokeWidth={2} />
+              <Text className="ml-1 text-sm text-darkgray">연지</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* 오른쪽 터치 영역 (증가) - 63% */}
@@ -54,12 +64,19 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
         onStartShouldSetResponder={() => true}
         onResponderRelease={onAdd}
       >
-        <Plus
-          size={60}
-          color="#fc3e39"
-          strokeWidth={2}
-          className="mr-3"
-        />
+        <View className="relative mr-3 items-center">
+          <Plus
+            size={60}
+            color="#fc3e39"
+            strokeWidth={2}
+          />
+          {showVoiceCommandHints && (
+            <View className="absolute top-[68px] flex-row items-center">
+              <Speech size={16} color={voiceHintIconColor} strokeWidth={2} />
+              <Text className="ml-1 text-sm text-darkgray">곤지</Text>
+            </View>
+          )}
+        </View>
       </View>
     </View>
   );

@@ -366,6 +366,7 @@ const CounterDetail = () => {
         onAdd={handleHighlightedAdd}
         onSubtract={handleHighlightedSubtract}
         highlightedAction={touchAreaHighlight}
+        showVoiceCommandHints={isVoiceCommandsActive}
       />
 
       {/* 중앙 콘텐츠 영역 */}
