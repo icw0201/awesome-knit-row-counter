@@ -288,6 +288,8 @@ const CounterDetail = () => {
     !!counter && isVoiceCommandsActive,
     handleHighlightedAdd,
     handleHighlightedSubtract,
+    handleSubAdd,
+    handleSubSubtract,
     handleVoiceRecognizedTextChange,
     setVoiceRecognitionError
   );
