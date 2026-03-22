@@ -69,8 +69,16 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
                           {record.time} {getEditContentText(record)}
                         </Text>
                         {record.inputSource === 'voice' && (
-                          <View className="ml-1">
+                          <View className="ml-1 flex-row items-center">
                             <Mic size={14} color={micColor} strokeWidth={2} />
+                            {record.voiceCommand && (
+                              <Text
+                                className={`ml-1 text-sm font-bold ${textColorClass}`}
+                                allowFontScaling={false}
+                              >
+                                {record.voiceCommand}
+                              </Text>
+                            )}
                           </View>
                         )}
                       </View>

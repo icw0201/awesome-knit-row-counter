@@ -56,6 +56,7 @@ export type SectionRecord = {
   editedMainCount?: number; // 편집 후 단수 (단수 관련 편집 시에만 저장)
   editContent: EditLogType; // 편집 내용
   inputSource?: 'voice'; // 음성 인식으로 실행된 기록인지 여부
+  voiceCommand?: string; // 음성 인식으로 실행된 경우 실제 인식된 명령어
   // 실행 취소를 위한 이전 상태 정보
   previousCount?: number;      // 이전 단수
   previousSubCount?: number;   // 이전 코수

@@ -34,8 +34,8 @@ interface UseCounterReturn {
   subModalIsOpen: boolean;
 
   // 액션 함수들
-  handleAdd: (inputSource?: 'voice') => void;
-  handleSubtract: (inputSource?: 'voice') => void;
+  handleAdd: (inputSource?: 'voice', voiceCommand?: string) => void;
+  handleSubtract: (inputSource?: 'voice', voiceCommand?: string) => void;
   handleEditOpen: () => void;
   handleEditConfirm: (value: string) => void;
   handleResetConfirm: () => void;
@@ -52,8 +52,8 @@ interface UseCounterReturn {
   setActiveModal: (modal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | 'timerReset' | null) => void;
 
   // 보조 카운터 액션 함수들
-  handleSubAdd: (inputSource?: 'voice') => void;
-  handleSubSubtract: (inputSource?: 'voice') => void;
+  handleSubAdd: (inputSource?: 'voice', voiceCommand?: string) => void;
+  handleSubSubtract: (inputSource?: 'voice', voiceCommand?: string) => void;
   handleSubReset: () => void;
   handleSubEdit: () => void;
   handleSubRule: () => void;
@@ -460,7 +460,8 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     editContent: EditLogType,
     editedCount: number,
     editedMainCount?: number,
-    inputSource?: 'voice'
+    inputSource?: 'voice',
+    voiceCommand?: string
   ): SectionRecord[] => {
     if (!counter) {
       return [];
@@ -472,6 +473,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
       editedMainCount,
       editContent,
       inputSource,
+      voiceCommand,
       // 실행 취소를 위한 이전 상태 저장
       previousCount: counter.count,
       previousSubCount: counter.subCount,
@@ -507,7 +509,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
   /**
    * 숫자 증가 처리
    */
-  const handleAdd = useCallback((inputSource?: 'voice') => {
+  const handleAdd = useCallback((inputSource?: 'voice', voiceCommand?: string) => {
     if (!counter) {
       return;
     }
@@ -519,7 +521,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     }
 
     const newWay = getReversedWayIfWayIsChange();
-    const updatedSectionRecords = addSectionRecord('count_increase', newCount, newCount, inputSource);
+    const updatedSectionRecords = addSectionRecord('count_increase', newCount, newCount, inputSource, voiceCommand);
 
     const updateData: any = { count: newCount, sectionRecords: updatedSectionRecords };
     if (newWay) {
@@ -535,7 +537,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
   /**
    * 숫자 감소 처리
    */
-  const handleSubtract = useCallback((inputSource?: 'voice') => {
+  const handleSubtract = useCallback((inputSource?: 'voice', voiceCommand?: string) => {
     if (!counter) {
       return;
     }
@@ -547,7 +549,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     }
 
     const newWay = getReversedWayIfWayIsChange();
-    const updatedSectionRecords = addSectionRecord('count_decrease', newCount, newCount, inputSource);
+    const updatedSectionRecords = addSectionRecord('count_decrease', newCount, newCount, inputSource, voiceCommand);
 
     const updateData: any = { count: newCount, sectionRecords: updatedSectionRecords };
     if (newWay) {
@@ -659,7 +661,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
   }, [counter, handleClose]);
 
   // 보조 카운터 액션 함수들
-  const handleSubAdd = useCallback(async (inputSource?: 'voice') => {
+  const handleSubAdd = useCallback(async (inputSource?: 'voice', voiceCommand?: string) => {
     if (!counter) {
       return;
     }
@@ -691,7 +693,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     // way 변경 로직 적용 (본 카운터가 증가할 때)
     const newWay = newMainCount > counter.count ? getReversedWayIfWayIsChange() : null;
 
-    const updatedSectionRecords = addSectionRecord('sub_count_increase', newSubCount, newMainCount, inputSource);
+    const updatedSectionRecords = addSectionRecord('sub_count_increase', newSubCount, newMainCount, inputSource, voiceCommand);
     const updatedCounter = {
       ...counter,
       subCount: newSubCount,
@@ -704,7 +706,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     setCounter(updatedCounter);
   }, [counter, playSound, triggerHaptics, getReversedWayIfWayIsChange, addSectionRecord]);
 
-  const handleSubSubtract = useCallback(async (inputSource?: 'voice') => {
+  const handleSubSubtract = useCallback(async (inputSource?: 'voice', voiceCommand?: string) => {
     if (!counter) {
       return;
     }
@@ -719,7 +721,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     triggerHaptics();
 
     const newSubCount = counter.subCount - 1;
-    const updatedSectionRecords = addSectionRecord('sub_count_decrease', newSubCount, counter.count, inputSource);
+    const updatedSectionRecords = addSectionRecord('sub_count_decrease', newSubCount, counter.count, inputSource, voiceCommand);
 
     const updatedCounter = {
       ...counter,

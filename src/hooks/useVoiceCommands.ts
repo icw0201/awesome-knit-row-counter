@@ -94,10 +94,10 @@ function getWordAction(word: string): 'add' | 'subtract' | 'subAdd' | 'subSubtra
  */
 export function useVoiceCommands(
   enabled: boolean,
-  onAdd: () => void,
-  onSubtract: () => void,
-  onSubAdd?: () => void,
-  onSubSubtract?: () => void,
+  onAdd: (commandWord?: string) => void,
+  onSubtract: (commandWord?: string) => void,
+  onSubAdd?: (commandWord?: string) => void,
+  onSubSubtract?: (commandWord?: string) => void,
   onRecognized?: (text: string) => void,
   onError?: (message: string) => void
 ) {
@@ -173,22 +173,22 @@ export function useVoiceCommands(
       newWords.forEach((word) => {
         const action = getWordAction(word);
         if (action === 'add') {
-          onAddRef.current();
+          onAddRef.current(word);
           return;
         }
 
         if (action === 'subtract') {
-          onSubtractRef.current();
+          onSubtractRef.current(word);
           return;
         }
 
         if (action === 'subAdd') {
-          onSubAddRef.current?.();
+          onSubAddRef.current?.(word);
           return;
         }
 
         if (action === 'subSubtract') {
-          onSubSubtractRef.current?.();
+          onSubSubtractRef.current?.(word);
         }
       });
     };

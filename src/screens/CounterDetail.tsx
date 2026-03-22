@@ -244,14 +244,14 @@ const CounterDetail = () => {
     handleSubtract();
   }, [flashTouchAreaHighlight, handleSubtract]);
 
-  const handleVoiceHighlightedAdd = useCallback(() => {
+  const handleVoiceHighlightedAdd = useCallback((commandWord?: string) => {
     flashTouchAreaHighlight('add');
-    handleAdd('voice');
+    handleAdd('voice', commandWord);
   }, [flashTouchAreaHighlight, handleAdd]);
 
-  const handleVoiceHighlightedSubtract = useCallback(() => {
+  const handleVoiceHighlightedSubtract = useCallback((commandWord?: string) => {
     flashTouchAreaHighlight('subtract');
-    handleSubtract('voice');
+    handleSubtract('voice', commandWord);
   }, [flashTouchAreaHighlight, handleSubtract]);
 
   const flashSubTouchAreaHighlight = useCallback((action: Exclude<SubTouchAreaHighlightAction, null>) => {
@@ -276,14 +276,14 @@ const CounterDetail = () => {
     handleSubSubtract();
   }, [flashSubTouchAreaHighlight, handleSubSubtract]);
 
-  const handleVoiceHighlightedSubAdd = useCallback(() => {
+  const handleVoiceHighlightedSubAdd = useCallback((commandWord?: string) => {
     flashSubTouchAreaHighlight('add');
-    handleSubAdd('voice');
+    handleSubAdd('voice', commandWord);
   }, [flashSubTouchAreaHighlight, handleSubAdd]);
 
-  const handleVoiceHighlightedSubSubtract = useCallback(() => {
+  const handleVoiceHighlightedSubSubtract = useCallback((commandWord?: string) => {
     flashSubTouchAreaHighlight('subtract');
-    handleSubSubtract('voice');
+    handleSubSubtract('voice', commandWord);
   }, [flashSubTouchAreaHighlight, handleSubSubtract]);
 
   const handleVoiceRecognizedTextChange = useCallback((nextText: string) => {
