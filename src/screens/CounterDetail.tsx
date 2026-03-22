@@ -17,7 +17,7 @@ import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, Scree
 import { getTooltipEnabledSetting } from '@storage/settings';
 import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
-import { useVoiceCommands } from '@hooks/useVoiceCommands';
+import { useVoiceCommands, VOICE_LISTENING_TEXT } from '@hooks/useVoiceCommands';
 import { useVoicePermissionGate } from '@hooks/useVoicePermissionGate';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
 
@@ -134,6 +134,9 @@ const CounterDetail = () => {
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
   const [voiceRecognizedText, setVoiceRecognizedText] = useState<string>('');
   const [voiceRecognitionError, setVoiceRecognitionError] = useState<string>('');
+  const lastVoiceTranscriptRef = useRef('');
+  const resetVoiceTextBaseRef = useRef('');
+  const [isVoiceTextResetPending, setIsVoiceTextResetPending] = useState(false);
   const {
     isVoiceCommandsEnabled,
     isVoiceCommandsActive,
@@ -195,6 +198,9 @@ const CounterDetail = () => {
   useEffect(() => {
     if (!isVoiceCommandsActive) {
       setVoiceRecognizedText('');
+      lastVoiceTranscriptRef.current = '';
+      resetVoiceTextBaseRef.current = '';
+      setIsVoiceTextResetPending(false);
     }
   }, [isVoiceCommandsActive]);
 
@@ -235,12 +241,54 @@ const CounterDetail = () => {
     handleSubtract();
   }, [flashTouchAreaHighlight, handleSubtract]);
 
+  const handleVoiceRecognizedTextChange = useCallback((nextText: string) => {
+    lastVoiceTranscriptRef.current = nextText;
+
+    if (!isVoiceTextResetPending) {
+      setVoiceRecognizedText(nextText);
+      return;
+    }
+
+    const resetBaseTranscript = resetVoiceTextBaseRef.current;
+
+    if (
+      resetBaseTranscript &&
+      nextText.startsWith(resetBaseTranscript)
+    ) {
+      const appendedText = nextText
+        .slice(resetBaseTranscript.length)
+        .trim();
+
+      if (!appendedText) {
+        return;
+      }
+
+      setVoiceRecognizedText(appendedText);
+      return;
+    }
+
+    resetVoiceTextBaseRef.current = '';
+    setIsVoiceTextResetPending(false);
+    setVoiceRecognizedText(nextText);
+  }, [isVoiceTextResetPending]);
+
+  const handleVoiceTextLayout = useCallback(
+    ({ nativeEvent }: { nativeEvent: { lines: Array<{ text: string }> } }) => {
+      if (nativeEvent.lines.length > 2 && voiceRecognizedText && !isVoiceTextResetPending) {
+        resetVoiceTextBaseRef.current = lastVoiceTranscriptRef.current;
+        setVoiceRecognizedText('');
+        setIsVoiceTextResetPending(true);
+      }
+    },
+    [isVoiceTextResetPending, voiceRecognizedText]
+  );
+
   /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
   useVoiceCommands(
     !!counter && isVoiceCommandsActive,
     handleHighlightedAdd,
     handleHighlightedSubtract,
-    setVoiceRecognizedText,
+    handleVoiceRecognizedTextChange,
     setVoiceRecognitionError
   );
 
@@ -389,16 +437,22 @@ const CounterDetail = () => {
         />
 
         {/* 음성 인식 결과 표시 (증가/감소) */}
-        <View className="absolute left-2 right-2 z-40 rounded px-2 py-1.5 bg-lightgray min-h-[32px] justify-center" style={{ top: progressBarHeightPx + 8 }}>
-          <Text className="text-xs text-darkgray">Voice</Text>
-          {voiceError ? (
-            <Text className="text-xs text-red-orange-500" numberOfLines={2}>에러: {voiceError}</Text>
-          ) : (
-            <Text className="text-sm text-black" numberOfLines={2}>
-              {voiceRecognizedText || '(듣는 중…)'}
-            </Text>
-          )}
-        </View>
+        {isVoiceCommandsActive && (
+          <View className="absolute left-2 right-2 z-40 rounded px-2 py-1.5 bg-lightgray min-h-[32px] justify-center" style={{ top: progressBarHeightPx + 8 }}>
+            <Text className="text-xs text-darkgray">Voice</Text>
+            {voiceError ? (
+              <Text className="text-xs text-red-orange-500" numberOfLines={2}>에러: {voiceError}</Text>
+            ) : (
+              <Text
+                className="text-sm text-black"
+                numberOfLines={2}
+                onTextLayout={handleVoiceTextLayout}
+              >
+                {voiceRecognizedText || (isVoiceTextResetPending ? '' : VOICE_LISTENING_TEXT)}
+              </Text>
+            )}
+          </View>
+        )}
 
         {/* 헤더 활성 아이콘 안내 툴팁 (헤더 대신 화면 위층에 표시) */}
         {screenSize !== ScreenSize.COMPACT && tooltipEnabled && (
