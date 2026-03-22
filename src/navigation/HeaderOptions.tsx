@@ -89,6 +89,17 @@ export const getHeaderRightWithActivateInfoSettings = (
 ): React.JSX.Element => {
   return (
     <View className="flex-row items-center">
+      {/* 음성 인식 아이콘 */}
+      <TouchableOpacity
+        onPress={onVoicePress}
+        style={{ marginRight: 10 }}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="음성 인식 단수 증감"
+        accessibilityHint="탭하여 음성 인식 단수 증감 기능을 켜거나 끕니다"
+      >
+        <Mic size={24} color={voiceCommandsEnabled ? 'black' : '#B8B8B8'} />
+      </TouchableOpacity>
       {/* Timer 아이콘 */}
       <TouchableOpacity
         onPress={onTimerPress}
@@ -100,18 +111,6 @@ export const getHeaderRightWithActivateInfoSettings = (
         accessibilityState={{ selected: timerIsActive }}
       >
         <Timer size={24} color={timerIsActive ? 'black' : '#B8B8B8'} />
-      </TouchableOpacity>
-
-      {/* 음성 인식 아이콘 */}
-      <TouchableOpacity
-        onPress={onVoicePress}
-        style={{ marginRight: 13 }}
-        accessible={true}
-        accessibilityRole="button"
-        accessibilityLabel="음성 인식 단수 증감"
-        accessibilityHint="탭하여 음성 인식 단수 증감 기능을 켜거나 끕니다"
-      >
-        <Mic size={24} color={voiceCommandsEnabled ? 'black' : '#B8B8B8'} />
       </TouchableOpacity>
 
       {/* 활성 아이콘 */}
