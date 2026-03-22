@@ -4,10 +4,14 @@ import { useEffect, useRef } from 'react';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 
 const LOCALE = 'ko-KR';
-const KEYWORDS_ADD = ['곤지', '군지', '건지'];
+const KEYWORDS_ADD = ['곤지', '군지', '건지', '본지'];
 const KEYWORDS_SUBTRACT = ['연지', '현지', '연기'];
+const KEYWORDS_SUB_ADD = ['홍실', '홍신', '동실', '통실'];
+const KEYWORDS_SUB_SUBTRACT = ['청실', '청신', '창실'];
 const KEYWORD_SET_ADD = new Set(KEYWORDS_ADD);
 const KEYWORD_SET_SUBTRACT = new Set(KEYWORDS_SUBTRACT);
+const KEYWORD_SET_SUB_ADD = new Set(KEYWORDS_SUB_ADD);
+const KEYWORD_SET_SUB_SUBTRACT = new Set(KEYWORDS_SUB_SUBTRACT);
 const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
 const DEBUG_TAG = '[useVoiceCommands]';
 const DEFAULT_RESTART_DELAY_MS = 1200;
@@ -15,6 +19,7 @@ const BUSY_RESTART_DELAY_MS = 8000;
 const IDLE_RECYCLE_MS = 30000;
 const IDLE_RESTART_DELAY_MS = 1500;
 const START_WATCHDOG_MS = 5000;
+export const VOICE_LISTENING_TEXT = '듣는 중...';
 
 const ERROR_MESSAGES: Record<string, string> = {
   aborted: '음성 인식이 중단되었습니다',
@@ -63,13 +68,21 @@ function getCommonPrefixLength(previousWords: string[], nextWords: string[]): nu
   return index;
 }
 
-function getWordAction(word: string): 'add' | 'subtract' | null {
+function getWordAction(word: string): 'add' | 'subtract' | 'subAdd' | 'subSubtract' | null {
   if (KEYWORD_SET_ADD.has(word)) {
     return 'add';
   }
 
   if (KEYWORD_SET_SUBTRACT.has(word)) {
     return 'subtract';
+  }
+
+  if (KEYWORD_SET_SUB_ADD.has(word)) {
+    return 'subAdd';
+  }
+
+  if (KEYWORD_SET_SUB_SUBTRACT.has(word)) {
+    return 'subSubtract';
   }
 
   return null;
@@ -83,17 +96,23 @@ export function useVoiceCommands(
   enabled: boolean,
   onAdd: () => void,
   onSubtract: () => void,
+  onSubAdd?: () => void,
+  onSubSubtract?: () => void,
   onRecognized?: (text: string) => void,
   onError?: (message: string) => void
 ) {
   const onAddRef = useRef(onAdd);
   const onSubtractRef = useRef(onSubtract);
+  const onSubAddRef = useRef(onSubAdd);
+  const onSubSubtractRef = useRef(onSubSubtract);
   const onRecognizedRef = useRef(onRecognized);
   const onErrorRef = useRef(onError);
   const enabledRef = useRef(enabled);
 
   onAddRef.current = onAdd;
   onSubtractRef.current = onSubtract;
+  onSubAddRef.current = onSubAdd;
+  onSubSubtractRef.current = onSubSubtract;
   onRecognizedRef.current = onRecognized;
   onErrorRef.current = onError;
   enabledRef.current = enabled;
@@ -160,6 +179,16 @@ export function useVoiceCommands(
 
         if (action === 'subtract') {
           onSubtractRef.current();
+          return;
+        }
+
+        if (action === 'subAdd') {
+          onSubAddRef.current?.();
+          return;
+        }
+
+        if (action === 'subSubtract') {
+          onSubSubtractRef.current?.();
         }
       });
     };
@@ -355,7 +384,12 @@ export function useVoiceCommands(
         }
 
         logState('calling ExpoSpeechRecognitionModule.start', {
-          keywords: [...KEYWORDS_ADD, ...KEYWORDS_SUBTRACT],
+          keywords: [
+            ...KEYWORDS_ADD,
+            ...KEYWORDS_SUBTRACT,
+            ...KEYWORDS_SUB_ADD,
+            ...KEYWORDS_SUB_SUBTRACT,
+          ],
         });
         ExpoSpeechRecognitionModule.start({
           lang: LOCALE,
@@ -364,7 +398,12 @@ export function useVoiceCommands(
           maxAlternatives: 1,
           requiresOnDeviceRecognition: true,
           androidRecognitionServicePackage: ANDROID_ON_DEVICE_SERVICE,
-          contextualStrings: [...KEYWORDS_ADD, ...KEYWORDS_SUBTRACT],
+          contextualStrings: [
+            ...KEYWORDS_ADD,
+            ...KEYWORDS_SUBTRACT,
+            ...KEYWORDS_SUB_ADD,
+            ...KEYWORDS_SUB_SUBTRACT,
+          ],
           androidIntentOptions: {
             EXTRA_LANGUAGE_MODEL: 'web_search',
           },
@@ -408,7 +447,7 @@ export function useVoiceCommands(
         isRecognizing = true;
         clearStartWatchdog();
         onErrorRef.current?.('');
-        onRecognizedRef.current?.('듣는 중...');
+        onRecognizedRef.current?.(VOICE_LISTENING_TEXT);
         logState('event:start');
         touchActivity('start');
       }

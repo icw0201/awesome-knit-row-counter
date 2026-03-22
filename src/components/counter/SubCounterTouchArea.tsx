@@ -8,6 +8,7 @@ interface SubCounterTouchAreaProps {
   onAdd?: () => void;
   onSubtract?: () => void;
   showVoiceCommandHints?: boolean;
+  highlightedAction?: 'add' | 'subtract' | null;
 }
 
 /**
@@ -22,10 +23,13 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
   onAdd,
   onSubtract,
   showVoiceCommandHints = false,
+  highlightedAction = null,
 }) => {
   const [leftPressed, setLeftPressed] = useState(false);
   const [rightPressed, setRightPressed] = useState(false);
   const voiceHintIconColor = '#767676';
+  const isSubtractHighlighted = leftPressed || highlightedAction === 'subtract';
+  const isAddHighlighted = rightPressed || highlightedAction === 'add';
 
   return (
     <View
@@ -36,7 +40,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
     >
       {/* 왼쪽 영역 (감소) - 투명 배경 */}
       <View
-        className={`flex-1 items-start justify-center ${leftPressed ? 'bg-gray-100' : 'bg-transparent'}`}
+        className={`flex-1 items-start justify-center ${isSubtractHighlighted ? 'bg-gray-100' : 'bg-transparent'}`}
         focusable={false}
         accessible={false}
         // 이 터치 레이어를 포커스/접근성 대상에서 제외해
@@ -70,7 +74,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
 
       {/* 오른쪽 영역 (증가) - 투명 배경 */}
       <View
-        className={`flex-1 items-end justify-center ${rightPressed ? 'bg-gray-100' : 'bg-transparent'}`}
+        className={`flex-1 items-end justify-center ${isAddHighlighted ? 'bg-gray-100' : 'bg-transparent'}`}
         focusable={false}
         accessible={false}
         // 오른쪽 영역도 같은 이유로 포커스/접근성 대상에서 제외한다.

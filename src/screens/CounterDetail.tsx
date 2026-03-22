@@ -25,6 +25,7 @@ type HardwareKeyUpEvent = {
   keyCode: number;
 };
 type TouchAreaHighlightAction = 'add' | 'subtract' | null;
+type SubTouchAreaHighlightAction = 'add' | 'subtract' | null;
 
 
 /**
@@ -150,6 +151,8 @@ const CounterDetail = () => {
 
   const [touchAreaHighlight, setTouchAreaHighlight] = useState<TouchAreaHighlightAction>(null);
   const touchAreaHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [subTouchAreaHighlight, setSubTouchAreaHighlight] = useState<SubTouchAreaHighlightAction>(null);
+  const subTouchAreaHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
   const imageWidth = iconSize * 1.4;
@@ -241,6 +244,28 @@ const CounterDetail = () => {
     handleSubtract();
   }, [flashTouchAreaHighlight, handleSubtract]);
 
+  const flashSubTouchAreaHighlight = useCallback((action: Exclude<SubTouchAreaHighlightAction, null>) => {
+    if (subTouchAreaHighlightTimeoutRef.current) {
+      clearTimeout(subTouchAreaHighlightTimeoutRef.current);
+    }
+
+    setSubTouchAreaHighlight(action);
+    subTouchAreaHighlightTimeoutRef.current = setTimeout(() => {
+      setSubTouchAreaHighlight(null);
+      subTouchAreaHighlightTimeoutRef.current = null;
+    }, 100);
+  }, []);
+
+  const handleHighlightedSubAdd = useCallback(() => {
+    flashSubTouchAreaHighlight('add');
+    handleSubAdd();
+  }, [flashSubTouchAreaHighlight, handleSubAdd]);
+
+  const handleHighlightedSubSubtract = useCallback(() => {
+    flashSubTouchAreaHighlight('subtract');
+    handleSubSubtract();
+  }, [flashSubTouchAreaHighlight, handleSubSubtract]);
+
   const handleVoiceRecognizedTextChange = useCallback((nextText: string) => {
     lastVoiceTranscriptRef.current = nextText;
 
@@ -288,8 +313,8 @@ const CounterDetail = () => {
     !!counter && isVoiceCommandsActive,
     handleHighlightedAdd,
     handleHighlightedSubtract,
-    handleSubAdd,
-    handleSubSubtract,
+    handleHighlightedSubAdd,
+    handleHighlightedSubSubtract,
     handleVoiceRecognizedTextChange,
     setVoiceRecognitionError
   );
@@ -304,6 +329,9 @@ const CounterDetail = () => {
     return () => {
       if (touchAreaHighlightTimeoutRef.current) {
         clearTimeout(touchAreaHighlightTimeoutRef.current);
+      }
+      if (subTouchAreaHighlightTimeoutRef.current) {
+        clearTimeout(subTouchAreaHighlightTimeoutRef.current);
       }
     };
   }, []);
@@ -547,9 +575,10 @@ const CounterDetail = () => {
       <SubCounterModal
         isOpen={subModalIsOpen}
         onToggle={handleSubModalToggle}
-        onAdd={handleSubAdd}
-        onSubtract={handleSubSubtract}
+        onAdd={handleHighlightedSubAdd}
+        onSubtract={handleHighlightedSubSubtract}
         showVoiceCommandHints={isVoiceCommandsActive}
+        highlightedAction={subTouchAreaHighlight}
         onReset={handleSubReset}
         onEdit={handleSubEdit}
         onRule={handleSubRule}
