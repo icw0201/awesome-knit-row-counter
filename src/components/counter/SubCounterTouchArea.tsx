@@ -1,12 +1,13 @@
 // src/components/counter/SubCounterTouchArea.tsx
 import React, { useState } from 'react';
-import { View } from 'react-native';
-import { Minus, Plus } from 'lucide-react-native';
+import { View, Text } from 'react-native';
+import { Minus, Plus, Speech } from 'lucide-react-native';
 
 interface SubCounterTouchAreaProps {
   handleWidth?: number;
   onAdd?: () => void;
   onSubtract?: () => void;
+  showVoiceCommandHints?: boolean;
 }
 
 /**
@@ -20,9 +21,11 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
   handleWidth = 30,
   onAdd,
   onSubtract,
+  showVoiceCommandHints = false,
 }) => {
   const [leftPressed, setLeftPressed] = useState(false);
   const [rightPressed, setRightPressed] = useState(false);
+  const voiceHintIconColor = '#767676';
 
   return (
     <View
@@ -47,12 +50,22 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
         }}
         onResponderTerminate={() => setLeftPressed(false)}
       >
-        <Minus
-          size={24}
-          color="#fc3e39"
-          strokeWidth={2}
-          className="ml-3"
-        />
+        <View
+          className="relative ml-5 items-center"
+          style={{ transform: [{ translateY: -10 }] }}
+        >
+          <Minus
+            size={24}
+            color="#fc3e39"
+            strokeWidth={2}
+          />
+          {showVoiceCommandHints && (
+            <View className="absolute top-8 flex-row items-center">
+              <Speech size={12} color={voiceHintIconColor} strokeWidth={2} />
+              <Text className="ml-1 text-xs text-darkgray">청실</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* 오른쪽 영역 (증가) - 투명 배경 */}
@@ -70,12 +83,22 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
         }}
         onResponderTerminate={() => setRightPressed(false)}
       >
-        <Plus
-          size={24}
-          color="#fc3e39"
-          strokeWidth={2}
-          className="mr-3"
-        />
+        <View
+          className="relative mr-5 items-center"
+          style={{ transform: [{ translateY: -10 }] }}
+        >
+          <Plus
+            size={24}
+            color="#fc3e39"
+            strokeWidth={2}
+          />
+          {showVoiceCommandHints && (
+            <View className="absolute top-8 flex-row items-center">
+              <Speech size={12} color={voiceHintIconColor} strokeWidth={2} />
+              <Text className="ml-1 text-xs text-darkgray">홍실</Text>
+            </View>
+          )}
+        </View>
       </View>
     </View>
   );

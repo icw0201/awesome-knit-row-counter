@@ -492,6 +492,7 @@ const CounterDetail = () => {
         onToggle={handleSubModalToggle}
         onAdd={handleSubAdd}
         onSubtract={handleSubSubtract}
+        showVoiceCommandHints={isVoiceCommandsActive}
         onReset={handleSubReset}
         onEdit={handleSubEdit}
         onRule={handleSubRule}

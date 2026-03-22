@@ -15,6 +15,7 @@ interface SubCounterModalProps {
   onRule?: () => void;
   onAdd?: () => void;
   onSubtract?: () => void;
+  showVoiceCommandHints?: boolean;
   handleWidth?: number;
   subCount?: number;
   subRule?: number;
@@ -34,6 +35,7 @@ export const SubCounterModal: React.FC<SubCounterModalProps> = ({
   onRule,
   onAdd,
   onSubtract,
+  showVoiceCommandHints = false,
   handleWidth = 30,
   subCount = 0,
   subRule: _subRule = 0,
@@ -62,6 +64,7 @@ export const SubCounterModal: React.FC<SubCounterModalProps> = ({
         handleWidth={handleWidth}
         onAdd={onAdd}
         onSubtract={onSubtract}
+        showVoiceCommandHints={showVoiceCommandHints}
       />
 
       {/* 콘텐츠 영역 */}
