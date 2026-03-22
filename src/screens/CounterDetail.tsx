@@ -246,12 +246,12 @@ const CounterDetail = () => {
 
   const handleVoiceHighlightedAdd = useCallback((commandWord?: string) => {
     flashTouchAreaHighlight('add');
-    handleAdd('voice', commandWord);
+    handleAdd(commandWord);
   }, [flashTouchAreaHighlight, handleAdd]);
 
   const handleVoiceHighlightedSubtract = useCallback((commandWord?: string) => {
     flashTouchAreaHighlight('subtract');
-    handleSubtract('voice', commandWord);
+    handleSubtract(commandWord);
   }, [flashTouchAreaHighlight, handleSubtract]);
 
   const flashSubTouchAreaHighlight = useCallback((action: Exclude<SubTouchAreaHighlightAction, null>) => {
@@ -278,12 +278,12 @@ const CounterDetail = () => {
 
   const handleVoiceHighlightedSubAdd = useCallback((commandWord?: string) => {
     flashSubTouchAreaHighlight('add');
-    handleSubAdd('voice', commandWord);
+    handleSubAdd(commandWord);
   }, [flashSubTouchAreaHighlight, handleSubAdd]);
 
   const handleVoiceHighlightedSubSubtract = useCallback((commandWord?: string) => {
     flashSubTouchAreaHighlight('subtract');
-    handleSubSubtract('voice', commandWord);
+    handleSubSubtract(commandWord);
   }, [flashSubTouchAreaHighlight, handleSubSubtract]);
 
   const handleVoiceRecognizedTextChange = useCallback((nextText: string) => {
