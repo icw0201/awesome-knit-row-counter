@@ -145,14 +145,6 @@ const CounterDetail = () => {
   } = useVoicePermissionGate();
   const voiceError = voicePermissionError || voiceRecognitionError;
 
-  /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
-  useVoiceCommands(
-    !!counter && isVoiceCommandsActive,
-    handleAdd,
-    handleSubtract,
-    setVoiceRecognizedText,
-    setVoiceRecognitionError
-  );
   const [touchAreaHighlight, setTouchAreaHighlight] = useState<TouchAreaHighlightAction>(null);
   const touchAreaHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -242,6 +234,15 @@ const CounterDetail = () => {
     flashTouchAreaHighlight('subtract');
     handleSubtract();
   }, [flashTouchAreaHighlight, handleSubtract]);
+
+  /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
+  useVoiceCommands(
+    !!counter && isVoiceCommandsActive,
+    handleHighlightedAdd,
+    handleHighlightedSubtract,
+    setVoiceRecognizedText,
+    setVoiceRecognitionError
+  );
 
   /**
    * 화면이 사라질 때 남아 있는 하이라이트 timeout을 정리한다.
