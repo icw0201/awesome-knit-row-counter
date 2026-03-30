@@ -137,9 +137,13 @@ const CounterDetail = () => {
     isVoiceCommandsEnabled,
     isVoiceCommandsActive,
     voicePermissionModalVisible,
+    voicePermissionModalTitle,
+    voicePermissionModalDescription,
+    voicePermissionModalConfirmText,
+    voicePermissionModalCancelText,
     voicePermissionError,
     closeVoicePermissionModal,
-    openVoicePermissionSettings,
+    handleVoicePermissionModalConfirm,
     toggleVoiceCommands,
   } = useVoicePermissionGate();
   const {
@@ -516,6 +520,10 @@ const CounterDetail = () => {
         errorModalVisible={errorModalVisible}
         errorMessage={errorMessage}
         voicePermissionModalVisible={voicePermissionModalVisible}
+        voicePermissionModalTitle={voicePermissionModalTitle}
+        voicePermissionModalDescription={voicePermissionModalDescription}
+        voicePermissionModalConfirmText={voicePermissionModalConfirmText}
+        voicePermissionModalCancelText={voicePermissionModalCancelText}
         currentCount={currentCount}
         currentTargetCount={currentTargetCount}
         subCount={subCount}
@@ -527,7 +535,7 @@ const CounterDetail = () => {
         onTimerResetConfirm={handleTimerResetConfirm}
         onErrorModalClose={() => setErrorModalVisible(false)}
         onVoicePermissionModalClose={closeVoicePermissionModal}
-        onOpenVoicePermissionSettings={openVoicePermissionSettings}
+        onVoicePermissionModalConfirm={handleVoicePermissionModalConfirm}
         onTargetCountConfirm={handleTargetCountConfirm}
         onSubEditConfirm={handleSubEditConfirm}
         onSubResetConfirm={handleSubResetConfirm}

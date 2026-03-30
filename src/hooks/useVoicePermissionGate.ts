@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from 'react';
-import { AppState, Linking, type AppStateStatus } from 'react-native';
+import { AppState, Linking, Platform, type AppStateStatus } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 import {
@@ -9,6 +9,9 @@ import {
   setVoiceRecognitionPermissionStatusSetting,
 } from '@storage/settings';
 
+const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
+const REQUIRED_ON_DEVICE_LOCALE = 'ko-KR';
+
 /**
  * 음성 인식 토글과 시스템 권한 상태를 함께 관리한다.
  *
@@ -16,7 +19,7 @@ import {
  * - 저장된 "음성 기능 사용 여부"와 실제 OS 권한 상태를 동기화
  * - 화면 포커스/앱 복귀 시 권한 상태 재확인
  * - 토글 ON 시 필요하면 시스템 권한 요청
- * - 영구 거절 상태에서는 설정 이동 모달 노출
+ * - 영구 거절/모델 미설치 상태에서는 안내 모달 노출
  */
 export function useVoicePermissionGate() {
   // 권한 요청/동기화가 중첩 실행되면 모달과 AppState 이벤트가 꼬일 수 있어 재진입을 막는다.
@@ -29,11 +32,92 @@ export function useVoicePermissionGate() {
   );
   // 시스템 권한이 실제로 허용되었는지 여부
   const [voicePermissionGranted, setVoicePermissionGranted] = useState(false);
-  // 권한이 영구 거절되었거나 설정 이동이 필요한 경우 보여줄 모달
+  // 권한 설정 안내 / 모델 미설치 안내에 공용으로 사용하는 모달
   const [voicePermissionModalVisible, setVoicePermissionModalVisible] =
     useState(false);
+  // 같은 ConfirmModal을 재사용하기 위해 제목/본문/버튼 문구를 상태로 들고 있다.
+  // 현재 상황이 "권한 필요"인지 "온디바이스 모델 없음"인지에 따라 값이 바뀐다.
+  const [voicePermissionModalTitle, setVoicePermissionModalTitle] = useState('음성 인식 권한');
+  const [voicePermissionModalDescription, setVoicePermissionModalDescription] = useState(
+    '음성인식 기능을 위해 설정에서 음성 인식 권한을 허용해 주세요.'
+  );
+  const [voicePermissionModalConfirmText, setVoicePermissionModalConfirmText] = useState('설정 열기');
+  const [voicePermissionModalCancelText, setVoicePermissionModalCancelText] = useState('닫기');
+  // 확인 버튼이 "설정 열기" 역할인지, 단순 닫기 역할인지 분기한다.
+  const [shouldOpenSettingsOnModalConfirm, setShouldOpenSettingsOnModalConfirm] = useState(true);
   // 권한 확인/설정 이동 과정에서 사용자에게 보여줄 에러 문구
   const [voicePermissionError, setVoicePermissionError] = useState('');
+
+  // 시스템 권한이 막혀 있을 때 보여줄 설정 이동 안내 모달 상태를 구성한다.
+  const showVoicePermissionSettingsModal = useCallback(() => {
+    setVoicePermissionModalTitle('음성 인식 권한');
+    setVoicePermissionModalDescription('음성인식 기능을 위해 설정에서 음성 인식 권한을 허용해 주세요.');
+    setVoicePermissionModalConfirmText('설정 열기');
+    setVoicePermissionModalCancelText('닫기');
+    setShouldOpenSettingsOnModalConfirm(true);
+    setVoicePermissionModalVisible(true);
+  }, []);
+
+  // 권한은 있어도 ko-KR 온디바이스 모델이 없어서 기능 자체를 켤 수 없을 때 사용한다.
+  const showVoiceUnavailableModal = useCallback(() => {
+    setVoicePermissionModalTitle('음성 인식 사용 불가');
+    setVoicePermissionModalDescription(`이 기기에는 ${REQUIRED_ON_DEVICE_LOCALE} 온디바이스 음성 인식 모델이 설치되어 있지 않아 음성인식 기능을 사용할 수 없습니다.`);
+    setVoicePermissionModalConfirmText('확인');
+    setVoicePermissionModalCancelText('');
+    setShouldOpenSettingsOnModalConfirm(false);
+    setVoicePermissionModalVisible(true);
+  }, []);
+
+  // 모달을 닫을 때는 현재 표시 상태만 내리고, 권한/기능 상태는 건드리지 않는다.
+  const closeVoicePermissionModal = useCallback(() => {
+    setVoicePermissionModalVisible(false);
+  }, []);
+
+  // 같은 ConfirmModal을 공용 사용하므로 확인 버튼 동작도 모달 타입에 따라 나눈다.
+  // 권한 모달이면 설정 앱으로 보내고, 사용 불가 모달이면 단순 확인 후 닫는다.
+  const handleVoicePermissionModalConfirm = useCallback(() => {
+    if (shouldOpenSettingsOnModalConfirm) {
+      setVoicePermissionModalVisible(false);
+      Linking.openSettings().catch(() => {
+        setVoicePermissionError('설정 화면을 열 수 없습니다');
+      });
+      return;
+    }
+
+    setVoicePermissionModalVisible(false);
+  }, [shouldOpenSettingsOnModalConfirm]);
+
+  /**
+   * Android에서 Google on-device recognition 서비스에
+   * 요청한 locale 모델이 실제로 설치되어 있는지 확인한다.
+   *
+   * - iOS/기타 플랫폼은 현재 이 제약을 강제하지 않으므로 true
+   * - on-device recognition 자체를 지원하지 않으면 false
+   * - locale 목록 조회가 실패해도 "사용 불가"로 안전하게 처리하기 위해 false
+   */
+  const checkOnDeviceKoModelAvailability = useCallback(async (): Promise<boolean> => {
+    if (Platform.OS !== 'android') {
+      return true;
+    }
+
+    try {
+      if (!ExpoSpeechRecognitionModule.supportsOnDeviceRecognition()) {
+        return false;
+      }
+
+      const supportedLocales =
+        await ExpoSpeechRecognitionModule.getSupportedLocales({
+          androidRecognitionServicePackage: ANDROID_ON_DEVICE_SERVICE,
+        });
+
+      const installedLocales = supportedLocales.installedLocales ?? [];
+      return installedLocales.some(
+        (locale) => locale.toLowerCase() === REQUIRED_ON_DEVICE_LOCALE.toLowerCase()
+      );
+    } catch {
+      return false;
+    }
+  }, []);
 
   // 권한 허용 상태를 저장소/UI에 함께 반영한다.
   const applyGrantedVoicePermission = useCallback((enabled: boolean) => {
@@ -52,9 +136,25 @@ export function useVoicePermissionGate() {
     setVoiceCommandsEnabledSetting(false);
     setVoiceCommandsEnabled(false);
     setVoicePermissionGranted(false);
-    setVoicePermissionModalVisible(showModal);
+    if (showModal) {
+      showVoicePermissionSettingsModal();
+    } else {
+      setVoicePermissionModalVisible(false);
+    }
     setVoicePermissionError('');
-  }, []);
+  }, [showVoicePermissionSettingsModal]);
+
+  const applyUnavailableVoiceRecognition = useCallback((showModal: boolean) => {
+    setVoiceCommandsEnabledSetting(false);
+    setVoiceCommandsEnabled(false);
+    setVoicePermissionGranted(false);
+    if (showModal) {
+      showVoiceUnavailableModal();
+    } else {
+      setVoicePermissionModalVisible(false);
+    }
+    setVoicePermissionError('');
+  }, [showVoiceUnavailableModal]);
 
   // 토글 ON 직전 시스템 권한을 확인하고, 아직 없으면 OS 권한 요청을 띄운다.
   const requestVoicePermission = useCallback(async (): Promise<boolean> => {
@@ -92,6 +192,13 @@ export function useVoicePermissionGate() {
       // 이미 허용된 경우: 저장소에 남아 있던 enabled 여부를 기준으로 복원한다.
       // 단, 최초 허용 직후처럼 저장 상태가 없으면 기본값을 true로 둔다.
       if (currentPermission.granted) {
+        const isModelAvailable = await checkOnDeviceKoModelAvailability();
+
+        if (!isModelAvailable) {
+          applyUnavailableVoiceRecognition(getVoiceCommandsEnabledSetting());
+          return;
+        }
+
         const shouldEnable = storedStatus === 'granted'
           ? getVoiceCommandsEnabledSetting()
           : true;
@@ -116,6 +223,13 @@ export function useVoicePermissionGate() {
         await ExpoSpeechRecognitionModule.requestPermissionsAsync();
 
       if (requestedPermission.granted) {
+        const isModelAvailable = await checkOnDeviceKoModelAvailability();
+
+        if (!isModelAvailable) {
+          applyUnavailableVoiceRecognition(true);
+          return;
+        }
+
         applyGrantedVoicePermission(true);
         return;
       }
@@ -124,12 +238,18 @@ export function useVoicePermissionGate() {
     } catch {
       setVoiceCommandsEnabled(false);
       setVoicePermissionGranted(false);
-      setVoicePermissionModalVisible(true);
+      showVoicePermissionSettingsModal();
       setVoicePermissionError('음성 인식 권한을 확인할 수 없습니다');
     } finally {
       isSyncingPermissionRef.current = false;
     }
-  }, [applyDeniedVoicePermission, applyGrantedVoicePermission]);
+  }, [
+    applyDeniedVoicePermission,
+    applyGrantedVoicePermission,
+    applyUnavailableVoiceRecognition,
+    checkOnDeviceKoModelAvailability,
+    showVoicePermissionSettingsModal,
+  ]);
 
   /**
    * 화면 포커스 시:
@@ -160,23 +280,12 @@ export function useVoicePermissionGate() {
     }, [syncVoicePermission])
   );
 
-  // 사용자를 앱 설정 화면으로 보낸다.
-  const openVoicePermissionSettings = useCallback(() => {
-    Linking.openSettings().catch(() => {
-      setVoicePermissionError('설정 화면을 열 수 없습니다');
-    });
-  }, []);
-
-  // 설정 이동 안내 모달만 닫고, 권한/기능 상태 자체는 유지한다.
-  const closeVoicePermissionModal = useCallback(() => {
-    setVoicePermissionModalVisible(false);
-  }, []);
-
   /**
    * 헤더의 음성 토글 버튼 처리.
    *
    * - 이미 켜져 있으면 즉시 OFF
-   * - 저장된 상태가 denied면 OS 팝업 대신 설정 이동 모달 노출
+   * - 실제 OS 권한이 이미 있으면 곧바로 모델 존재 여부까지 확인
+   * - OS 차원에서 더 이상 권한 요청이 불가능하면 설정 이동 모달 노출
    * - 그 외에는 시스템 권한을 요청하고 결과에 따라 granted/denied 적용
    */
   const toggleVoiceCommands = useCallback(async () => {
@@ -187,15 +296,37 @@ export function useVoicePermissionGate() {
       return;
     }
 
-    if (getVoiceRecognitionPermissionStatusSetting() === 'denied') {
-      setVoicePermissionModalVisible(true);
-      return;
-    }
-
     try {
+      const currentPermission =
+        await ExpoSpeechRecognitionModule.getPermissionsAsync();
+
+      if (currentPermission.granted) {
+        const isModelAvailable = await checkOnDeviceKoModelAvailability();
+
+        if (!isModelAvailable) {
+          applyUnavailableVoiceRecognition(true);
+          return;
+        }
+
+        applyGrantedVoicePermission(true);
+        return;
+      }
+
+      if (currentPermission.canAskAgain === false) {
+        applyDeniedVoicePermission(true);
+        return;
+      }
+
       const granted = await requestVoicePermission();
 
       if (granted) {
+        const isModelAvailable = await checkOnDeviceKoModelAvailability();
+
+        if (!isModelAvailable) {
+          applyUnavailableVoiceRecognition(true);
+          return;
+        }
+
         applyGrantedVoicePermission(true);
         return;
       }
@@ -205,13 +336,16 @@ export function useVoicePermissionGate() {
       setVoiceCommandsEnabledSetting(false);
       setVoiceCommandsEnabled(false);
       setVoicePermissionGranted(false);
-      setVoicePermissionModalVisible(true);
+      showVoicePermissionSettingsModal();
       setVoicePermissionError('음성 인식 권한을 확인할 수 없습니다');
     }
   }, [
     applyDeniedVoicePermission,
     applyGrantedVoicePermission,
+    applyUnavailableVoiceRecognition,
+    checkOnDeviceKoModelAvailability,
     requestVoicePermission,
+    showVoicePermissionSettingsModal,
     voiceCommandsEnabled,
   ]);
 
@@ -222,9 +356,13 @@ export function useVoicePermissionGate() {
     isVoiceCommandsActive:
       isScreenFocused && voiceCommandsEnabled && voicePermissionGranted,
     voicePermissionModalVisible,
+    voicePermissionModalTitle,
+    voicePermissionModalDescription,
+    voicePermissionModalConfirmText,
+    voicePermissionModalCancelText,
     voicePermissionError,
     closeVoicePermissionModal,
-    openVoicePermissionSettings,
+    handleVoicePermissionModalConfirm,
     toggleVoiceCommands,
   };
 }
