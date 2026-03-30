@@ -11,30 +11,24 @@ const ONE_LINE_HEIGHT = 22;
 
 export interface VoiceRecognitionBannerProps {
   visible: boolean;
-  /** ProgressBar 아래 오프셋 (`progressBarHeightPx + 8` 등) */
-  top: number;
   /** 배너가 넘지 않는 최대 가로 (화면 기준, 줄 바꿈·초기화 트리거용) */
   maxWidth: number;
   voiceError: string;
   recognizedText: string;
   isResetPending: boolean;
   onRecognizedTextLayout: (e: NativeSyntheticEvent<TextLayoutEventData>) => void;
-  /** 임시: 레이아웃 구역 확인용 배경 */
-  layoutDebug?: boolean;
 }
 
 /**
- * 카운터 상단 음성 인식 상태·결과 표시 배너 (시각적으로 1줄, 너비는 내용에 맞춤·상한 maxWidth)
+ * 카운터 콘텐츠 내부 음성 인식 상태·결과 표시 배너
  */
 const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
   visible,
-  top,
   maxWidth,
   voiceError,
   recognizedText,
   isResetPending,
   onRecognizedTextLayout,
-  layoutDebug = false,
 }) => {
   const textMaxWidth = useMemo(
     () => Math.max(0, maxWidth - H_PAD - MIC_SIZE - 6),
@@ -46,12 +40,9 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
   }
 
   return (
-    <View className="absolute left-0 right-0 z-40 items-center" pointerEvents="none" style={{ top }}>
+    <View className="w-full items-center justify-center" pointerEvents="none">
       <View
-        className={clsx(
-          'rounded px-2 py-1.5',
-          layoutDebug ? 'bg-violet-200' : 'bg-lightgray'
-        )}
+        className={clsx('rounded bg-lightgray px-2 py-1.5')}
         style={{ maxWidth }}
       >
         <View className="flex-row items-center gap-1.5">

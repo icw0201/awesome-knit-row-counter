@@ -10,14 +10,14 @@ import KeyEvent from 'react-native-keyevent';
 
 import { getHeaderRightWithActivateInfoSettings } from '@navigation/HeaderOptions';
 
-import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal } from '@components/counter';
+import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal, VoiceRecognitionBanner } from '@components/counter';
 import Tooltip from '@components/common/Tooltip';
 import { ADD_KEY_CODES, SUBTRACT_KEY_CODES } from '@constants/hardwareKeyCodes';
 import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, ScreenSize } from '@constants/screenSizeConfig';
 import { getTooltipEnabledSetting } from '@storage/settings';
 import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
-import { useVoiceCommands, VOICE_LISTENING_TEXT } from '@hooks/useVoiceCommands';
+import { useVoiceCommands } from '@hooks/useVoiceCommands';
 import { useVoicePermissionGate } from '@hooks/useVoicePermissionGate';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
 
@@ -26,7 +26,6 @@ type HardwareKeyUpEvent = {
 };
 type TouchAreaHighlightAction = 'add' | 'subtract' | null;
 type SubTouchAreaHighlightAction = 'add' | 'subtract' | null;
-
 
 /**
  * 카운터 상세 화면 컴포넌트
@@ -180,8 +179,10 @@ const CounterDetail = () => {
       timerIsActive: counter?.timerIsActive ?? false,
       subModalIsOpen,
     });
-  const { directionSectionFlex, countSectionFlex, actionsSectionFlex } =
-    getContentSectionFlexes(mascotIsActive, showCounterActions);
+  const showVoiceBanner =
+    screenSize === ScreenSize.LARGE && isVoiceCommandsActive;
+  const { directionSectionFlex, voiceBannerSectionFlex, countSectionFlex, actionsSectionFlex } =
+    getContentSectionFlexes(mascotIsActive, showCounterActions, showVoiceBanner);
   const { timerHeightPx, gapBetweenTimerAndContentPx, contentHeightPx, bottomReservedHeightPx } =
     getCounterDetailVerticalPx({
       contentAreaHeight,
@@ -192,10 +193,12 @@ const CounterDetail = () => {
       shouldStartContentFromTop,
     });
   const countSectionHeightPx = contentHeightPx * countSectionFlex;
+  const shouldFillCountVertically = mascotIsActive && showVoiceBanner;
   const digitCount = Math.max(1, String(counter?.count ?? 0).length);
   const CHAR_WIDTH_RATIO = 0.6; // 숫자 1글자 너비 ≈ fontSize * 비율
-  const maxFontSizeByHeight = countSectionHeightPx * 0.8;
-  const maxFontSizeByWidth = (resolvedWidth * 0.5) / (digitCount * CHAR_WIDTH_RATIO);
+  const maxFontSizeByHeight = countSectionHeightPx * (shouldFillCountVertically ? 1 : 0.8);
+  const maxFontSizeByWidth =
+    (resolvedWidth * (shouldFillCountVertically ? 0.8 : 0.5)) / (digitCount * CHAR_WIDTH_RATIO);
   const countTextFontSizePx = Math.max(0, Math.min(maxFontSizeByHeight, maxFontSizeByWidth));
 
   useEffect(() => {
@@ -319,7 +322,7 @@ const CounterDetail = () => {
 
   const handleVoiceTextLayout = useCallback(
     ({ nativeEvent }: { nativeEvent: { lines: Array<{ text: string }> } }) => {
-      if (nativeEvent.lines.length > 2 && voiceRecognizedText && !isVoiceTextResetPending) {
+      if (nativeEvent.lines.length > 1 && voiceRecognizedText && !isVoiceTextResetPending) {
         resetVoiceTextBaseRef.current = lastVoiceTranscriptRef.current;
         setVoiceRecognizedText('');
         setIsVoiceTextResetPending(true);
@@ -486,24 +489,6 @@ const CounterDetail = () => {
           onPress={handleTargetCountOpen}
         />
 
-        {/* 음성 인식 결과 표시 (증가/감소) */}
-        {isVoiceCommandsActive && (
-          <View className="absolute left-2 right-2 z-40 rounded px-2 py-1.5 bg-lightgray min-h-[32px] justify-center" style={{ top: progressBarHeightPx + 8 }}>
-            <Text className="text-xs text-darkgray">Voice</Text>
-            {voiceError ? (
-              <Text className="text-xs text-red-orange-500" numberOfLines={2}>에러: {voiceError}</Text>
-            ) : (
-              <Text
-                className="text-sm text-black"
-                numberOfLines={2}
-                onTextLayout={handleVoiceTextLayout}
-              >
-                {voiceRecognizedText || (isVoiceTextResetPending ? '' : VOICE_LISTENING_TEXT)}
-              </Text>
-            )}
-          </View>
-        )}
-
         {/* 헤더 활성 아이콘 안내 툴팁 (헤더 대신 화면 위층에 표시) */}
         {screenSize !== ScreenSize.COMPACT && tooltipEnabled && (
           <Tooltip
@@ -513,9 +498,15 @@ const CounterDetail = () => {
           />
         )}
 
-        <View className="absolute left-0 right-0 bottom-0 w-full items-center justify-start" style={{ top: progressBarHeightPx }}>
+        <View
+          className="absolute left-0 right-0 bottom-0 w-full items-center justify-start"
+          style={{ top: progressBarHeightPx }}
+        >
           {/* 타이머 영역 (bands의 timerEndPercent 기준) */}
-          <View className="w-full items-center justify-center" style={{ height: timerHeightPx }}>
+          <View
+            className="w-full items-center justify-center"
+            style={{ height: timerHeightPx }}
+          >
             {showTimeDisplay && (
               <TimeDisplay
                 screenSize={screenSize}
@@ -534,7 +525,10 @@ const CounterDetail = () => {
           <View className="w-full items-center" style={{ height: contentHeightPx }}>
             <View className="w-full flex-1">
               {mascotIsActive && (
-                <View className="items-center justify-center w-full" style={{ flex: directionSectionFlex }}>
+                <View
+                  className="w-full items-center justify-center"
+                  style={{ flex: directionSectionFlex }}
+                >
                   <CounterDirection
                     mascotIsActive={mascotIsActive}
                     wayIsChange={wayIsChange}
@@ -547,8 +541,23 @@ const CounterDetail = () => {
                   />
                 </View>
               )}
+              {showVoiceBanner && (
+                <View
+                  className="w-full items-center justify-center"
+                  style={{ flex: voiceBannerSectionFlex }}
+                >
+                  <VoiceRecognitionBanner
+                    visible={showVoiceBanner}
+                    maxWidth={Math.max(0, resolvedWidth - 32)}
+                    voiceError={voiceError}
+                    recognizedText={voiceRecognizedText}
+                    isResetPending={isVoiceTextResetPending}
+                    onRecognizedTextLayout={handleVoiceTextLayout}
+                  />
+                </View>
+              )}
               <View
-                className="items-center justify-center w-full"
+                className="w-full items-center justify-center"
                 style={{ flex: countSectionFlex }}
                 pointerEvents="none"
               >
@@ -560,7 +569,10 @@ const CounterDetail = () => {
                 </Text>
               </View>
               {showCounterActions && (
-                <View className="items-center justify-center w-full" style={{ flex: actionsSectionFlex }}>
+                <View
+                  className="w-full items-center justify-center"
+                  style={{ flex: actionsSectionFlex }}
+                >
                   <CounterActions
                     screenSize={screenSize}
                     iconSize={iconSize}
