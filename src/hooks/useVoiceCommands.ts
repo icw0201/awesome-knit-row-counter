@@ -14,10 +14,15 @@ const KEYWORD_SET_SUB_ADD = new Set(KEYWORDS_SUB_ADD);
 const KEYWORD_SET_SUB_SUBTRACT = new Set(KEYWORDS_SUB_SUBTRACT);
 const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
 const DEBUG_TAG = '[useVoiceCommands]';
+// 일반적인 end/error 이후 recognition을 다시 시작할 때 기본 대기 시간.
 const DEFAULT_RESTART_DELAY_MS = 1200;
+// recognizer가 busy/stopping 상태일 때는 더 길게 기다려 네이티브 세션 정리를 우선한다.
 const BUSY_RESTART_DELAY_MS = 8000;
+// 이 시간 동안 음성/이벤트 활동이 없으면 현재 세션을 재활용하지 않고 새로 연다.
 const IDLE_RECYCLE_MS = 30000;
+// idle recycle로 stop()한 뒤에는 기본 재시작보다 살짝 긴 딜레이로 다시 시작한다.
 const IDLE_RESTART_DELAY_MS = 1500;
+// start() 호출 후 이 시간 안에 start 이벤트가 없으면 시작이 멈춘 것으로 보고 abort()한다.
 const START_WATCHDOG_MS = 5000;
 export const VOICE_LISTENING_TEXT = '듣는 중...';
 
@@ -122,16 +127,20 @@ export function useVoiceCommands(
       return;
     }
 
+    // recognition session의 로컬 런타임 상태.
+    // React state로 두지 않고 effect 내부 변수로 관리해 네이티브 이벤트/타이머에서 즉시 읽는다.
     let cancelled = false;
     let restartTimeout: ReturnType<typeof setTimeout> | null = null;
     let startWatchdogTimeout: ReturnType<typeof setTimeout> | null = null;
     let idleRecycleTimeout: ReturnType<typeof setTimeout> | null = null;
     let isStarting = false;
     let isRecognizing = false;
+    // 우리가 내부적으로 호출한 abort()/stop() 뒤에 따라오는 에러는 정상 흐름이므로 1회 무시한다.
     let ignoreNextAbortedError = false;
     let ignoreNextNoSpeechError = false;
     let nextRestartDelayMs = DEFAULT_RESTART_DELAY_MS;
     let lastActivityAt = Date.now();
+    // partial/final result가 같은 prefix를 반복 전달하므로, 새로 들어온 단어만 액션으로 소비한다.
     let lastTranscriptWords: string[] = [];
 
     const logState = (message: string, extra?: Record<string, unknown>) => {
@@ -155,6 +164,8 @@ export function useVoiceCommands(
       lastTranscriptWords = [];
     };
 
+    // STT 엔진은 같은 문장을 partial -> final로 반복 전달하므로,
+    // 이전 transcript와 공통 prefix를 비교해 "새 단어"만 액션으로 변환한다.
     const runActionsFromTranscript = (text: string) => {
       const nextWords = normalizeTranscriptWords(text);
       const commonPrefixLength = getCommonPrefixLength(lastTranscriptWords, nextWords);
@@ -219,12 +230,14 @@ export function useVoiceCommands(
       clearIdleRecycleTimeout();
     };
 
+    // 음성/이벤트 활동이 감지되면 idle recycle 기준 시각을 갱신한다.
     const touchActivity = (source: string) => {
       lastActivityAt = Date.now();
       logState('activity', { source });
       scheduleIdleRecycle();
     };
 
+    // 개발 중 서비스/언어팩 환경 이슈를 파악하기 위한 진단용 probe.
     const probeRecognitionEnvironment = async () => {
       try {
         const availableServices =
@@ -283,6 +296,8 @@ export function useVoiceCommands(
         return;
       }
 
+      // 긴 무음 상태가 이어지면 stop() 후 재시작해 on-device recognizer가
+      // 조용히 멈춰 버리는 상황을 완화한다.
       idleRecycleTimeout = setTimeout(() => {
         idleRecycleTimeout = null;
         if (cancelled || !enabledRef.current || isStarting || !isRecognizing) {
@@ -321,6 +336,8 @@ export function useVoiceCommands(
       }, delayMs);
     };
 
+    // recognition 시작 전 stale session 정리, watchdog 설정,
+    // unavailable/busy 상황 분기를 한곳에서 처리한다.
     const startListening = async () => {
       if (!enabledRef.current || cancelled || isStarting || isRecognizing) {
         logState('startListening skipped', {
@@ -364,6 +381,7 @@ export function useVoiceCommands(
           nextRestartDelayMs =
             state === 'stopping' ? BUSY_RESTART_DELAY_MS : DEFAULT_RESTART_DELAY_MS;
 
+          // 이전 세션이 완전히 종료되지 않았으면 end 이벤트를 기다렸다가 다시 시도한다.
           if (state === 'stopping') {
             onRecognizedRef.current?.('이전 음성 인식이 완전히 종료되길 기다리는 중...');
             logState('recognizer already stopping, waiting for end event', {
@@ -408,6 +426,7 @@ export function useVoiceCommands(
           },
         });
 
+        // start 이벤트가 오지 않고 시작이 걸려 버리는 경우를 대비한 watchdog.
         startWatchdogTimeout = setTimeout(() => {
           if (cancelled || !enabledRef.current || !isStarting || isRecognizing) {
             return;
@@ -476,6 +495,8 @@ export function useVoiceCommands(
         clearStartWatchdog();
         const transcript = event.results[0]?.transcript ?? '';
         if (transcript) {
+          // partial/final 결과 모두 배너 표시에는 전달하되,
+          // 실제 add/subtract 액션은 runActionsFromTranscript가 중복을 걸러낸다.
           logState('event:result', {
             transcript,
             isFinal: event.isFinal,
@@ -501,6 +522,7 @@ export function useVoiceCommands(
           code: (event as { code?: string | number }).code,
         });
 
+        // idle recycle에서 의도적으로 stop()한 뒤 따라오는 no-speech는 사용자 오류가 아니다.
         const isIgnoredNoSpeech = event.error === 'no-speech' && ignoreNextNoSpeechError;
         if (isIgnoredNoSpeech) {
           ignoreNextNoSpeechError = false;
@@ -511,6 +533,7 @@ export function useVoiceCommands(
           return;
         }
 
+        // stale session 정리용 abort() 뒤에 따라오는 aborted도 내부 제어 흐름으로 본다.
         const isIgnoredAbort = event.error === 'aborted' && ignoreNextAbortedError;
         if (isIgnoredAbort) {
           ignoreNextAbortedError = false;
@@ -534,6 +557,8 @@ export function useVoiceCommands(
           event.error === 'network' ||
           isServerDisconnect;
         if (isBusy) {
+          // recognizer가 여전히 살아 있으면 abort()로 정리하고,
+          // inactive면 end 이후 restart delay만 조정한다.
           const state = await ExpoSpeechRecognitionModule.getStateAsync().catch(
             () => 'inactive' as const
           );
@@ -571,6 +596,7 @@ export function useVoiceCommands(
       () => {
         clearStartWatchdog();
         clearIdleRecycleTimeout();
+        // 세션 경계가 바뀌면 transcript diff 기준도 함께 리셋한다.
         resetTranscriptTracking();
         isStarting = false;
         isRecognizing = false;
@@ -592,6 +618,8 @@ export function useVoiceCommands(
       ignoreNextAbortedError = true;
       resetTranscriptTracking();
       clearAllTimeouts();
+      // unmount/disable 시에는 현재 세션을 중단시키고,
+      // 뒤따라오는 aborted 에러는 ignoreNextAbortedError로 무시한다.
       logState('cleanup abort');
       startSubscription.remove();
       speechStartSubscription.remove();
