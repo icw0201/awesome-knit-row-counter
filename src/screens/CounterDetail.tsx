@@ -1,6 +1,6 @@
 // src/screens/CounterDetail.tsx
 
-import { useLayoutEffect, useCallback, useEffect, useState, useRef } from 'react';
+import { useLayoutEffect, useCallback, useState, useRef } from 'react';
 import { View, Text, useWindowDimensions, Animated, LayoutChangeEvent, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
@@ -18,6 +18,7 @@ import { getTooltipEnabledSetting } from '@storage/settings';
 import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
 import { useVoiceCommands } from '@hooks/useVoiceCommands';
+import { useVoiceBannerText } from '@hooks/useVoiceBannerText';
 import { useVoicePermissionGate } from '@hooks/useVoicePermissionGate';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
 
@@ -132,11 +133,7 @@ const CounterDetail = () => {
   } = useCounter({ counterId });
 
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
-  const [voiceRecognizedText, setVoiceRecognizedText] = useState<string>('');
   const [voiceRecognitionError, setVoiceRecognitionError] = useState<string>('');
-  const lastVoiceTranscriptRef = useRef('');
-  const resetVoiceTextBaseRef = useRef('');
-  const [isVoiceTextResetPending, setIsVoiceTextResetPending] = useState(false);
   const {
     isVoiceCommandsEnabled,
     isVoiceCommandsActive,
@@ -146,6 +143,12 @@ const CounterDetail = () => {
     openVoicePermissionSettings,
     toggleVoiceCommands,
   } = useVoicePermissionGate();
+  const {
+    voiceRecognizedText,
+    isVoiceTextResetPending,
+    handleVoiceRecognizedTextChange,
+    handleVoiceTextLayout,
+  } = useVoiceBannerText({ isVoiceCommandsActive });
   const voiceError = voicePermissionError || voiceRecognitionError;
 
   const [touchAreaHighlight, setTouchAreaHighlight] = useState<TouchAreaHighlightAction>(null);
@@ -200,15 +203,6 @@ const CounterDetail = () => {
   const maxFontSizeByWidth =
     (resolvedWidth * (shouldFillCountVertically ? 0.8 : 0.5)) / (digitCount * CHAR_WIDTH_RATIO);
   const countTextFontSizePx = Math.max(0, Math.min(maxFontSizeByHeight, maxFontSizeByWidth));
-
-  useEffect(() => {
-    if (!isVoiceCommandsActive) {
-      setVoiceRecognizedText('');
-      lastVoiceTranscriptRef.current = '';
-      resetVoiceTextBaseRef.current = '';
-      setIsVoiceTextResetPending(false);
-    }
-  }, [isVoiceCommandsActive]);
 
   /**
    * 메인 카운터의 add/subtract 액션이 실행될 때 좌/우 터치 영역 배경을 잠깐 강조한다.
@@ -288,53 +282,6 @@ const CounterDetail = () => {
     flashSubTouchAreaHighlight('subtract');
     handleSubSubtract(commandWord);
   }, [flashSubTouchAreaHighlight, handleSubSubtract]);
-
-  const handleVoiceRecognizedTextChange = useCallback((nextText: string) => {
-    lastVoiceTranscriptRef.current = nextText;
-    const hiddenPrefix = resetVoiceTextBaseRef.current;
-
-    if (
-      hiddenPrefix &&
-      nextText.startsWith(hiddenPrefix)
-    ) {
-      const remainingText = nextText
-        .slice(hiddenPrefix.length)
-        .trimStart();
-
-      setVoiceRecognizedText(remainingText);
-      setIsVoiceTextResetPending(remainingText.length === 0);
-      return;
-    }
-
-    resetVoiceTextBaseRef.current = '';
-    setIsVoiceTextResetPending(false);
-    setVoiceRecognizedText(nextText);
-  }, []);
-
-  const handleVoiceTextLayout = useCallback(
-    ({ nativeEvent }: { nativeEvent: { lines: Array<{ text: string }> } }) => {
-      if (nativeEvent.lines.length > 1 && voiceRecognizedText) {
-        const visibleLineText = nativeEvent.lines[0]?.text ?? '';
-
-        if (!visibleLineText || !voiceRecognizedText.startsWith(visibleLineText)) {
-          resetVoiceTextBaseRef.current = lastVoiceTranscriptRef.current;
-          setVoiceRecognizedText('');
-          setIsVoiceTextResetPending(true);
-          return;
-        }
-
-        const remainingTextRaw = voiceRecognizedText.slice(visibleLineText.length);
-        const remainingText = remainingTextRaw.trimStart();
-        const consumedLength = voiceRecognizedText.length - remainingText.length;
-
-        resetVoiceTextBaseRef.current += voiceRecognizedText.slice(0, consumedLength);
-
-        setVoiceRecognizedText(remainingText);
-        setIsVoiceTextResetPending(remainingText.length === 0);
-      }
-    },
-    [voiceRecognizedText]
-  );
 
   /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
   useVoiceCommands(
