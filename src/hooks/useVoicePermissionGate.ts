@@ -155,10 +155,6 @@ export function useVoicePermissionGate() {
         installedLocales,
         REQUIRED_ON_DEVICE_LOCALE
       );
-      const matchedSupportedLocale = hasMatchingOnDeviceLocale(
-        supportedLocales.locales ?? [],
-        REQUIRED_ON_DEVICE_LOCALE
-      );
       const usedSupportedLocalesFallback =
         shouldTrustSupportedLocalesWhenInstalledLocalesEmpty(
           installedLocales,
@@ -197,6 +193,9 @@ export function useVoicePermissionGate() {
   }, [showVoicePermissionSettingsModal]);
 
   const applyUnavailableVoiceRecognition = useCallback((showModal: boolean) => {
+    // OS 권한은 이미 허용된 상태이므로 granted를 유지해야,
+    // 나중에 모델이 설치되어도 사용자가 끈 설정(false)이 임의로 true로 복원되지 않는다.
+    setVoiceRecognitionPermissionStatusSetting('granted');
     setVoiceCommandsEnabledSetting(false);
     setVoiceCommandsEnabled(false);
     setVoicePermissionGranted(false);

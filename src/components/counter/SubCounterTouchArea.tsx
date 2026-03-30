@@ -9,6 +9,7 @@ interface SubCounterTouchAreaProps {
   onSubtract?: () => void;
   showVoiceCommandHints?: boolean;
   highlightedAction?: 'add' | 'subtract' | null;
+  disabled?: boolean;
 }
 
 /**
@@ -24,6 +25,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
   onSubtract,
   showVoiceCommandHints = false,
   highlightedAction = null,
+  disabled = false,
 }) => {
   const voiceHintIconColor = '#767676';
   const isSubtractHighlighted = highlightedAction === 'subtract';
@@ -44,7 +46,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
         // 이 터치 레이어를 포커스/접근성 대상에서 제외해
         // 하드웨어 키보드 입력 시 서브 카운터 영역으로 포커스가 들어오지 않게 한다.
         importantForAccessibility="no-hide-descendants"
-        onStartShouldSetResponder={() => true}
+        onStartShouldSetResponder={() => !disabled}
         onResponderRelease={() => onSubtract?.()}
       >
         <View
@@ -72,7 +74,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
         accessible={false}
         // 오른쪽 영역도 같은 이유로 포커스/접근성 대상에서 제외한다.
         importantForAccessibility="no-hide-descendants"
-        onStartShouldSetResponder={() => true}
+        onStartShouldSetResponder={() => !disabled}
         onResponderRelease={() => onAdd?.()}
       >
         <View

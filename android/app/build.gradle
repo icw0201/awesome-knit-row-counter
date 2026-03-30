@@ -4,8 +4,16 @@ apply plugin: "com.facebook.react"
 
 // Android 앱 모듈 빌드 설정의 중심 파일입니다.
 // 이 브랜치에서는 Expo 음성 인식 플러그인이 생성하는 설정을 Android 빌드에 반영하도록
-// 엔트리 파일, CLI, 패키징 옵션, 이미지 포맷 지원, 릴리즈 서명 fallback 흐름을 맞췄습니다.
+// 엔트리 파일, CLI, 패키징 옵션, 이미지 포맷 지원을 맞추고
+// release 빌드는 서명 누락을 조기에 실패시키도록 경로를 정리했습니다.
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
+def releaseKeystorePropertiesFile = rootProject.file("keystore.properties")
+def isReleaseKeystoreConfigured = releaseKeystorePropertiesFile.exists()
+def allowDebugSigningInRelease =
+    (findProperty('android.allowDebugSigningInRelease') ?: false).toBoolean()
+def isReleaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+    taskName.toLowerCase().contains("release")
+}
 
 /**
  * This is the configuration block to customize your React Native Android app.
@@ -71,7 +79,8 @@ react {
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-def enableProguardInReleaseBuilds = (findProperty('android.enableProguardInReleaseBuilds') ?: true).toBoolean()
+def enableProguardInReleaseBuilds =
+    (findProperty('android.enableProguardInReleaseBuilds') ?: false).toBoolean()
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -108,10 +117,9 @@ android {
             keyPassword 'android'
         }
         release {
-            def keystorePropertiesFile = rootProject.file("keystore.properties")
             def keystoreProperties = new Properties()
-            if (keystorePropertiesFile.exists()) {
-                keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+            if (isReleaseKeystoreConfigured) {
+                keystoreProperties.load(new FileInputStream(releaseKeystorePropertiesFile))
                 storeFile file(keystoreProperties['MYAPP_UPLOAD_STORE_FILE'])
                 storePassword keystoreProperties['MYAPP_UPLOAD_STORE_PASSWORD']
                 keyAlias keystoreProperties['MYAPP_UPLOAD_KEY_ALIAS']
@@ -124,10 +132,16 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            // 로컬에 실제 배포 키스토어가 없을 때도 release 빌드 테스트가 가능하도록
-            // debug 서명으로 fallback 하되, keystore.properties가 있으면 정식 서명을 사용합니다.
-            def keystorePropertiesFile = rootProject.file("keystore.properties")
-            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
+            if (isReleaseTaskRequested && !isReleaseKeystoreConfigured && !allowDebugSigningInRelease) {
+                throw new GradleException(
+                    "Release signing is not configured. Add android/keystore.properties " +
+                    "or pass -Pandroid.allowDebugSigningInRelease=true for local-only testing."
+                )
+            }
+
+            // 실제 release 작업에서는 업로드 키스토어가 없으면 실패시키고,
+            // 정말 필요한 로컬 테스트만 명시적으로 debug 서명을 허용한다.
+            signingConfig isReleaseKeystoreConfigured ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
             shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"

@@ -146,12 +146,17 @@ const CounterDetail = () => {
     handleVoicePermissionModalConfirm,
     toggleVoiceCommands,
   } = useVoicePermissionGate();
+  const isInputBlocked =
+    activeModal !== null ||
+    errorModalVisible ||
+    voicePermissionModalVisible;
+  const effectiveVoiceCommandsActive = isVoiceCommandsActive && !isInputBlocked;
   const {
     voiceRecognizedText,
     isVoiceTextResetPending,
     handleVoiceRecognizedTextChange,
     handleVoiceTextLayout,
-  } = useVoiceBannerText({ isVoiceCommandsActive });
+  } = useVoiceBannerText({ isVoiceCommandsActive: effectiveVoiceCommandsActive });
   const voiceError = voicePermissionError || voiceRecognitionError;
   const {
     highlightedAction: touchAreaHighlight,
@@ -189,7 +194,7 @@ const CounterDetail = () => {
       subModalIsOpen,
     });
   const showVoiceBanner =
-    screenSize === ScreenSize.LARGE && isVoiceCommandsActive;
+    screenSize === ScreenSize.LARGE && effectiveVoiceCommandsActive;
   const { directionSectionFlex, voiceBannerSectionFlex, countSectionFlex, actionsSectionFlex } =
     getContentSectionFlexes(mascotIsActive, showCounterActions, showVoiceBanner);
   const { timerHeightPx, gapBetweenTimerAndContentPx, contentHeightPx, bottomReservedHeightPx } =
@@ -215,32 +220,44 @@ const CounterDetail = () => {
    * 터치/키보드/보이스 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
    */
   const runHighlightedAdd = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
     flashTouchAreaHighlight('add');
     handleAdd(commandWord);
-  }, [flashTouchAreaHighlight, handleAdd]);
+  }, [flashTouchAreaHighlight, handleAdd, isInputBlocked]);
 
   const runHighlightedSubtract = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
     flashTouchAreaHighlight('subtract');
     handleSubtract(commandWord);
-  }, [flashTouchAreaHighlight, handleSubtract]);
+  }, [flashTouchAreaHighlight, handleSubtract, isInputBlocked]);
 
   /**
    * 보조 카운터 공통 진입점.
    * 터치/보이스 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
    */
   const runHighlightedSubAdd = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
     flashSubTouchAreaHighlight('add');
     handleSubAdd(commandWord);
-  }, [flashSubTouchAreaHighlight, handleSubAdd]);
+  }, [flashSubTouchAreaHighlight, handleSubAdd, isInputBlocked]);
 
   const runHighlightedSubSubtract = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
     flashSubTouchAreaHighlight('subtract');
     handleSubSubtract(commandWord);
-  }, [flashSubTouchAreaHighlight, handleSubSubtract]);
+  }, [flashSubTouchAreaHighlight, handleSubSubtract, isInputBlocked]);
 
   /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
   useVoiceCommands(
-    !!counter && isVoiceCommandsActive,
+    !!counter && effectiveVoiceCommandsActive,
     runHighlightedAdd,
     runHighlightedSubtract,
     runHighlightedSubAdd,
@@ -276,12 +293,8 @@ const CounterDetail = () => {
        * "키를 뗄 때 1회 실행"이라는 더 안전한 동작을 만들기 위해서다.
        */
       const handleHardwareKeyUp = ({ keyCode }: HardwareKeyUpEvent) => {
-        const isModalBlockingInput =
-          activeModal !== null ||
-          errorModalVisible;
-
-        // 일반 모달이 열려 있으면 실수로 메인 카운터가 변하지 않도록 차단한다.
-        if (isModalBlockingInput) {
+        // 음성/편집/에러 모달이 떠 있는 동안은 하드웨어 키 입력도 함께 차단한다.
+        if (isInputBlocked) {
           return;
         }
 
@@ -298,7 +311,7 @@ const CounterDetail = () => {
         // 화면 포커스를 잃으면 전역 key up 리스너를 반드시 제거한다.
         KeyEvent.removeKeyUpListener();
       };
-    }, [activeModal, errorModalVisible, runHighlightedAdd, runHighlightedSubtract])
+    }, [isInputBlocked, runHighlightedAdd, runHighlightedSubtract])
   );
 
 
@@ -358,7 +371,8 @@ const CounterDetail = () => {
         onAdd={runHighlightedAdd}
         onSubtract={runHighlightedSubtract}
         highlightedAction={touchAreaHighlight}
-        showVoiceCommandHints={isVoiceCommandsActive}
+        showVoiceCommandHints={effectiveVoiceCommandsActive}
+        disabled={isInputBlocked}
       />
 
       {/* 중앙 콘텐츠 영역 */}
@@ -499,8 +513,9 @@ const CounterDetail = () => {
         onToggle={handleSubModalToggle}
         onAdd={runHighlightedSubAdd}
         onSubtract={runHighlightedSubSubtract}
-        showVoiceCommandHints={isVoiceCommandsActive}
+        showVoiceCommandHints={effectiveVoiceCommandsActive}
         highlightedAction={subTouchAreaHighlight}
+        inputDisabled={isInputBlocked}
         onReset={handleSubReset}
         onEdit={handleSubEdit}
         onRule={handleSubRule}

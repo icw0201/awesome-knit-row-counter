@@ -8,6 +8,7 @@ interface CounterTouchAreaProps {
   onSubtract: () => void;
   highlightedAction?: 'add' | 'subtract' | null;
   showVoiceCommandHints?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -19,6 +20,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
   onSubtract,
   highlightedAction = null,
   showVoiceCommandHints = false,
+  disabled = false,
 }) => {
   const isSubtractHighlighted = highlightedAction === 'subtract';
   const isAddHighlighted = highlightedAction === 'add';
@@ -35,7 +37,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
         // 이 오버레이는 화면 전체를 덮는 입력 레이어라 접근성/포커스를 열어두면
         // 하드웨어 키보드 포커스가 여기로 들어와 잘못된 하이라이트가 생길 수 있다.
         importantForAccessibility="no-hide-descendants"
-        onStartShouldSetResponder={() => true}
+        onStartShouldSetResponder={() => !disabled}
         onResponderRelease={() => onSubtract()}
       >
         <View className="relative ml-3 items-center">
@@ -61,7 +63,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
         accessible={false}
         // 오른쪽 영역도 같은 이유로 포커스/접근성 대상에서 제외한다.
         importantForAccessibility="no-hide-descendants"
-        onStartShouldSetResponder={() => true}
+        onStartShouldSetResponder={() => !disabled}
         onResponderRelease={() => onAdd()}
       >
         <View className="relative mr-3 items-center">

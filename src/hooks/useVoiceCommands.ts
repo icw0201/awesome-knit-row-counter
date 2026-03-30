@@ -1,7 +1,7 @@
 // src/hooks/useVoiceCommands.ts
 
 import { useEffect, useRef } from 'react';
-import { Platform } from 'react-native';
+import { AppState, Platform } from 'react-native';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 
 const LOCALE = 'ko-KR';
@@ -66,6 +66,50 @@ function getErrorMessage(event: { error: string; message?: string }): string {
     return msg;
   }
   return ERROR_MESSAGES[event.error] ?? event.error ?? 'Unknown error';
+}
+
+function normalizeLocaleTag(locale: string): string {
+  return locale.trim().replace(/_/g, '-').toLowerCase();
+}
+
+function getLocaleLanguage(locale: string): string {
+  return normalizeLocaleTag(locale).split('-')[0] ?? '';
+}
+
+function hasMatchingOnDeviceLocale(
+  locales: string[],
+  requiredLocale: string
+): boolean {
+  const normalizedRequiredLocale = normalizeLocaleTag(requiredLocale);
+  const requiredLanguage = getLocaleLanguage(requiredLocale);
+
+  return locales.some((locale) => {
+    const normalizedLocale = normalizeLocaleTag(locale);
+    return (
+      normalizedLocale === normalizedRequiredLocale ||
+      getLocaleLanguage(normalizedLocale) === requiredLanguage
+    );
+  });
+}
+
+async function checkAndroidOfflineModelAvailability(): Promise<boolean> {
+  try {
+    const supportedLocales = await ExpoSpeechRecognitionModule.getSupportedLocales({
+      androidRecognitionServicePackage: ANDROID_ON_DEVICE_SERVICE,
+    });
+    const installedLocales = supportedLocales.installedLocales ?? [];
+
+    if (hasMatchingOnDeviceLocale(installedLocales, LOCALE)) {
+      return true;
+    }
+
+    return (
+      installedLocales.length === 0 &&
+      hasMatchingOnDeviceLocale(supportedLocales.locales ?? [], LOCALE)
+    );
+  } catch {
+    return false;
+  }
 }
 
 function normalizeTranscriptWords(text: string): string[] {
@@ -148,6 +192,7 @@ export function useVoiceCommands(
     let restartTimeout: ReturnType<typeof setTimeout> | null = null;
     let startWatchdogTimeout: ReturnType<typeof setTimeout> | null = null;
     let idleRecycleTimeout: ReturnType<typeof setTimeout> | null = null;
+    let offlineModelCheckTimeout: ReturnType<typeof setTimeout> | null = null;
     let isStarting = false;
     let isRecognizing = false;
     // 우리가 내부적으로 호출한 abort()/stop() 뒤에 따라오는 에러는 정상 흐름이므로 1회 무시한다.
@@ -215,14 +260,22 @@ export function useVoiceCommands(
       }
     };
 
+    const clearOfflineModelCheckTimeout = () => {
+      if (offlineModelCheckTimeout) {
+        clearTimeout(offlineModelCheckTimeout);
+        offlineModelCheckTimeout = null;
+      }
+    };
+
     const clearAllTimeouts = () => {
       clearRestartTimeout();
       clearStartWatchdog();
       clearIdleRecycleTimeout();
+      clearOfflineModelCheckTimeout();
     };
 
     // 음성/이벤트 활동이 감지되면 idle recycle 기준 시각을 갱신한다.
-    const touchActivity = (source: string) => {
+    const touchActivity = (_source: string) => {
       lastActivityAt = Date.now();
       scheduleIdleRecycle();
     };
@@ -253,6 +306,57 @@ export function useVoiceCommands(
         onRecognizedRef.current?.('오랫동안 입력이 없어 음성 인식을 새로 시작합니다...');
         ExpoSpeechRecognitionModule.stop();
       }, IDLE_RECYCLE_MS);
+    };
+
+    const resumeAfterOfflineModelDownload = async () => {
+      if (
+        cancelled ||
+        !enabledRef.current ||
+        !isWaitingForOfflineModelDownload ||
+        Platform.OS !== 'android'
+      ) {
+        return;
+      }
+
+      const isModelAvailable = await checkAndroidOfflineModelAvailability();
+      if (
+        cancelled ||
+        !enabledRef.current ||
+        !isWaitingForOfflineModelDownload
+      ) {
+        return;
+      }
+
+      if (!isModelAvailable) {
+        onErrorRef.current?.(OFFLINE_MODEL_REQUIRED_MESSAGE);
+        onRecognizedRef.current?.('한국어 음성 모델 다운로드가 필요합니다...');
+        return;
+      }
+
+      isWaitingForOfflineModelDownload = false;
+      nextRestartDelayMs = DEFAULT_RESTART_DELAY_MS;
+      onErrorRef.current?.('');
+      onRecognizedRef.current?.('모델 다운로드를 확인해 음성 인식을 다시 시작합니다...');
+      scheduleRestart(200);
+    };
+
+    const scheduleOfflineModelAvailabilityCheck = (delayMs = 1500) => {
+      clearOfflineModelCheckTimeout();
+      if (
+        cancelled ||
+        !enabledRef.current ||
+        !isWaitingForOfflineModelDownload ||
+        Platform.OS !== 'android'
+      ) {
+        return;
+      }
+
+      offlineModelCheckTimeout = setTimeout(() => {
+        offlineModelCheckTimeout = null;
+        resumeAfterOfflineModelDownload().catch(() => {
+          onErrorRef.current?.(OFFLINE_MODEL_REQUIRED_MESSAGE);
+        });
+      }, delayMs);
     };
 
     const scheduleRestart = (delayMs = DEFAULT_RESTART_DELAY_MS) => {
@@ -440,9 +544,12 @@ export function useVoiceCommands(
           isWaitingForOfflineModelDownload = true;
           onErrorRef.current?.(OFFLINE_MODEL_REQUIRED_MESSAGE);
           onRecognizedRef.current?.('한국어 음성 모델 다운로드가 필요합니다...');
-          void ExpoSpeechRecognitionModule.androidTriggerOfflineModelDownload({
+          ExpoSpeechRecognitionModule.androidTriggerOfflineModelDownload({
             locale: LOCALE,
           })
+            .then(() => {
+              scheduleOfflineModelAvailabilityCheck();
+            })
             .catch(() => {
               onErrorRef.current?.(OFFLINE_MODEL_REQUIRED_MESSAGE);
             });
@@ -506,6 +613,14 @@ export function useVoiceCommands(
       }
     );
 
+    const appStateSubscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        resumeAfterOfflineModelDownload().catch(() => {
+          onErrorRef.current?.(OFFLINE_MODEL_REQUIRED_MESSAGE);
+        });
+      }
+    });
+
     startListening();
 
     return () => {
@@ -520,6 +635,7 @@ export function useVoiceCommands(
       resultSubscription.remove();
       errorSubscription.remove();
       endSubscription.remove();
+      appStateSubscription.remove();
       ExpoSpeechRecognitionModule.abort();
     };
   }, [enabled]);
