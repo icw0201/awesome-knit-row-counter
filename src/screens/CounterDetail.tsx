@@ -291,44 +291,49 @@ const CounterDetail = () => {
 
   const handleVoiceRecognizedTextChange = useCallback((nextText: string) => {
     lastVoiceTranscriptRef.current = nextText;
-
-    if (!isVoiceTextResetPending) {
-      setVoiceRecognizedText(nextText);
-      return;
-    }
-
-    const resetBaseTranscript = resetVoiceTextBaseRef.current;
+    const hiddenPrefix = resetVoiceTextBaseRef.current;
 
     if (
-      resetBaseTranscript &&
-      nextText.startsWith(resetBaseTranscript)
+      hiddenPrefix &&
+      nextText.startsWith(hiddenPrefix)
     ) {
-      const appendedText = nextText
-        .slice(resetBaseTranscript.length)
-        .trim();
+      const remainingText = nextText
+        .slice(hiddenPrefix.length)
+        .trimStart();
 
-      if (!appendedText) {
-        return;
-      }
-
-      setVoiceRecognizedText(appendedText);
+      setVoiceRecognizedText(remainingText);
+      setIsVoiceTextResetPending(remainingText.length === 0);
       return;
     }
 
     resetVoiceTextBaseRef.current = '';
     setIsVoiceTextResetPending(false);
     setVoiceRecognizedText(nextText);
-  }, [isVoiceTextResetPending]);
+  }, []);
 
   const handleVoiceTextLayout = useCallback(
     ({ nativeEvent }: { nativeEvent: { lines: Array<{ text: string }> } }) => {
-      if (nativeEvent.lines.length > 1 && voiceRecognizedText && !isVoiceTextResetPending) {
-        resetVoiceTextBaseRef.current = lastVoiceTranscriptRef.current;
-        setVoiceRecognizedText('');
-        setIsVoiceTextResetPending(true);
+      if (nativeEvent.lines.length > 1 && voiceRecognizedText) {
+        const visibleLineText = nativeEvent.lines[0]?.text ?? '';
+
+        if (!visibleLineText || !voiceRecognizedText.startsWith(visibleLineText)) {
+          resetVoiceTextBaseRef.current = lastVoiceTranscriptRef.current;
+          setVoiceRecognizedText('');
+          setIsVoiceTextResetPending(true);
+          return;
+        }
+
+        const remainingTextRaw = voiceRecognizedText.slice(visibleLineText.length);
+        const remainingText = remainingTextRaw.trimStart();
+        const consumedLength = voiceRecognizedText.length - remainingText.length;
+
+        resetVoiceTextBaseRef.current += voiceRecognizedText.slice(0, consumedLength);
+
+        setVoiceRecognizedText(remainingText);
+        setIsVoiceTextResetPending(remainingText.length === 0);
       }
     },
-    [isVoiceTextResetPending, voiceRecognizedText]
+    [voiceRecognizedText]
   );
 
   /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
@@ -548,7 +553,7 @@ const CounterDetail = () => {
                 >
                   <VoiceRecognitionBanner
                     visible={showVoiceBanner}
-                    maxWidth={Math.max(0, resolvedWidth - 32)}
+                    maxWidth={Math.max(0, resolvedWidth * 0.3)}
                     voiceError={voiceError}
                     recognizedText={voiceRecognizedText}
                     isResetPending={isVoiceTextResetPending}

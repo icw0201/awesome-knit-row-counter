@@ -169,7 +169,6 @@ export function useVoiceCommands(
       }
 
       lastTranscriptWords = nextWords;
-
       newWords.forEach((word) => {
         const action = getWordAction(word);
         if (action === 'add') {

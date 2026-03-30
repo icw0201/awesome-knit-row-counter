@@ -1,10 +1,9 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 import { Mic } from 'lucide-react-native';
 import { View, Text, type NativeSyntheticEvent, type TextLayoutEventData } from 'react-native';
 import { VOICE_LISTENING_TEXT } from '@hooks/useVoiceCommands';
 
 const MIC_SIZE = 18;
-const H_PAD = 16; // px-2 ×2
 /**
  * 배너를 시각적으로 1줄만 보이게 고정하는 높이.
  * lineHeight와 wrapper maxHeight를 같은 값으로 맞춰야
@@ -14,7 +13,7 @@ const ONE_LINE_HEIGHT = 22;
 
 export interface VoiceRecognitionBannerProps {
   visible: boolean;
-  /** 배너가 넘지 않는 최대 가로 (화면 기준, 줄 바꿈·초기화 트리거용) */
+  /** 일반 인식 텍스트가 넘지 않는 최대 가로 (화면 기준, 줄 바꿈·초기화 트리거용) */
   maxWidth: number;
   voiceError: string;
   recognizedText: string;
@@ -33,10 +32,7 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
   isResetPending,
   onRecognizedTextLayout,
 }) => {
-  const textMaxWidth = useMemo(
-    () => Math.max(0, maxWidth - H_PAD - MIC_SIZE - 6),
-    [maxWidth]
-  );
+  const hasVoiceError = voiceError.length > 0;
 
   if (!visible) {
     return null;
@@ -45,19 +41,17 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
   return (
     // 부모가 준 voice banner 영역 전체 안에서 세로/가로 중앙 정렬한다.
     <View className="w-full flex-1 items-center justify-center" pointerEvents="none">
-      {/* 실제 배너 박스: 내용 길이에 맞춰 커지되 maxWidth는 넘지 않는다. */}
-      <View className="rounded bg-lightgray px-2 py-1.5" style={{ maxWidth }}>
+      {/* 실제 배너 박스: 에러는 폭 제한 없이, 일반 인식 텍스트만 30% 제한을 적용한다. */}
+      <View className="rounded bg-lightgray px-2 py-1.5">
         {/* 아이콘 + 텍스트를 한 줄로 배치한다. */}
         <View className="flex-row items-center gap-1.5">
           <Mic size={MIC_SIZE} color="#111111" strokeWidth={2} />
-          {voiceError ? (
-            // 에러도 같은 한 줄 높이 규칙을 적용해 배너 높이가 튀지 않게 한다.
-            <View style={{ maxHeight: ONE_LINE_HEIGHT, overflow: 'hidden' }}>
+          {hasVoiceError ? (
+            // 에러는 잘라내지 않고 전체 문구를 그대로 보여준다.
+            <View className="shrink">
               <Text
                 className="text-xs text-red-orange-500"
-                style={{ lineHeight: ONE_LINE_HEIGHT, maxWidth: textMaxWidth }}
-                numberOfLines={1}
-                ellipsizeMode="clip"
+                style={{ lineHeight: ONE_LINE_HEIGHT }}
               >
                 에러: {voiceError}
               </Text>
@@ -67,7 +61,7 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
             <View style={{ maxHeight: ONE_LINE_HEIGHT, overflow: 'hidden' }}>
               <Text
                 className="text-sm text-black"
-                style={{ lineHeight: ONE_LINE_HEIGHT, maxWidth: textMaxWidth }}
+                style={{ lineHeight: ONE_LINE_HEIGHT, maxWidth }}
                 onTextLayout={onRecognizedTextLayout}
               >
                 {recognizedText || (isResetPending ? '' : VOICE_LISTENING_TEXT)}
