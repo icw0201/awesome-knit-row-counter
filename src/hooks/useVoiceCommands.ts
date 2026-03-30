@@ -13,7 +13,6 @@ const KEYWORD_SET_SUBTRACT = new Set(KEYWORDS_SUBTRACT);
 const KEYWORD_SET_SUB_ADD = new Set(KEYWORDS_SUB_ADD);
 const KEYWORD_SET_SUB_SUBTRACT = new Set(KEYWORDS_SUB_SUBTRACT);
 const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
-const DEBUG_TAG = '[useVoiceCommands]';
 // 일반적인 end/error 이후 recognition을 다시 시작할 때 기본 대기 시간.
 const DEFAULT_RESTART_DELAY_MS = 1200;
 // recognizer가 busy/stopping 상태일 때는 더 길게 기다려 네이티브 세션 정리를 우선한다.
@@ -143,23 +142,6 @@ export function useVoiceCommands(
     // partial/final result가 같은 prefix를 반복 전달하므로, 새로 들어온 단어만 액션으로 소비한다.
     let lastTranscriptWords: string[] = [];
 
-    const logState = (message: string, extra?: Record<string, unknown>) => {
-      if (!__DEV__) {
-        return;
-      }
-
-      const snapshot = {
-        enabled: enabledRef.current,
-        cancelled,
-        isStarting,
-        isRecognizing,
-        nextRestartDelayMs,
-        lastActivityAgoMs: Date.now() - lastActivityAt,
-        ...extra,
-      };
-      console.log(`${DEBUG_TAG} ${message} ${JSON.stringify(snapshot)}`);
-    };
-
     const resetTranscriptTracking = () => {
       lastTranscriptWords = [];
     };
@@ -170,14 +152,6 @@ export function useVoiceCommands(
       const nextWords = normalizeTranscriptWords(text);
       const commonPrefixLength = getCommonPrefixLength(lastTranscriptWords, nextWords);
       const newWords = nextWords.slice(commonPrefixLength);
-
-      if (__DEV__ && commonPrefixLength < lastTranscriptWords.length) {
-        logState('transcript revised', {
-          previousWords: lastTranscriptWords,
-          nextWords,
-          commonPrefixLength,
-        });
-      }
 
       lastTranscriptWords = nextWords;
       newWords.forEach((word) => {
@@ -233,61 +207,7 @@ export function useVoiceCommands(
     // 음성/이벤트 활동이 감지되면 idle recycle 기준 시각을 갱신한다.
     const touchActivity = (source: string) => {
       lastActivityAt = Date.now();
-      logState('activity', { source });
       scheduleIdleRecycle();
-    };
-
-    // 개발 중 서비스/언어팩 환경 이슈를 파악하기 위한 진단용 probe.
-    const probeRecognitionEnvironment = async () => {
-      try {
-        const availableServices =
-          ExpoSpeechRecognitionModule.getSpeechRecognitionServices();
-        const defaultService =
-          ExpoSpeechRecognitionModule.getDefaultRecognitionService();
-        const supportsOnDeviceRecognition =
-          ExpoSpeechRecognitionModule.supportsOnDeviceRecognition();
-
-        logState('recognition environment', {
-          availableServices,
-          defaultServicePackage: defaultService.packageName,
-          supportsOnDeviceRecognition,
-        });
-
-        if (!supportsOnDeviceRecognition) {
-          return;
-        }
-
-        try {
-          const supportedLocales =
-            await ExpoSpeechRecognitionModule.getSupportedLocales({
-              androidRecognitionServicePackage: ANDROID_ON_DEVICE_SERVICE,
-            });
-
-          const installedLocales = supportedLocales.installedLocales ?? [];
-          const hasTargetLocaleInstalled = installedLocales.some(
-            (locale) => locale.toLowerCase() === LOCALE.toLowerCase()
-          );
-
-          logState('on-device locale environment', {
-            onDeviceServicePackage: ANDROID_ON_DEVICE_SERVICE,
-            hasTargetLocaleInstalled,
-            installedLocales,
-            supportedLocaleCount: supportedLocales.locales.length,
-          });
-        } catch (error) {
-          const message =
-            error instanceof Error ? error.message : String(error);
-          logState('getSupportedLocales failed', {
-            onDeviceServicePackage: ANDROID_ON_DEVICE_SERVICE,
-            error: message,
-          });
-        }
-      } catch (error) {
-        const message = error instanceof Error ? error.message : String(error);
-        logState('recognition environment probe failed', {
-          error: message,
-        });
-      }
     };
 
     const scheduleIdleRecycle = () => {
@@ -314,7 +234,6 @@ export function useVoiceCommands(
         nextRestartDelayMs = IDLE_RESTART_DELAY_MS;
         isRecognizing = false;
         onRecognizedRef.current?.('오랫동안 입력이 없어 음성 인식을 새로 시작합니다...');
-        logState('idle recycle via stop()', { idleForMs });
         ExpoSpeechRecognitionModule.stop();
       }, IDLE_RECYCLE_MS);
     };
@@ -324,8 +243,6 @@ export function useVoiceCommands(
       if (cancelled || !enabledRef.current) {
         return;
       }
-
-      logState('scheduleRestart', { delayMs });
 
       restartTimeout = setTimeout(() => {
         restartTimeout = null;
@@ -340,15 +257,6 @@ export function useVoiceCommands(
     // unavailable/busy 상황 분기를 한곳에서 처리한다.
     const startListening = async () => {
       if (!enabledRef.current || cancelled || isStarting || isRecognizing) {
-        logState('startListening skipped', {
-          reason: !enabledRef.current
-            ? 'disabled'
-            : cancelled
-              ? 'cancelled'
-              : isStarting
-                ? 'already-starting'
-                : 'already-recognizing',
-        });
         return;
       }
 
@@ -357,7 +265,6 @@ export function useVoiceCommands(
       clearAllTimeouts();
       onErrorRef.current?.('');
       onRecognizedRef.current?.('마이크 준비 중...');
-      logState('startListening begin');
 
       try {
         if (!ExpoSpeechRecognitionModule.isRecognitionAvailable()) {
@@ -369,7 +276,6 @@ export function useVoiceCommands(
         const state = await ExpoSpeechRecognitionModule.getStateAsync().catch(
           () => 'inactive' as const
         );
-        logState('pre-start recognizer state', { nativeState: state });
 
         if (cancelled || !enabledRef.current) {
           isStarting = false;
@@ -384,30 +290,16 @@ export function useVoiceCommands(
           // 이전 세션이 완전히 종료되지 않았으면 end 이벤트를 기다렸다가 다시 시도한다.
           if (state === 'stopping') {
             onRecognizedRef.current?.('이전 음성 인식이 완전히 종료되길 기다리는 중...');
-            logState('recognizer already stopping, waiting for end event', {
-              nativeState: state,
-            });
             scheduleRestart(BUSY_RESTART_DELAY_MS);
             return;
           }
 
           ignoreNextAbortedError = true;
           onRecognizedRef.current?.('이전 음성 인식 세션을 정리하는 중...');
-          logState('closing stale in-app recognizer before restart', {
-            nativeState: state,
-          });
           ExpoSpeechRecognitionModule.abort();
           return;
         }
 
-        logState('calling ExpoSpeechRecognitionModule.start', {
-          keywords: [
-            ...KEYWORDS_ADD,
-            ...KEYWORDS_SUBTRACT,
-            ...KEYWORDS_SUB_ADD,
-            ...KEYWORDS_SUB_SUBTRACT,
-          ],
-        });
         ExpoSpeechRecognitionModule.start({
           lang: LOCALE,
           interimResults: true,
@@ -435,7 +327,6 @@ export function useVoiceCommands(
           isStarting = false;
           ignoreNextAbortedError = true;
           onRecognizedRef.current?.('음성 인식을 다시 시작하는 중...');
-          logState('start watchdog fired, aborting stalled start');
           ExpoSpeechRecognitionModule.abort();
         }, START_WATCHDOG_MS);
       } catch (err) {
@@ -446,9 +337,6 @@ export function useVoiceCommands(
         }
         const msg = err instanceof Error ? err.message : String(err);
         onErrorRef.current?.(msg || '음성 인식을 시작하지 못했습니다');
-        logState('startListening failed', {
-          error: msg || '음성 인식을 시작하지 못했습니다',
-        });
         nextRestartDelayMs = DEFAULT_RESTART_DELAY_MS;
         scheduleRestart(DEFAULT_RESTART_DELAY_MS);
       }
@@ -466,7 +354,6 @@ export function useVoiceCommands(
         clearStartWatchdog();
         onErrorRef.current?.('');
         onRecognizedRef.current?.(VOICE_LISTENING_TEXT);
-        logState('event:start');
         touchActivity('start');
       }
     );
@@ -478,7 +365,6 @@ export function useVoiceCommands(
           return;
         }
 
-        logState('event:speechstart');
         touchActivity('speechstart');
       }
     );
@@ -497,10 +383,6 @@ export function useVoiceCommands(
         if (transcript) {
           // partial/final 결과 모두 배너 표시에는 전달하되,
           // 실제 add/subtract 액션은 runActionsFromTranscript가 중복을 걸러낸다.
-          logState('event:result', {
-            transcript,
-            isFinal: event.isFinal,
-          });
           touchActivity(event.isFinal ? 'result-final' : 'result-partial');
           onRecognizedRef.current?.(transcript);
           onErrorRef.current?.('');
@@ -516,20 +398,11 @@ export function useVoiceCommands(
         isStarting = false;
         isRecognizing = false;
 
-        logState('event:error', {
-          error: event.error,
-          message: event.message,
-          code: (event as { code?: string | number }).code,
-        });
-
         // idle recycle에서 의도적으로 stop()한 뒤 따라오는 no-speech는 사용자 오류가 아니다.
         const isIgnoredNoSpeech = event.error === 'no-speech' && ignoreNextNoSpeechError;
         if (isIgnoredNoSpeech) {
           ignoreNextNoSpeechError = false;
           onErrorRef.current?.('');
-          logState('ignored internal no-speech event', {
-            preservedRestartDelayMs: nextRestartDelayMs,
-          });
           return;
         }
 
@@ -537,9 +410,6 @@ export function useVoiceCommands(
         const isIgnoredAbort = event.error === 'aborted' && ignoreNextAbortedError;
         if (isIgnoredAbort) {
           ignoreNextAbortedError = false;
-          logState('ignored internal aborted event', {
-            preservedRestartDelayMs: nextRestartDelayMs,
-          });
           return;
         }
 
@@ -562,26 +432,17 @@ export function useVoiceCommands(
           const state = await ExpoSpeechRecognitionModule.getStateAsync().catch(
             () => 'inactive' as const
           );
-          logState('busy/network error current recognizer state', {
-            nativeState: state,
-          });
 
           if (state !== 'inactive') {
             nextRestartDelayMs = BUSY_RESTART_DELAY_MS;
 
             if (state === 'stopping') {
               onRecognizedRef.current?.('음성 인식 서비스가 완전히 종료되길 기다리는 중...');
-              logState('busy/network while recognizer is stopping, waiting', {
-                nativeState: state,
-              });
               return;
             }
 
             ignoreNextAbortedError = true;
             onRecognizedRef.current?.('멈춘 음성 인식 세션을 정리하는 중...');
-            logState('busy/network caused in-app abort', {
-              nativeState: state,
-            });
             ExpoSpeechRecognitionModule.abort();
             return;
           }
@@ -600,7 +461,6 @@ export function useVoiceCommands(
         resetTranscriptTracking();
         isStarting = false;
         isRecognizing = false;
-        logState('event:end');
 
         if (enabledRef.current && !cancelled) {
           const delayMs = nextRestartDelayMs;
@@ -610,7 +470,6 @@ export function useVoiceCommands(
       }
     );
 
-    probeRecognitionEnvironment();
     startListening();
 
     return () => {
@@ -620,7 +479,6 @@ export function useVoiceCommands(
       clearAllTimeouts();
       // unmount/disable 시에는 현재 세션을 중단시키고,
       // 뒤따라오는 aborted 에러는 ignoreNextAbortedError로 무시한다.
-      logState('cleanup abort');
       startSubscription.remove();
       speechStartSubscription.remove();
       resultSubscription.remove();
