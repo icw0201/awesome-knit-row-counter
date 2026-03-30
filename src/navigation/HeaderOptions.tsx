@@ -92,7 +92,7 @@ export const getHeaderRightWithActivateInfoSettings = (
       {/* 음성 인식 아이콘 */}
       <TouchableOpacity
         onPress={onVoicePress}
-        style={{ marginRight: 10 }}
+        className="mr-2"
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel="음성 인식 단수 증감"
@@ -100,6 +100,12 @@ export const getHeaderRightWithActivateInfoSettings = (
       >
         <Mic size={24} color={voiceCommandsEnabled ? 'black' : '#B8B8B8'} />
       </TouchableOpacity>
+      <View
+        pointerEvents="none"
+        className="mr-2 h-5 w-px bg-lightgray"
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+      />
       {/* Timer 아이콘 */}
       <TouchableOpacity
         onPress={onTimerPress}
