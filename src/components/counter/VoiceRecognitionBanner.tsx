@@ -1,12 +1,15 @@
 import React, { useMemo } from 'react';
 import { Mic } from 'lucide-react-native';
 import { View, Text, type NativeSyntheticEvent, type TextLayoutEventData } from 'react-native';
-import clsx from 'clsx';
 import { VOICE_LISTENING_TEXT } from '@hooks/useVoiceCommands';
 
 const MIC_SIZE = 18;
 const H_PAD = 16; // px-2 ×2
-/** 한 줄 높이만 보이게 잘라 `onTextLayout`에서 줄 수(2줄 이상)로 초기화 트리거 */
+/**
+ * 배너를 시각적으로 1줄만 보이게 고정하는 높이.
+ * lineHeight와 wrapper maxHeight를 같은 값으로 맞춰야
+ * 텍스트가 2줄로 넘어갈 때 onTextLayout 감지가 안정적이다.
+ */
 const ONE_LINE_HEIGHT = 22;
 
 export interface VoiceRecognitionBannerProps {
@@ -40,18 +43,19 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
   }
 
   return (
-    <View className="w-full items-center justify-center" pointerEvents="none">
-      <View
-        className={clsx('rounded bg-lightgray px-2 py-1.5')}
-        style={{ maxWidth }}
-      >
+    // 부모가 준 voice banner 영역 전체 안에서 세로/가로 중앙 정렬한다.
+    <View className="w-full flex-1 items-center justify-center" pointerEvents="none">
+      {/* 실제 배너 박스: 내용 길이에 맞춰 커지되 maxWidth는 넘지 않는다. */}
+      <View className="rounded bg-lightgray px-2 py-1.5" style={{ maxWidth }}>
+        {/* 아이콘 + 텍스트를 한 줄로 배치한다. */}
         <View className="flex-row items-center gap-1.5">
           <Mic size={MIC_SIZE} color="#111111" strokeWidth={2} />
           {voiceError ? (
+            // 에러도 같은 한 줄 높이 규칙을 적용해 배너 높이가 튀지 않게 한다.
             <View style={{ maxHeight: ONE_LINE_HEIGHT, overflow: 'hidden' }}>
               <Text
-                className="text-xs leading-[22px] text-red-orange-500"
-                style={{ maxWidth: textMaxWidth }}
+                className="text-xs text-red-orange-500"
+                style={{ lineHeight: ONE_LINE_HEIGHT, maxWidth: textMaxWidth }}
                 numberOfLines={1}
                 ellipsizeMode="clip"
               >
@@ -59,10 +63,11 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
               </Text>
             </View>
           ) : (
+            // 일반 인식 텍스트는 줄바꿈이 생기면 부모가 감지해 내용을 초기화한다.
             <View style={{ maxHeight: ONE_LINE_HEIGHT, overflow: 'hidden' }}>
               <Text
-                className="text-sm leading-[22px] text-black"
-                style={{ maxWidth: textMaxWidth }}
+                className="text-sm text-black"
+                style={{ lineHeight: ONE_LINE_HEIGHT, maxWidth: textMaxWidth }}
                 onTextLayout={onRecognizedTextLayout}
               >
                 {recognizedText || (isResetPending ? '' : VOICE_LISTENING_TEXT)}
