@@ -201,7 +201,7 @@ const CounterDetail = () => {
   const shouldFillCountVertically = mascotIsActive && showVoiceBanner;
   const digitCount = Math.max(1, String(counter?.count ?? 0).length);
   const CHAR_WIDTH_RATIO = 0.6; // 숫자 1글자 너비 ≈ fontSize * 비율
-  const maxFontSizeByHeight = countSectionHeightPx * (shouldFillCountVertically ? 1 : 0.8);
+  const maxFontSizeByHeight = countSectionHeightPx * (shouldFillCountVertically ? 1 : 0.8); //음성인식, 방향이가 활성화 된 경우 글자 차지 세로 영역 1로 증가
   const maxFontSizeByWidth =
     (resolvedWidth * (shouldFillCountVertically ? 0.8 : 0.5)) / (digitCount * CHAR_WIDTH_RATIO);
   const countTextFontSizePx = Math.max(0, Math.min(maxFontSizeByHeight, maxFontSizeByWidth));
