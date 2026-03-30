@@ -17,7 +17,7 @@ const DEBUG_TAG = '[useVoiceCommands]';
 // 일반적인 end/error 이후 recognition을 다시 시작할 때 기본 대기 시간.
 const DEFAULT_RESTART_DELAY_MS = 1200;
 // recognizer가 busy/stopping 상태일 때는 더 길게 기다려 네이티브 세션 정리를 우선한다.
-const BUSY_RESTART_DELAY_MS = 8000;
+const BUSY_RESTART_DELAY_MS = 5000;
 // 이 시간 동안 음성/이벤트 활동이 없으면 현재 세션을 재활용하지 않고 새로 연다.
 const IDLE_RECYCLE_MS = 30000;
 // idle recycle로 stop()한 뒤에는 기본 재시작보다 살짝 긴 딜레이로 다시 시작한다.
