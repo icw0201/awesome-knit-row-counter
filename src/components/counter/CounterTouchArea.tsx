@@ -36,7 +36,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
         // 하드웨어 키보드 포커스가 여기로 들어와 잘못된 하이라이트가 생길 수 있다.
         importantForAccessibility="no-hide-descendants"
         onStartShouldSetResponder={() => true}
-        onResponderRelease={onSubtract}
+        onResponderRelease={() => onSubtract()}
       >
         <View className="relative ml-3 items-center">
           <Minus
@@ -62,7 +62,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
         // 오른쪽 영역도 같은 이유로 포커스/접근성 대상에서 제외한다.
         importantForAccessibility="no-hide-descendants"
         onStartShouldSetResponder={() => true}
-        onResponderRelease={onAdd}
+        onResponderRelease={() => onAdd()}
       >
         <View className="relative mr-3 items-center">
           <Plus

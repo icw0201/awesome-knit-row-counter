@@ -207,49 +207,29 @@ const CounterDetail = () => {
   const countTextFontSizePx = Math.max(0, Math.min(maxFontSizeByHeight, maxFontSizeByWidth));
 
   /**
-   * 메인 카운터 증가 액션의 공통 진입점.
-   * 터치와 키보드 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
+   * 메인 카운터 공통 진입점.
+   * 터치/키보드/보이스 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
    */
-  const handleHighlightedAdd = useCallback(() => {
-    flashTouchAreaHighlight('add');
-    handleAdd();
-  }, [flashTouchAreaHighlight, handleAdd]);
-
-  /**
-   * 메인 카운터 감소 액션의 공통 진입점.
-   * 터치와 키보드 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
-   */
-  const handleHighlightedSubtract = useCallback(() => {
-    flashTouchAreaHighlight('subtract');
-    handleSubtract();
-  }, [flashTouchAreaHighlight, handleSubtract]);
-
-  const handleVoiceHighlightedAdd = useCallback((commandWord?: string) => {
+  const runHighlightedAdd = useCallback((commandWord?: string) => {
     flashTouchAreaHighlight('add');
     handleAdd(commandWord);
   }, [flashTouchAreaHighlight, handleAdd]);
 
-  const handleVoiceHighlightedSubtract = useCallback((commandWord?: string) => {
+  const runHighlightedSubtract = useCallback((commandWord?: string) => {
     flashTouchAreaHighlight('subtract');
     handleSubtract(commandWord);
   }, [flashTouchAreaHighlight, handleSubtract]);
 
-  const handleHighlightedSubAdd = useCallback(() => {
-    flashSubTouchAreaHighlight('add');
-    handleSubAdd();
-  }, [flashSubTouchAreaHighlight, handleSubAdd]);
-
-  const handleHighlightedSubSubtract = useCallback(() => {
-    flashSubTouchAreaHighlight('subtract');
-    handleSubSubtract();
-  }, [flashSubTouchAreaHighlight, handleSubSubtract]);
-
-  const handleVoiceHighlightedSubAdd = useCallback((commandWord?: string) => {
+  /**
+   * 보조 카운터 공통 진입점.
+   * 터치/보이스 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
+   */
+  const runHighlightedSubAdd = useCallback((commandWord?: string) => {
     flashSubTouchAreaHighlight('add');
     handleSubAdd(commandWord);
   }, [flashSubTouchAreaHighlight, handleSubAdd]);
 
-  const handleVoiceHighlightedSubSubtract = useCallback((commandWord?: string) => {
+  const runHighlightedSubSubtract = useCallback((commandWord?: string) => {
     flashSubTouchAreaHighlight('subtract');
     handleSubSubtract(commandWord);
   }, [flashSubTouchAreaHighlight, handleSubSubtract]);
@@ -257,10 +237,10 @@ const CounterDetail = () => {
   /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
   useVoiceCommands(
     !!counter && isVoiceCommandsActive,
-    handleVoiceHighlightedAdd,
-    handleVoiceHighlightedSubtract,
-    handleVoiceHighlightedSubAdd,
-    handleVoiceHighlightedSubSubtract,
+    runHighlightedAdd,
+    runHighlightedSubtract,
+    runHighlightedSubAdd,
+    runHighlightedSubSubtract,
     handleVoiceRecognizedTextChange,
     setVoiceRecognitionError
   );
@@ -302,9 +282,9 @@ const CounterDetail = () => {
         }
 
         if (ADD_KEY_CODES.has(keyCode)) {
-          handleHighlightedAdd();
+          runHighlightedAdd();
         } else if (SUBTRACT_KEY_CODES.has(keyCode)) {
-          handleHighlightedSubtract();
+          runHighlightedSubtract();
         }
       };
 
@@ -314,7 +294,7 @@ const CounterDetail = () => {
         // 화면 포커스를 잃으면 전역 key up 리스너를 반드시 제거한다.
         KeyEvent.removeKeyUpListener();
       };
-    }, [activeModal, errorModalVisible, handleHighlightedAdd, handleHighlightedSubtract])
+    }, [activeModal, errorModalVisible, runHighlightedAdd, runHighlightedSubtract])
   );
 
 
@@ -371,8 +351,8 @@ const CounterDetail = () => {
 
       {/* 좌우 터치 레이어 */}
       <CounterTouchArea
-        onAdd={handleHighlightedAdd}
-        onSubtract={handleHighlightedSubtract}
+        onAdd={runHighlightedAdd}
+        onSubtract={runHighlightedSubtract}
         highlightedAction={touchAreaHighlight}
         showVoiceCommandHints={isVoiceCommandsActive}
       />
@@ -513,8 +493,8 @@ const CounterDetail = () => {
       <SubCounterModal
         isOpen={subModalIsOpen}
         onToggle={handleSubModalToggle}
-        onAdd={handleHighlightedSubAdd}
-        onSubtract={handleHighlightedSubSubtract}
+        onAdd={runHighlightedSubAdd}
+        onSubtract={runHighlightedSubSubtract}
         showVoiceCommandHints={isVoiceCommandsActive}
         highlightedAction={subTouchAreaHighlight}
         onReset={handleSubReset}
