@@ -39,18 +39,13 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // 앱 시작 시 저장된 설정값을 한 번에 주입한다.
-  const loadStoredSettings = useCallback(() => {
+  useEffect(() => {
     setSound(getSoundSetting());
     setVibration(getVibrationSetting());
     setScreenAwake(getScreenAwakeSetting());
     setTooltipEnabled(getTooltipEnabledSetting());
     setAutoPlayElapsedTime(getAutoPlayElapsedTimeSetting());
   }, []);
-
-  useEffect(() => {
-    loadStoredSettings();
-  }, [loadStoredSettings]);
 
   /**
    * 에러 모달 표시
