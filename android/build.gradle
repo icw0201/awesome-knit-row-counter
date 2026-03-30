@@ -1,4 +1,6 @@
-// Top-level build file where you can add configuration options common to all sub-projects/modules.
+// Android 전체 서브프로젝트가 공통으로 쓰는 최상위 Gradle 설정 파일입니다.
+// 이 브랜치에서는 Expo 기반 React Native 구성을 쓰도록 저장소/플러그인 해석 방식을 바꿔
+// node_modules 안의 React Native/Expo Gradle 플러그인을 안정적으로 찾게 했습니다.
 
 buildscript {
   repositories {

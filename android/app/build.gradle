@@ -2,6 +2,9 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
+// Android 앱 모듈 빌드 설정의 중심 파일입니다.
+// 이 브랜치에서는 Expo 음성 인식 플러그인이 생성하는 설정을 Android 빌드에 반영하도록
+// 엔트리 파일, CLI, 패키징 옵션, 이미지 포맷 지원, 릴리즈 서명 fallback 흐름을 맞췄습니다.
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
 /**
@@ -9,6 +12,8 @@ def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
 react {
+    // Expo가 app.json/plugins를 보고 생성한 엔트리/CLI 설정을 그대로 사용해야
+    // Android 번들이 Metro 설정과 어긋나지 않고 음성 인식 네이티브 모듈도 함께 묶입니다.
     entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot, "android", "absolute"].execute(null, rootDir).text.trim())
     reactNativeDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
     hermesCommand = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"
@@ -119,6 +124,8 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
+            // 로컬에 실제 배포 키스토어가 없을 때도 release 빌드 테스트가 가능하도록
+            // debug 서명으로 fallback 하되, keystore.properties가 있으면 정식 서명을 사용합니다.
             def keystorePropertiesFile = rootProject.file("keystore.properties")
             signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
@@ -129,6 +136,7 @@ android {
     }
     packagingOptions {
         jniLibs {
+            // Expo/Gradle 속성값을 그대로 읽어 네이티브 라이브러리 패키징 방식을 제어합니다.
             useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)
         }
     }
@@ -161,6 +169,8 @@ dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
 
+    // Expo가 여는 이미지 포맷 플래그를 Android 의존성에 연결해
+    // 음성 기능 도입으로 늘어난 Expo 설정과 앱 빌드 결과가 일치하도록 맞춥니다.
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
     def isWebpAnimatedEnabled = (findProperty('expo.webp.animated') ?: "") == "true";

@@ -1,4 +1,7 @@
 pluginManagement {
+  // Android용 Gradle 플러그인 위치를 node_modules에서 동적으로 찾습니다.
+  // 이 브랜치에서 Expo 모듈 자동 링크를 도입했기 때문에 정적 상대경로 대신
+  // 실제 설치 경로를 따라가야 React Native/Expo 플러그인 둘 다 안정적으로 연결됩니다.
   def reactNativeGradlePlugin = new File(
     providers.exec {
       workingDir(rootDir)
@@ -19,6 +22,8 @@ pluginManagement {
 
 plugins {
   id("com.facebook.react.settings")
+  // Expo 자동 링크 설정을 활성화해 expo-speech-recognition 같은 네이티브 모듈을
+  // 수동 include 없이 Android 프로젝트에 연결합니다.
   id("expo-autolinking-settings")
 }
 

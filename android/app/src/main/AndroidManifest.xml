@@ -1,4 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <!-- Android 앱이 요구하는 권한/컴포넌트 선언 파일입니다.
+       이 브랜치에서는 음성 인식 기능 추가에 맞춰 마이크 권한, 음성 서비스 조회,
+       Expo 생성 메타데이터를 Android 런타임이 이해할 수 있게 명시했습니다. -->
   <uses-permission android:name="android.permission.INTERNET"/>
   <!-- 앱에서 외부 저장소/미디어 접근 없음. 구형 기기 호환용으로만 선언, Android 13+에서는 미요청 -->
   <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
@@ -13,12 +16,14 @@
     </intent>
   </queries>
   <queries>
+    <!-- Google 음성 인식 서비스 존재 여부를 조회해야 지원 기기/미설치 상태를 구분할 수 있습니다. -->
     <package android:name="com.google.android.googlequicksearchbox"/>
     <intent>
       <action android:name="android.speech.RecognitionService"/>
     </intent>
   </queries>
   <application android:name=".MainApplication" android:label="@string/app_name" android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher_round" android:allowBackup="false" android:theme="@style/AppTheme" android:supportsRtl="true">
+    <!-- OTA 업데이트를 쓰지 않는 현재 구조에서는 Expo updates를 꺼 두어 초기화 경로를 단순화합니다. -->
     <meta-data android:name="expo.modules.updates.ENABLED" android:value="false"/>
     <activity android:name=".MainActivity" android:configChanges="keyboard|keyboardHidden|orientation|screenSize|screenLayout|uiMode" android:launchMode="singleTask" android:windowSoftInputMode="adjustResize" android:theme="@style/AppTheme" android:exported="true">
       <intent-filter>

@@ -76,6 +76,8 @@ yarn-error.log
 # Keystore configuration (보안 파일)
 android/keystore.properties
 
+# Expo 개발 서버/번들 산출물은 환경별로 쉽게 재생성되므로 버전 관리에서 제외합니다.
+# 이 브랜치에서 Expo 설정과 로컬 빌드 흐름이 추가되어 관련 캐시/산출물을 ignore 대상에 넣었습니다.
 # Expo
 .expo
 dist/
