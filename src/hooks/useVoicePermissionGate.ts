@@ -11,6 +11,46 @@ import {
 
 const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
 const REQUIRED_ON_DEVICE_LOCALE = 'ko-KR';
+const REQUIRED_ON_DEVICE_LANGUAGE_LABEL = '한국어';
+
+function normalizeLocaleTag(locale: string): string {
+  return locale.trim().replace(/_/g, '-').toLowerCase();
+}
+
+function getLocaleLanguage(locale: string): string {
+  return normalizeLocaleTag(locale).split('-')[0] ?? '';
+}
+
+function hasMatchingOnDeviceLocale(
+  installedLocales: string[],
+  requiredLocale: string
+): boolean {
+  const normalizedRequiredLocale = normalizeLocaleTag(requiredLocale);
+  const requiredLanguage = getLocaleLanguage(requiredLocale);
+
+  return installedLocales.some((locale) => {
+    const normalizedLocale = normalizeLocaleTag(locale);
+
+    if (normalizedLocale === normalizedRequiredLocale) {
+      return true;
+    }
+
+    // 일부 Android 인식 서비스는 region 없이 "ko"만 돌려주거나 "_" 구분자를 사용한다.
+    return getLocaleLanguage(normalizedLocale) === requiredLanguage;
+  });
+}
+
+function shouldTrustSupportedLocalesWhenInstalledLocalesEmpty(
+  installedLocales: string[],
+  supportedLocales: string[],
+  requiredLocale: string
+): boolean {
+  if (installedLocales.length > 0) {
+    return false;
+  }
+
+  return hasMatchingOnDeviceLocale(supportedLocales, requiredLocale);
+}
 
 /**
  * 음성 인식 토글과 시스템 권한 상태를 함께 관리한다.
@@ -61,7 +101,7 @@ export function useVoicePermissionGate() {
   // 권한은 있어도 ko-KR 온디바이스 모델이 없어서 기능 자체를 켤 수 없을 때 사용한다.
   const showVoiceUnavailableModal = useCallback(() => {
     setVoicePermissionModalTitle('음성 인식 사용 불가');
-    setVoicePermissionModalDescription(`이 기기에는 ${REQUIRED_ON_DEVICE_LOCALE} 온디바이스 음성 인식 모델이 설치되어 있지 않아 음성인식 기능을 사용할 수 없습니다.`);
+    setVoicePermissionModalDescription(`이 기기에는 ${REQUIRED_ON_DEVICE_LANGUAGE_LABEL} 온디바이스 음성 인식 모델이 설치되어 있지 않아 음성인식 기능을 사용할 수 없습니다.`);
     setVoicePermissionModalConfirmText('확인');
     setVoicePermissionModalCancelText('');
     setShouldOpenSettingsOnModalConfirm(false);
@@ -111,9 +151,21 @@ export function useVoicePermissionGate() {
         });
 
       const installedLocales = supportedLocales.installedLocales ?? [];
-      return installedLocales.some(
-        (locale) => locale.toLowerCase() === REQUIRED_ON_DEVICE_LOCALE.toLowerCase()
+      const matchedInstalledLocale = hasMatchingOnDeviceLocale(
+        installedLocales,
+        REQUIRED_ON_DEVICE_LOCALE
       );
+      const matchedSupportedLocale = hasMatchingOnDeviceLocale(
+        supportedLocales.locales ?? [],
+        REQUIRED_ON_DEVICE_LOCALE
+      );
+      const usedSupportedLocalesFallback =
+        shouldTrustSupportedLocalesWhenInstalledLocalesEmpty(
+          installedLocales,
+          supportedLocales.locales ?? [],
+          REQUIRED_ON_DEVICE_LOCALE
+        );
+      return matchedInstalledLocale || usedSupportedLocalesFallback;
     } catch {
       return false;
     }

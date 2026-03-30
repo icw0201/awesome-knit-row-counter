@@ -1,6 +1,7 @@
 // src/hooks/useVoiceCommands.ts
 
 import { useEffect, useRef } from 'react';
+import { Platform } from 'react-native';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 
 const LOCALE = 'ko-KR';
@@ -24,6 +25,10 @@ const IDLE_RESTART_DELAY_MS = 1500;
 // start() 호출 후 이 시간 안에 start 이벤트가 없으면 시작이 멈춘 것으로 보고 abort()한다.
 const START_WATCHDOG_MS = 5000;
 export const VOICE_LISTENING_TEXT = '듣는 중...';
+const MODEL_NOT_DOWNLOADED_MESSAGE_FRAGMENT =
+  'requested language is supported, but not yet downloaded';
+const OFFLINE_MODEL_REQUIRED_MESSAGE =
+  '한국어 온디바이스 음성 모델 다운로드가 필요합니다. 시스템 안내를 완료한 뒤 다시 시도해 주세요.';
 
 const ERROR_MESSAGES: Record<string, string> = {
   aborted: '음성 인식이 중단되었습니다',
@@ -41,7 +46,18 @@ const ERROR_MESSAGES: Record<string, string> = {
   unknown: '알 수 없는 오류가 발생했습니다',
 };
 
+function isOfflineModelDownloadRequiredError(event: {
+  error: string;
+  message?: string;
+}): boolean {
+  return event.message?.trim().toLowerCase().includes(MODEL_NOT_DOWNLOADED_MESSAGE_FRAGMENT) ?? false;
+}
+
 function getErrorMessage(event: { error: string; message?: string }): string {
+  if (isOfflineModelDownloadRequiredError(event)) {
+    return OFFLINE_MODEL_REQUIRED_MESSAGE;
+  }
+
   const msg = event.message?.trim();
   if (msg?.toLowerCase().includes('server disconnect')) {
     return ERROR_MESSAGES['server-disconnect'];
@@ -139,6 +155,7 @@ export function useVoiceCommands(
     let ignoreNextNoSpeechError = false;
     let nextRestartDelayMs = DEFAULT_RESTART_DELAY_MS;
     let lastActivityAt = Date.now();
+    let isWaitingForOfflineModelDownload = false;
     // partial/final result가 같은 prefix를 반복 전달하므로, 새로 들어온 단어만 액션으로 소비한다.
     let lastTranscriptWords: string[] = [];
 
@@ -240,7 +257,7 @@ export function useVoiceCommands(
 
     const scheduleRestart = (delayMs = DEFAULT_RESTART_DELAY_MS) => {
       clearRestartTimeout();
-      if (cancelled || !enabledRef.current) {
+      if (cancelled || !enabledRef.current || isWaitingForOfflineModelDownload) {
         return;
       }
 
@@ -256,7 +273,13 @@ export function useVoiceCommands(
     // recognition 시작 전 stale session 정리, watchdog 설정,
     // unavailable/busy 상황 분기를 한곳에서 처리한다.
     const startListening = async () => {
-      if (!enabledRef.current || cancelled || isStarting || isRecognizing) {
+      if (
+        !enabledRef.current ||
+        cancelled ||
+        isStarting ||
+        isRecognizing ||
+        isWaitingForOfflineModelDownload
+      ) {
         return;
       }
 
@@ -410,6 +433,19 @@ export function useVoiceCommands(
         const isIgnoredAbort = event.error === 'aborted' && ignoreNextAbortedError;
         if (isIgnoredAbort) {
           ignoreNextAbortedError = false;
+          return;
+        }
+
+        if (Platform.OS === 'android' && isOfflineModelDownloadRequiredError(event)) {
+          isWaitingForOfflineModelDownload = true;
+          onErrorRef.current?.(OFFLINE_MODEL_REQUIRED_MESSAGE);
+          onRecognizedRef.current?.('한국어 음성 모델 다운로드가 필요합니다...');
+          void ExpoSpeechRecognitionModule.androidTriggerOfflineModelDownload({
+            locale: LOCALE,
+          })
+            .catch(() => {
+              onErrorRef.current?.(OFFLINE_MODEL_REQUIRED_MESSAGE);
+            });
           return;
         }
 
