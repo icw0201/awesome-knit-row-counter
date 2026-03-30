@@ -19,14 +19,13 @@ import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
 import { useVoiceCommands } from '@hooks/useVoiceCommands';
 import { useVoiceBannerText } from '@hooks/useVoiceBannerText';
+import { useTimedHighlight } from '@hooks/useTimedHighlight';
 import { useVoicePermissionGate } from '@hooks/useVoicePermissionGate';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
 
 type HardwareKeyUpEvent = {
   keyCode: number;
 };
-type TouchAreaHighlightAction = 'add' | 'subtract' | null;
-type SubTouchAreaHighlightAction = 'add' | 'subtract' | null;
 
 /**
  * 카운터 상세 화면 컴포넌트
@@ -150,11 +149,14 @@ const CounterDetail = () => {
     handleVoiceTextLayout,
   } = useVoiceBannerText({ isVoiceCommandsActive });
   const voiceError = voicePermissionError || voiceRecognitionError;
-
-  const [touchAreaHighlight, setTouchAreaHighlight] = useState<TouchAreaHighlightAction>(null);
-  const touchAreaHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [subTouchAreaHighlight, setSubTouchAreaHighlight] = useState<SubTouchAreaHighlightAction>(null);
-  const subTouchAreaHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const {
+    highlightedAction: touchAreaHighlight,
+    flashHighlight: flashTouchAreaHighlight,
+  } = useTimedHighlight(100);
+  const {
+    highlightedAction: subTouchAreaHighlight,
+    flashHighlight: flashSubTouchAreaHighlight,
+  } = useTimedHighlight(100);
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
   const imageWidth = iconSize * 1.4;
@@ -205,25 +207,6 @@ const CounterDetail = () => {
   const countTextFontSizePx = Math.max(0, Math.min(maxFontSizeByHeight, maxFontSizeByWidth));
 
   /**
-   * 메인 카운터의 add/subtract 액션이 실행될 때 좌/우 터치 영역 배경을 잠깐 강조한다.
-   *
-   * 이제 터치 입력과 하드웨어 키보드 입력이 모두 이 부모 state를 통해 같은 하이라이트
-   * 경로를 사용한다. 연속 입력 시 이전 timeout을 취소하고 다시 시작해서
-   * 하이라이트가 중간에 예상치 않게 꺼지지 않도록 한다.
-   */
-  const flashTouchAreaHighlight = useCallback((action: Exclude<TouchAreaHighlightAction, null>) => {
-    if (touchAreaHighlightTimeoutRef.current) {
-      clearTimeout(touchAreaHighlightTimeoutRef.current);
-    }
-
-    setTouchAreaHighlight(action);
-    touchAreaHighlightTimeoutRef.current = setTimeout(() => {
-      setTouchAreaHighlight(null);
-      touchAreaHighlightTimeoutRef.current = null;
-    }, 100);
-  }, []);
-
-  /**
    * 메인 카운터 증가 액션의 공통 진입점.
    * 터치와 키보드 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
    */
@@ -250,18 +233,6 @@ const CounterDetail = () => {
     flashTouchAreaHighlight('subtract');
     handleSubtract(commandWord);
   }, [flashTouchAreaHighlight, handleSubtract]);
-
-  const flashSubTouchAreaHighlight = useCallback((action: Exclude<SubTouchAreaHighlightAction, null>) => {
-    if (subTouchAreaHighlightTimeoutRef.current) {
-      clearTimeout(subTouchAreaHighlightTimeoutRef.current);
-    }
-
-    setSubTouchAreaHighlight(action);
-    subTouchAreaHighlightTimeoutRef.current = setTimeout(() => {
-      setSubTouchAreaHighlight(null);
-      subTouchAreaHighlightTimeoutRef.current = null;
-    }, 100);
-  }, []);
 
   const handleHighlightedSubAdd = useCallback(() => {
     flashSubTouchAreaHighlight('add');
@@ -293,23 +264,6 @@ const CounterDetail = () => {
     handleVoiceRecognizedTextChange,
     setVoiceRecognitionError
   );
-
-  /**
-   * 화면이 사라질 때 남아 있는 하이라이트 timeout을 정리한다.
-   *
-   * 정리하지 않으면 CounterDetail이 언마운트된 뒤에도 timeout 콜백이 실행되어
-   * 이미 사라진 화면의 state를 변경하려고 시도할 수 있다.
-   */
-  useLayoutEffect(() => {
-    return () => {
-      if (touchAreaHighlightTimeoutRef.current) {
-        clearTimeout(touchAreaHighlightTimeoutRef.current);
-      }
-      if (subTouchAreaHighlightTimeoutRef.current) {
-        clearTimeout(subTouchAreaHighlightTimeoutRef.current);
-      }
-    };
-  }, []);
 
   /**
    * 화면 포커스 시 실행되는 효과
