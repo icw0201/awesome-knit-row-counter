@@ -3,15 +3,17 @@ import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@navigation/AppNavigator';
 import { getStoredItems, updateItem } from '@storage/storage';
-import { Counter, RepeatRule } from '@storage/types';
+import { Counter, RepeatRule, RuleEndMode } from '@storage/types';
 
 /**
  * 규칙 확인 데이터 타입
  */
 export type RuleConfirmData = {
   message: string;
-  startNumber: number;
+  startNumber: number | null;
   endNumber: number;
+  repeatCount: number;
+  endMode: RuleEndMode | null;
   ruleNumber: number;
   color: string; // 색상 (필수)
 };
@@ -98,6 +100,8 @@ export const useWaySetting = () => {
       message: data.message,
       startNumber: data.startNumber,
       endNumber: data.endNumber,
+      repeatCount: data.repeatCount,
+      endMode: data.endMode,
       ruleNumber: data.ruleNumber,
       color: data.color,
     };

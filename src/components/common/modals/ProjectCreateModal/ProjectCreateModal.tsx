@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { BaseModal } from '../BaseModal';
 import TextInputBox from '@components/common/TextInputBox';
-import RadioButtonGroup from '@components/common/RadioButtonGroup';
 import RoundedButton from '@components/common/RoundedButton';
+import ProjectTypeSelector from './ProjectTypeSelector';
 
 /**
  * ProjectCreateModal 컴포넌트의 Props 인터페이스
@@ -47,31 +47,17 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
     onClose();
   };
 
-  const radioOptions = [
-    {
-      label: '프로젝트',
-      value: 'project',
-      tooltip: '프로젝트는 하위에 여러 카운터를 생성할 수 있습니다.',
-    },
-    {
-      label: '카운터',
-      value: 'counter',
-      tooltip: '단일 카운터를 생성합니다.',
-    },
-  ];
-
   return (
     <BaseModal
       visible={visible}
       onClose={handleClose}
       title={title}
     >
-      {/* 라디오 버튼 그룹 */}
+      {/* 체크형 라디오 버튼 목록 */}
       <View className="mt-4 mb-0">
-        <RadioButtonGroup
+        <ProjectTypeSelector
           selected={selectedType}
-          onSelect={(value) => setSelectedType(value as 'project' | 'counter')}
-          options={radioOptions}
+          onSelect={setSelectedType}
         />
       </View>
 

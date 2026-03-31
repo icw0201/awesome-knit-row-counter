@@ -8,7 +8,7 @@ const STORAGE_KEY = 'knit_items';
 const DATA_VERSION_KEY = 'data_version';
 
 // 데이터 버전 관리
-export const CURRENT_DATA_VERSION = 5; // sectionRecords에 date 추가, 최대 30개 유지
+export const CURRENT_DATA_VERSION = 5; // sectionRecords 보정 + repeatRules에 endMode 추가
 
 /**
  * 버전 1: 기존 'active' 상태를 'auto'로 마이그레이션
@@ -141,8 +141,11 @@ const migrateV4_RepeatRulesToArrayAndMoveWay = (items: Item[]): Item[] => {
 };
 
 /**
- * 버전 5: sectionRecords에 date 필드 추가, 최대 30개 유지
- * 기존 기록은 정확한 날짜 정보가 없으므로 0으로 채운 기본값을 사용
+ * 버전 5: sectionRecords에 date 필드 추가, 최대 30개 유지,
+ * repeatRules에 현재 사용 중인 종료 방식(endMode) 추가
+ * 기존 기록은 정확한 날짜 정보가 없으므로 0으로 채운 기본값을 사용하고,
+ * endMode는 기존 배포 버전에 반복 횟수 지정이 없었으므로 종료단이 있으면 'endNumber',
+ * 없으면 null로 채웁니다. startNumber는 기존 0을 미지정(null)으로 변환합니다.
  * @param items 마이그레이션할 아이템 배열
  * @returns 마이그레이션된 아이템 배열
  */
@@ -157,6 +160,7 @@ const migrateV5_AddSectionRecordDateAndExpandLimit = (items: Item[]): Item[] => 
 
     const counter = item as any;
     const sectionRecords = Array.isArray(counter.sectionRecords) ? counter.sectionRecords : [];
+    const repeatRules = Array.isArray(counter.repeatRules) ? counter.repeatRules : [];
 
     return {
       ...counter,
@@ -166,6 +170,16 @@ const migrateV5_AddSectionRecordDateAndExpandLimit = (items: Item[]): Item[] => 
           date: typeof record?.date === 'string' && /^\d{8}$/.test(record.date) ? record.date : EMPTY_SECTION_RECORD_DATE,
         }))
         .slice(0, MAX_SECTION_RECORDS),
+      repeatRules: repeatRules.map((rule: any) => ({
+        ...rule,
+        startNumber: typeof rule?.startNumber === 'number' && rule.startNumber > 0 ? rule.startNumber : null,
+        endMode:
+          rule?.endMode === 'endNumber' || rule?.endMode === 'repeatCount'
+            ? rule.endMode
+            : (rule?.endNumber ?? 0) > 0
+              ? 'endNumber'
+              : null,
+      })),
     };
   });
 };
