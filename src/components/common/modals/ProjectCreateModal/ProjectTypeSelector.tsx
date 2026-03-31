@@ -80,7 +80,10 @@ const ProjectTypeSelector: React.FC<ProjectTypeSelectorProps> = ({
 
   return (
     <View className="items-center">
-      <View className="flex-row items-center justify-center">
+      <View 
+        className="flex-row items-center justify-center"
+        accessibilityRole="radiogroup"
+      >
         {PROJECT_TYPE_OPTIONS.map((option, index) => (
           <View
             key={option.value}
@@ -94,7 +97,6 @@ const ProjectTypeSelector: React.FC<ProjectTypeSelectorProps> = ({
           </View>
         ))}
       </View>
-
       {selectedTooltip && (
         <Text className="mt-2 text-center text-xs text-darkgray">
           {selectedTooltip}
