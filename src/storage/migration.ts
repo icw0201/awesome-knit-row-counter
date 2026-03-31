@@ -8,7 +8,7 @@ const STORAGE_KEY = 'knit_items';
 const DATA_VERSION_KEY = 'data_version';
 
 // 데이터 버전 관리
-export const CURRENT_DATA_VERSION = 4; // repeatRules 배열로 변경, way를 Counter로 이동, RepeatRule에 color 필드 추가
+export const CURRENT_DATA_VERSION = 5; // sectionRecords에 date 추가, 최대 30개 유지
 
 /**
  * 버전 1: 기존 'active' 상태를 'auto'로 마이그레이션
@@ -141,6 +141,36 @@ const migrateV4_RepeatRulesToArrayAndMoveWay = (items: Item[]): Item[] => {
 };
 
 /**
+ * 버전 5: sectionRecords에 date 필드 추가, 최대 30개 유지
+ * 기존 기록은 정확한 날짜 정보가 없으므로 0으로 채운 기본값을 사용
+ * @param items 마이그레이션할 아이템 배열
+ * @returns 마이그레이션된 아이템 배열
+ */
+const MAX_SECTION_RECORDS = 30;
+const EMPTY_SECTION_RECORD_DATE = '00000000';
+
+const migrateV5_AddSectionRecordDateAndExpandLimit = (items: Item[]): Item[] => {
+  return items.map((item) => {
+    if (item.type !== 'counter') {
+      return item;
+    }
+
+    const counter = item as any;
+    const sectionRecords = Array.isArray(counter.sectionRecords) ? counter.sectionRecords : [];
+
+    return {
+      ...counter,
+      sectionRecords: sectionRecords
+        .map((record: any) => ({
+          ...record,
+          date: typeof record?.date === 'string' && /^\d{8}$/.test(record.date) ? record.date : EMPTY_SECTION_RECORD_DATE,
+        }))
+        .slice(0, MAX_SECTION_RECORDS),
+    };
+  });
+};
+
+/**
  * 마이그레이션 실행
  * @param items 마이그레이션할 아이템 배열
  * @param fromVersion 시작 버전
@@ -166,6 +196,10 @@ const runMigrations = (items: Item[], fromVersion: number, toVersion: number): I
   if (fromVersion < 4 && toVersion >= 4) {
     migratedItems = migrateV3_AddNewProperties(migratedItems); // 기본값 설정
     migratedItems = migrateV4_RepeatRulesToArrayAndMoveWay(migratedItems); // repeatRules 배열, way 이동, color 필드 추가
+  }
+
+  if (fromVersion < 5 && toVersion >= 5) {
+    migratedItems = migrateV5_AddSectionRecordDateAndExpandLimit(migratedItems);
   }
 
   return migratedItems;

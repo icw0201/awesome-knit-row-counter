@@ -1,6 +1,6 @@
 // src/components/common/modals/BaseModal/BaseModal.tsx
 import React from 'react';
-import { Modal, Text, Pressable } from 'react-native';
+import { Modal, Text, Pressable, View } from 'react-native';
 import { modalStyles } from '@styles/modalStyle';
 
 /**
@@ -34,17 +34,19 @@ const BaseModal: React.FC<BaseModalProps> = ({
       animationType="fade"
       onRequestClose={onClose}
     >
-      {/* 모달 배경 오버레이 - 클릭 시 모달 닫기 */}
-      <Pressable style={modalStyles.overlay} onPress={onClose}>
-        {/* 모달 컨테이너 - 배경 클릭 이벤트 전파 방지 */}
-        <Pressable style={modalStyles.container} onPress={(e) => e.stopPropagation()}>
+      <View style={modalStyles.overlay}>
+        {/* 배경 터치 영역 */}
+        <Pressable style={modalStyles.backdrop} onPress={onClose} />
+
+        {/* 모달 컨테이너 */}
+        <View style={modalStyles.container}>
           {/* 모달 제목 */}
           <Text style={modalStyles.title}>{title}</Text>
 
           {/* 모달 내용 */}
           {children}
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 };
