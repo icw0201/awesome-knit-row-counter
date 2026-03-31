@@ -120,7 +120,11 @@ const renderRulePreview = (
       : '';
   const hasMorePreviewItems =
     totalRepeatCount !== null ? totalRepeatCount > rulePreview.length : rulePreview.length === 5;
-  const previewSuffix = totalRepeatCount !== null ? ` (${totalRepeatCount}회)` : '';
+  const previewSuffix = hasRuleInput
+    ? totalRepeatCount !== null
+      ? ` (${totalRepeatCount}회)`
+      : ' (∞)'
+    : '';
 
   return (
     <View className="mt-2 flex-row items-center">
@@ -189,6 +193,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
   }, [message]);
 
   const viewRepeatCount = calculateRuleRepeatCount(startNumber, endNumber, ruleNumber, repeatCount);
+  const viewRepeatCountText = viewRepeatCount !== null ? ` (${viewRepeatCount}회)` : ' (∞)';
 
   const handleEditClick = () => {
     setIsEditMode(true);
@@ -293,7 +298,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
               {startNumber > 0 ? `${startNumber}단부터 ` : ''}
               {endNumber > 0 ? `${endNumber}단까지 ` : ''}
               {ruleNumber}단마다
-              {viewRepeatCount !== null ? ` (${viewRepeatCount}회)` : ''}
+              {viewRepeatCountText}
             </Text>
           </View>
           <View className="flex-shrink-0 ml-2">
