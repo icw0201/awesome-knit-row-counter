@@ -1,4 +1,8 @@
-const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
+// Metro 번들러 설정 파일입니다.
+// 이 브랜치에서는 Expo 기반 네이티브 모듈/asset 설정을 우선 적용해야 하므로
+// 기본 설정 생성기를 React Native 기본 구현에서 Expo 구현으로 바꿨습니다.
+const { getDefaultConfig } = require('expo/metro-config');
+const { mergeConfig } = require('@react-native/metro-config');
 
 const defaultConfig = getDefaultConfig(__dirname);
 

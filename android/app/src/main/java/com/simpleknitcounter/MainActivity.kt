@@ -1,5 +1,6 @@
 package com.simpleknitcounter
 
+import android.os.Build
 import android.os.Bundle
 import android.view.KeyEvent
 import com.github.kevinejohn.keyevent.KeyEventModule
@@ -8,14 +9,11 @@ import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
 
-class MainActivity : ReactActivity() {
+import expo.modules.ReactActivityDelegateWrapper
 
-  /**
-   * react-native-screens 권장: Fragment 복원을 막아 "context detached from activity" /
-   * "Screen fragments should never be restored" 크래시 방지 (배경 복귀, 16KB 페이지 크기 기기 등).
-   * https://github.com/software-mansion/react-native-screens/issues/17
-   */
+class MainActivity : ReactActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
+    setTheme(R.style.AppTheme);
     super.onCreate(null)
   }
 
@@ -30,10 +28,24 @@ class MainActivity : ReactActivity() {
    */
   override fun getMainComponentName(): String = "SimpleKnitCounter"
 
-  /**
-   * Returns the instance of the [ReactActivityDelegate]. We use [DefaultReactActivityDelegate]
-   * which allows you to enable New Architecture with a single boolean flags [fabricEnabled]
-   */
-  override fun createReactActivityDelegate(): ReactActivityDelegate =
-      DefaultReactActivityDelegate(this, mainComponentName, fabricEnabled)
+  override fun createReactActivityDelegate(): ReactActivityDelegate {
+    return ReactActivityDelegateWrapper(
+          this,
+          BuildConfig.IS_NEW_ARCHITECTURE_ENABLED,
+          object : DefaultReactActivityDelegate(
+              this,
+              mainComponentName,
+              fabricEnabled
+          ){})
+  }
+
+  override fun invokeDefaultOnBackPressed() {
+      if (Build.VERSION.SDK_INT <= Build.VERSION_CODES.R) {
+          if (!moveTaskToBack(false)) {
+              super.invokeDefaultOnBackPressed()
+          }
+          return
+      }
+      super.invokeDefaultOnBackPressed()
+  }
 }

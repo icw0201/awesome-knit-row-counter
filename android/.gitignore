@@ -1,0 +1,18 @@
+# Android 네이티브 프로젝트가 이 브랜치에서 실제 빌드 산출물을 갖게 되어,
+# 루트 ignore와 별개로 android 폴더 안의 로컬/IDE 산출물을 다시 한 번 제외합니다.
+# OSX
+#
+.DS_Store
+
+# Android/IntelliJ
+#
+build/
+.idea
+.gradle
+local.properties
+*.iml
+*.hprof
+.cxx/
+
+# Bundle artifacts
+*.jsbundle

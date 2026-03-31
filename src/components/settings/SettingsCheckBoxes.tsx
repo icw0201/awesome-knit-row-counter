@@ -1,5 +1,5 @@
 // src/components/settings/SettingsCheckBoxes.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { View } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 
@@ -39,14 +39,20 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // 앱 시작 시 저장된 설정값 불러오기
   useEffect(() => {
     setSound(getSoundSetting());
     setVibration(getVibrationSetting());
-    const currentSetting = getScreenAwakeSetting();
-    setScreenAwake(currentSetting);
+    setScreenAwake(getScreenAwakeSetting());
     setTooltipEnabled(getTooltipEnabledSetting());
     setAutoPlayElapsedTime(getAutoPlayElapsedTimeSetting());
+  }, []);
+
+  /**
+   * 에러 모달 표시
+   */
+  const showErrorModal = useCallback((message: string) => {
+    setErrorMessage(message);
+    setErrorModalVisible(true);
   }, []);
 
   /**
@@ -133,13 +139,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
     setResetConfirm(false);
   };
 
-  /**
-   * 에러 모달 표시
-   */
-  const showErrorModal = (message: string) => {
-    setErrorMessage(message);
-    setErrorModalVisible(true);
-  };
   return (
     <>
       <View className="mb-6 space-y-4">

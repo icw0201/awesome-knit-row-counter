@@ -2,11 +2,17 @@ apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
 apply plugin: "com.facebook.react"
 
-// 키스토어 설정 파일 로드
-def keystorePropertiesFile = rootProject.file("keystore.properties")
-def keystoreProperties = new Properties()
-if (keystorePropertiesFile.exists()) {
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+// Android 앱 모듈 빌드 설정의 중심 파일입니다.
+// 이 브랜치에서는 Expo 음성 인식 플러그인이 생성하는 설정을 Android 빌드에 반영하도록
+// 엔트리 파일, CLI, 패키징 옵션, 이미지 포맷 지원을 맞추고
+// release 빌드는 서명 누락을 조기에 실패시키도록 경로를 정리했습니다.
+def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
+def releaseKeystorePropertiesFile = rootProject.file("keystore.properties")
+def isReleaseKeystoreConfigured = releaseKeystorePropertiesFile.exists()
+def allowDebugSigningInRelease =
+    (findProperty('android.allowDebugSigningInRelease') ?: false).toBoolean()
+def isReleaseTaskRequested = gradle.startParameter.taskNames.any { taskName ->
+    taskName.toLowerCase().contains("release")
 }
 
 /**
@@ -14,15 +20,26 @@ if (keystorePropertiesFile.exists()) {
  * By default you don't need to apply any configuration, just uncomment the lines you need.
  */
 react {
+    // Expo가 app.json/plugins를 보고 생성한 엔트리/CLI 설정을 그대로 사용해야
+    // Android 번들이 Metro 설정과 어긋나지 않고 음성 인식 네이티브 모듈도 함께 묶입니다.
+    entryFile = file(["node", "-e", "require('expo/scripts/resolveAppEntry')", projectRoot, "android", "absolute"].execute(null, rootDir).text.trim())
+    reactNativeDir = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
+    hermesCommand = new File(["node", "--print", "require.resolve('react-native/package.json')"].execute(null, rootDir).text.trim()).getParentFile().getAbsolutePath() + "/sdks/hermesc/%OS-BIN%/hermesc"
+    codegenDir = new File(["node", "--print", "require.resolve('@react-native/codegen/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim()).getParentFile().getAbsoluteFile()
+
+    enableBundleCompression = (findProperty('android.enableBundleCompression') ?: false).toBoolean()
+    // Use Expo CLI to bundle the app, this ensures the Metro config
+    // works correctly with Expo projects.
+    cliFile = new File(["node", "--print", "require.resolve('@expo/cli', { paths: [require.resolve('expo/package.json')] })"].execute(null, rootDir).text.trim())
+    bundleCommand = "export:embed"
+
     /* Folders */
-    //   The root of your project, i.e. where "package.json" lives. Default is '../..'
+     //   The root of your project, i.e. where "package.json" lives. Default is '../..'
     // root = file("../../")
     //   The folder where the react-native NPM package is. Default is ../../node_modules/react-native
     // reactNativeDir = file("../../node_modules/react-native")
     //   The folder where the react-native Codegen package is. Default is ../../node_modules/@react-native/codegen
     // codegenDir = file("../../node_modules/@react-native/codegen")
-    //   The cli.js file which is the React Native CLI entrypoint. Default is ../../node_modules/react-native/cli.js
-    // cliFile = file("../../node_modules/react-native/cli.js")
 
     /* Variants */
     //   The list of variants to that are debuggable. For those we're going to
@@ -33,9 +50,7 @@ react {
     /* Bundling */
     //   A list containing the node command and its flags. Default is just 'node'.
     // nodeExecutableAndArgs = ["node"]
-    //
-    //   The command to run when bundling. By default is 'bundle'
-    // bundleCommand = "ram-bundle"
+
     //
     //   The path to the CLI configuration file. Default is empty.
     // bundleConfig = file(../rn-cli.config.js)
@@ -64,15 +79,14 @@ react {
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-def enableProguardInReleaseBuilds = true
-
-def enableSeparateBuildPerCPUArchitecture = true
+def enableProguardInReleaseBuilds =
+    (findProperty('android.enableProguardInReleaseBuilds') ?: false).toBoolean()
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
  *
  * For example, to use the international variant, you can use:
- * `def jscFlavor = io.github.react-native-community:jsc-android-intl:2026004.+`
+ * `def jscFlavor = 'org.webkit:android-jsc-intl:+'`
  *
  * The international variant includes ICU i18n library and necessary data
  * allowing to use e.g. `Date.toLocaleString` and `String.localeCompare` that
@@ -83,19 +97,17 @@ def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
 android {
     ndkVersion rootProject.ext.ndkVersion
+
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "com.simpleknitcounter"
+    namespace 'com.simpleknitcounter'
     defaultConfig {
-        applicationId "com.simpleknitcounter"
+        applicationId 'com.simpleknitcounter'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 18
         versionName "1.3.2"
-        // ndk {
-        //     abiFilters "armeabi-v7a", "x86"
-        // }
     }
     signingConfigs {
         debug {
@@ -105,7 +117,9 @@ android {
             keyPassword 'android'
         }
         release {
-            if (keystorePropertiesFile.exists()) {
+            def keystoreProperties = new Properties()
+            if (isReleaseKeystoreConfigured) {
+                keystoreProperties.load(new FileInputStream(releaseKeystorePropertiesFile))
                 storeFile file(keystoreProperties['MYAPP_UPLOAD_STORE_FILE'])
                 storePassword keystoreProperties['MYAPP_UPLOAD_STORE_PASSWORD']
                 keyAlias keystoreProperties['MYAPP_UPLOAD_KEY_ALIAS']
@@ -118,16 +132,49 @@ android {
             signingConfig signingConfigs.debug
         }
         release {
-            // 릴리즈 빌드에서는 실제 키스토어를 사용합니다
-            if (keystorePropertiesFile.exists()) {
-                signingConfig signingConfigs.release
-            } else {
-                // 키스토어 파일이 없으면 디버그 키스토어를 사용 (개발용)
-                signingConfig signingConfigs.debug
+            if (isReleaseTaskRequested && !isReleaseKeystoreConfigured && !allowDebugSigningInRelease) {
+                throw new GradleException(
+                    "Release signing is not configured. Add android/keystore.properties " +
+                    "or pass -Pandroid.allowDebugSigningInRelease=true for local-only testing."
+                )
             }
+
+            // 실제 release 작업에서는 업로드 키스토어가 없으면 실패시키고,
+            // 정말 필요한 로컬 테스트만 명시적으로 debug 서명을 허용한다.
+            signingConfig isReleaseKeystoreConfigured ? signingConfigs.release : signingConfigs.debug
             minifyEnabled enableProguardInReleaseBuilds
-            shrinkResources true
+            shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            crunchPngs (findProperty('android.enablePngCrunchInReleaseBuilds')?.toBoolean() ?: true)
+        }
+    }
+    packagingOptions {
+        jniLibs {
+            // Expo/Gradle 속성값을 그대로 읽어 네이티브 라이브러리 패키징 방식을 제어합니다.
+            useLegacyPackaging (findProperty('expo.useLegacyPackaging')?.toBoolean() ?: false)
+        }
+    }
+    androidResources {
+        ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+}
+
+// Apply static values from `gradle.properties` to the `android.packagingOptions`
+// Accepts values in comma delimited lists, example:
+// android.packagingOptions.pickFirsts=/LICENSE,**/picasa.ini
+["pickFirsts", "excludes", "merges", "doNotStrip"].each { prop ->
+    // Split option: 'foo,bar' -> ['foo', 'bar']
+    def options = (findProperty("android.packagingOptions.$prop") ?: "").split(",");
+    // Trim all elements in place.
+    for (i in 0..<options.size()) options[i] = options[i].trim();
+    // `[] - ""` is essentially `[""].filter(Boolean)` removing all empty strings.
+    options -= ""
+
+    if (options.size() > 0) {
+        println "android.packagingOptions.$prop += $options (${options.size()})"
+        // Ex: android.packagingOptions.pickFirsts += '**/SCCS/**'
+        options.each {
+            android.packagingOptions[prop] += it
         }
     }
 }
@@ -135,6 +182,26 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+
+    // Expo가 여는 이미지 포맷 플래그를 Android 의존성에 연결해
+    // 음성 기능 도입으로 늘어난 Expo 설정과 앱 빌드 결과가 일치하도록 맞춥니다.
+    def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
+    def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
+    def isWebpAnimatedEnabled = (findProperty('expo.webp.animated') ?: "") == "true";
+
+    if (isGifEnabled) {
+        // For animated gif support
+        implementation("com.facebook.fresco:animated-gif:${expoLibs.versions.fresco.get()}")
+    }
+
+    if (isWebpEnabled) {
+        // For webp support
+        implementation("com.facebook.fresco:webpsupport:${expoLibs.versions.fresco.get()}")
+        if (isWebpAnimatedEnabled) {
+            // Animated webp support
+            implementation("com.facebook.fresco:animated-webp:${expoLibs.versions.fresco.get()}")
+        }
+    }
 
     if (hermesEnabled.toBoolean()) {
         implementation("com.facebook.react:hermes-android")

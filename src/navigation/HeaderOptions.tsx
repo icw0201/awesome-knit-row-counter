@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, Settings, Trash2, Info, ArrowDownUp, Timer } from 'lucide-react-native';
+import { ChevronLeft, Settings, Trash2, Info, ArrowDownUp, Timer, Mic } from 'lucide-react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from './AppNavigator';
 
@@ -75,20 +75,47 @@ export const getHeaderRightWithInfoEditAndSettings = (
   );
 };
 
-//활성이, 인포, 세팅 (CounterDetail전용)
+//타이머, 음성, 활성, 인포, 세팅 (CounterDetail전용)
 export const getHeaderRightWithActivateInfoSettings = (
   navigation: NativeStackNavigationProp<RootStackParamList>,
   mascotIsActive: boolean,
   onActivatePress: () => void,
   timerIsActive: boolean,
   onTimerPress: () => void,
+  voiceCommandsEnabled: boolean,
+  onVoicePress: () => void,
   counterId: string,
   onInfoPress: () => void
 ): React.JSX.Element => {
   return (
     <View className="flex-row items-center">
+      {/* 음성 인식 아이콘 */}
+      <TouchableOpacity
+        onPress={onVoicePress}
+        className="mr-2"
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="음성 인식 단수 증감"
+        accessibilityHint="탭하여 음성 인식 단수 증감 기능을 켜거나 끕니다"
+      >
+        <Mic size={24} color={voiceCommandsEnabled ? 'black' : '#B8B8B8'} />
+      </TouchableOpacity>
+      <View
+        pointerEvents="none"
+        className="mr-2 h-5 w-px bg-lightgray"
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+      />
       {/* Timer 아이콘 */}
-      <TouchableOpacity onPress={onTimerPress} style={{ marginRight: 13 }}>
+      <TouchableOpacity
+        onPress={onTimerPress}
+        style={{ marginRight: 13 }}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="타이머"
+        accessibilityHint="탭하여 타이머 기능을 켜거나 끕니다"
+        accessibilityState={{ selected: timerIsActive }}
+      >
         <Timer size={24} color={timerIsActive ? 'black' : '#B8B8B8'} />
       </TouchableOpacity>
 

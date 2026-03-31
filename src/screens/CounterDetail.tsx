@@ -10,20 +10,22 @@ import KeyEvent from 'react-native-keyevent';
 
 import { getHeaderRightWithActivateInfoSettings } from '@navigation/HeaderOptions';
 
-import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal } from '@components/counter';
+import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal, VoiceRecognitionBanner } from '@components/counter';
 import Tooltip from '@components/common/Tooltip';
 import { ADD_KEY_CODES, SUBTRACT_KEY_CODES } from '@constants/hardwareKeyCodes';
 import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, ScreenSize } from '@constants/screenSizeConfig';
 import { getTooltipEnabledSetting } from '@storage/settings';
 import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
+import { useVoiceCommands } from '@hooks/useVoiceCommands';
+import { useVoiceBannerText } from '@hooks/useVoiceBannerText';
+import { useTimedHighlight } from '@hooks/useTimedHighlight';
+import { useVoicePermissionGate } from '@hooks/useVoicePermissionGate';
 import { getContentSectionFlexes, getCounterDetailModalLayout, getCounterDetailVerticalPercents, getCounterDetailVerticalPx, getCounterDetailVisibility } from '@utils/counterDetailLayout';
 
 type HardwareKeyUpEvent = {
   keyCode: number;
 };
-type TouchAreaHighlightAction = 'add' | 'subtract' | null;
-
 
 /**
  * 카운터 상세 화면 컴포넌트
@@ -130,8 +132,40 @@ const CounterDetail = () => {
   } = useCounter({ counterId });
 
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
-  const [touchAreaHighlight, setTouchAreaHighlight] = useState<TouchAreaHighlightAction>(null);
-  const touchAreaHighlightTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [voiceRecognitionError, setVoiceRecognitionError] = useState<string>('');
+  const {
+    isVoiceCommandsEnabled,
+    isVoiceCommandsActive,
+    voicePermissionModalVisible,
+    voicePermissionModalTitle,
+    voicePermissionModalDescription,
+    voicePermissionModalConfirmText,
+    voicePermissionModalCancelText,
+    voicePermissionError,
+    closeVoicePermissionModal,
+    handleVoicePermissionModalConfirm,
+    toggleVoiceCommands,
+  } = useVoicePermissionGate();
+  const isInputBlocked =
+    activeModal !== null ||
+    errorModalVisible ||
+    voicePermissionModalVisible;
+  const effectiveVoiceCommandsActive = isVoiceCommandsActive && !isInputBlocked;
+  const {
+    voiceRecognizedText,
+    isVoiceTextResetPending,
+    handleVoiceRecognizedTextChange,
+    handleVoiceTextLayout,
+  } = useVoiceBannerText({ isVoiceCommandsActive: effectiveVoiceCommandsActive });
+  const voiceError = voicePermissionError || voiceRecognitionError;
+  const {
+    highlightedAction: touchAreaHighlight,
+    flashHighlight: flashTouchAreaHighlight,
+  } = useTimedHighlight(100);
+  const {
+    highlightedAction: subTouchAreaHighlight,
+    flashHighlight: flashSubTouchAreaHighlight,
+  } = useTimedHighlight(100);
 
   // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
   const imageWidth = iconSize * 1.4;
@@ -159,8 +193,10 @@ const CounterDetail = () => {
       timerIsActive: counter?.timerIsActive ?? false,
       subModalIsOpen,
     });
-  const { directionSectionFlex, countSectionFlex, actionsSectionFlex } =
-    getContentSectionFlexes(mascotIsActive, showCounterActions);
+  const showVoiceBanner =
+    screenSize === ScreenSize.LARGE && effectiveVoiceCommandsActive;
+  const { directionSectionFlex, voiceBannerSectionFlex, countSectionFlex, actionsSectionFlex } =
+    getContentSectionFlexes(mascotIsActive, showCounterActions, showVoiceBanner);
   const { timerHeightPx, gapBetweenTimerAndContentPx, contentHeightPx, bottomReservedHeightPx } =
     getCounterDetailVerticalPx({
       contentAreaHeight,
@@ -170,71 +206,73 @@ const CounterDetail = () => {
       contentEndPercent,
       shouldStartContentFromTop,
     });
+  const voiceBannerHeightPx = contentHeightPx * voiceBannerSectionFlex;
   const countSectionHeightPx = contentHeightPx * countSectionFlex;
+  const shouldFillCountVertically = mascotIsActive && showVoiceBanner;
   const digitCount = Math.max(1, String(counter?.count ?? 0).length);
   const CHAR_WIDTH_RATIO = 0.6; // 숫자 1글자 너비 ≈ fontSize * 비율
-  const maxFontSizeByHeight = countSectionHeightPx * 0.8;
-  const maxFontSizeByWidth = (resolvedWidth * 0.5) / (digitCount * CHAR_WIDTH_RATIO);
+  const maxFontSizeByHeight = countSectionHeightPx * (shouldFillCountVertically ? 1 : 0.8); //음성인식, 방향이가 활성화 된 경우 글자 차지 세로 영역 1로 증가
+  const maxFontSizeByWidth =
+    (resolvedWidth * (shouldFillCountVertically ? 0.8 : 0.5)) / (digitCount * CHAR_WIDTH_RATIO);
   const countTextFontSizePx = Math.max(0, Math.min(maxFontSizeByHeight, maxFontSizeByWidth));
 
   /**
-   * 메인 카운터의 add/subtract 액션이 실행될 때 좌/우 터치 영역 배경을 잠깐 강조한다.
-   *
-   * 이제 터치 입력과 하드웨어 키보드 입력이 모두 이 부모 state를 통해 같은 하이라이트
-   * 경로를 사용한다. 연속 입력 시 이전 timeout을 취소하고 다시 시작해서
-   * 하이라이트가 중간에 예상치 않게 꺼지지 않도록 한다.
+   * 메인 카운터 공통 진입점.
+   * 터치/키보드/보이스 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
    */
-  const flashTouchAreaHighlight = useCallback((action: Exclude<TouchAreaHighlightAction, null>) => {
-    if (touchAreaHighlightTimeoutRef.current) {
-      clearTimeout(touchAreaHighlightTimeoutRef.current);
+  const runHighlightedAdd = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
     }
-
-    setTouchAreaHighlight(action);
-    touchAreaHighlightTimeoutRef.current = setTimeout(() => {
-      setTouchAreaHighlight(null);
-      touchAreaHighlightTimeoutRef.current = null;
-    }, 100);
-  }, []);
-
-  /**
-   * 메인 카운터 증가 액션의 공통 진입점.
-   * 터치와 키보드 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
-   */
-  const handleHighlightedAdd = useCallback(() => {
     flashTouchAreaHighlight('add');
-    handleAdd();
-  }, [flashTouchAreaHighlight, handleAdd]);
+    handleAdd(commandWord);
+  }, [flashTouchAreaHighlight, handleAdd, isInputBlocked]);
 
-  /**
-   * 메인 카운터 감소 액션의 공통 진입점.
-   * 터치와 키보드 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
-   */
-  const handleHighlightedSubtract = useCallback(() => {
+  const runHighlightedSubtract = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
     flashTouchAreaHighlight('subtract');
-    handleSubtract();
-  }, [flashTouchAreaHighlight, handleSubtract]);
+    handleSubtract(commandWord);
+  }, [flashTouchAreaHighlight, handleSubtract, isInputBlocked]);
 
   /**
-   * 화면이 사라질 때 남아 있는 하이라이트 timeout을 정리한다.
-   *
-   * 정리하지 않으면 CounterDetail이 언마운트된 뒤에도 timeout 콜백이 실행되어
-   * 이미 사라진 화면의 state를 변경하려고 시도할 수 있다.
+   * 보조 카운터 공통 진입점.
+   * 터치/보이스 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
    */
-  useLayoutEffect(() => {
-    return () => {
-      if (touchAreaHighlightTimeoutRef.current) {
-        clearTimeout(touchAreaHighlightTimeoutRef.current);
-      }
-    };
-  }, []);
+  const runHighlightedSubAdd = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
+    flashSubTouchAreaHighlight('add');
+    handleSubAdd(commandWord);
+  }, [flashSubTouchAreaHighlight, handleSubAdd, isInputBlocked]);
+
+  const runHighlightedSubSubtract = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
+    flashSubTouchAreaHighlight('subtract');
+    handleSubSubtract(commandWord);
+  }, [flashSubTouchAreaHighlight, handleSubSubtract, isInputBlocked]);
+
+  /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
+  useVoiceCommands(
+    !!counter && effectiveVoiceCommandsActive,
+    runHighlightedAdd,
+    runHighlightedSubtract,
+    runHighlightedSubAdd,
+    runHighlightedSubSubtract,
+    handleVoiceRecognizedTextChange,
+    setVoiceRecognitionError
+  );
 
   /**
    * 화면 포커스 시 실행되는 효과
-   * 화면 켜짐 상태 관리만 담당합니다.
+   * 툴팁 설정만 다시 반영한다.
    */
   useFocusEffect(
     useCallback(() => {
-      // 툴팁 표시 설정 로드
       setTooltipEnabled(getTooltipEnabledSetting());
     }, [])
   );
@@ -256,19 +294,15 @@ const CounterDetail = () => {
        * "키를 뗄 때 1회 실행"이라는 더 안전한 동작을 만들기 위해서다.
        */
       const handleHardwareKeyUp = ({ keyCode }: HardwareKeyUpEvent) => {
-        const isModalBlockingInput =
-          activeModal !== null ||
-          errorModalVisible;
-
-        // 일반 모달이 열려 있으면 실수로 메인 카운터가 변하지 않도록 차단한다.
-        if (isModalBlockingInput) {
+        // 음성/편집/에러 모달이 떠 있는 동안은 하드웨어 키 입력도 함께 차단한다.
+        if (isInputBlocked) {
           return;
         }
 
         if (ADD_KEY_CODES.has(keyCode)) {
-          handleHighlightedAdd();
+          runHighlightedAdd();
         } else if (SUBTRACT_KEY_CODES.has(keyCode)) {
-          handleHighlightedSubtract();
+          runHighlightedSubtract();
         }
       };
 
@@ -278,7 +312,7 @@ const CounterDetail = () => {
         // 화면 포커스를 잃으면 전역 key up 리스너를 반드시 제거한다.
         KeyEvent.removeKeyUpListener();
       };
-    }, [activeModal, errorModalVisible, handleHighlightedAdd, handleHighlightedSubtract])
+    }, [isInputBlocked, runHighlightedAdd, runHighlightedSubtract])
   );
 
 
@@ -301,11 +335,22 @@ const CounterDetail = () => {
           toggleMascotIsActive,
           counter.timerIsActive,
           toggleTimerIsActive,
+          isVoiceCommandsEnabled,
+          toggleVoiceCommands,
           counter.id,
           () => navigation.navigate('InfoScreen', { itemId: counter.id })
         ),
     });
-  }, [navigation, counter, mascotIsActive, screenSize, resolvedWidth, toggleMascotIsActive, toggleTimerIsActive]);
+  }, [
+    navigation,
+    counter,
+    isVoiceCommandsEnabled,
+    mascotIsActive,
+    screenSize,
+    toggleMascotIsActive,
+    toggleTimerIsActive,
+    toggleVoiceCommands,
+  ]);
 
 
   // 카운터 데이터가 없으면 렌더링하지 않음
@@ -324,9 +369,11 @@ const CounterDetail = () => {
 
       {/* 좌우 터치 레이어 */}
       <CounterTouchArea
-        onAdd={handleHighlightedAdd}
-        onSubtract={handleHighlightedSubtract}
+        onAdd={runHighlightedAdd}
+        onSubtract={runHighlightedSubtract}
         highlightedAction={touchAreaHighlight}
+        showVoiceCommandHints={effectiveVoiceCommandsActive}
+        disabled={isInputBlocked}
       />
 
       {/* 중앙 콘텐츠 영역 */}
@@ -356,9 +403,15 @@ const CounterDetail = () => {
           />
         )}
 
-        <View className="absolute left-0 right-0 bottom-0 w-full items-center justify-start" style={{ top: progressBarHeightPx }}>
+        <View
+          className="absolute left-0 right-0 bottom-0 w-full items-center justify-start"
+          style={{ top: progressBarHeightPx }}
+        >
           {/* 타이머 영역 (bands의 timerEndPercent 기준) */}
-          <View className="w-full items-center justify-center" style={{ height: timerHeightPx }}>
+          <View
+            className="w-full items-center justify-center"
+            style={{ height: timerHeightPx }}
+          >
             {showTimeDisplay && (
               <TimeDisplay
                 screenSize={screenSize}
@@ -377,7 +430,10 @@ const CounterDetail = () => {
           <View className="w-full items-center" style={{ height: contentHeightPx }}>
             <View className="w-full flex-1">
               {mascotIsActive && (
-                <View className="items-center justify-center w-full" style={{ flex: directionSectionFlex }}>
+                <View
+                  className="w-full items-center justify-center"
+                  style={{ flex: directionSectionFlex }}
+                >
                   <CounterDirection
                     mascotIsActive={mascotIsActive}
                     wayIsChange={wayIsChange}
@@ -390,8 +446,24 @@ const CounterDetail = () => {
                   />
                 </View>
               )}
+              {showVoiceBanner && (
+                <View
+                  className="w-full items-center justify-center"
+                  style={{ flex: voiceBannerSectionFlex }}
+                >
+                  <VoiceRecognitionBanner
+                    visible={showVoiceBanner}
+                    bannerHeight={voiceBannerHeightPx}
+                    maxWidth={Math.max(0, resolvedWidth * 0.3)}
+                    voiceError={voiceError}
+                    recognizedText={voiceRecognizedText}
+                    isResetPending={isVoiceTextResetPending}
+                    onRecognizedTextLayout={handleVoiceTextLayout}
+                  />
+                </View>
+              )}
               <View
-                className="items-center justify-center w-full"
+                className="w-full items-center justify-center"
                 style={{ flex: countSectionFlex }}
                 pointerEvents="none"
               >
@@ -403,7 +475,10 @@ const CounterDetail = () => {
                 </Text>
               </View>
               {showCounterActions && (
-                <View className="items-center justify-center w-full" style={{ flex: actionsSectionFlex }}>
+                <View
+                  className="w-full items-center justify-center"
+                  style={{ flex: actionsSectionFlex }}
+                >
                   <CounterActions
                     screenSize={screenSize}
                     iconSize={iconSize}
@@ -438,8 +513,11 @@ const CounterDetail = () => {
       <SubCounterModal
         isOpen={subModalIsOpen}
         onToggle={handleSubModalToggle}
-        onAdd={handleSubAdd}
-        onSubtract={handleSubSubtract}
+        onAdd={runHighlightedSubAdd}
+        onSubtract={runHighlightedSubSubtract}
+        showVoiceCommandHints={effectiveVoiceCommandsActive}
+        highlightedAction={subTouchAreaHighlight}
+        inputDisabled={isInputBlocked}
         onReset={handleSubReset}
         onEdit={handleSubEdit}
         onRule={handleSubRule}
@@ -458,6 +536,11 @@ const CounterDetail = () => {
         activeModal={activeModal}
         errorModalVisible={errorModalVisible}
         errorMessage={errorMessage}
+        voicePermissionModalVisible={voicePermissionModalVisible}
+        voicePermissionModalTitle={voicePermissionModalTitle}
+        voicePermissionModalDescription={voicePermissionModalDescription}
+        voicePermissionModalConfirmText={voicePermissionModalConfirmText}
+        voicePermissionModalCancelText={voicePermissionModalCancelText}
         currentCount={currentCount}
         currentTargetCount={currentTargetCount}
         subCount={subCount}
@@ -468,6 +551,8 @@ const CounterDetail = () => {
         onResetConfirm={handleResetConfirm}
         onTimerResetConfirm={handleTimerResetConfirm}
         onErrorModalClose={() => setErrorModalVisible(false)}
+        onVoicePermissionModalClose={closeVoicePermissionModal}
+        onVoicePermissionModalConfirm={handleVoicePermissionModalConfirm}
         onTargetCountConfirm={handleTargetCountConfirm}
         onSubEditConfirm={handleSubEditConfirm}
         onSubResetConfirm={handleSubResetConfirm}

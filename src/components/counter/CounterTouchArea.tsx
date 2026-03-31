@@ -1,12 +1,14 @@
 // src/components/counter/CounterTouchArea.tsx
 import React from 'react';
-import { View } from 'react-native';
-import { Minus, Plus } from 'lucide-react-native';
+import { View, Text } from 'react-native';
+import { Minus, Plus, Speech } from 'lucide-react-native';
 
 interface CounterTouchAreaProps {
   onAdd: () => void;
   onSubtract: () => void;
   highlightedAction?: 'add' | 'subtract' | null;
+  showVoiceCommandHints?: boolean;
+  disabled?: boolean;
 }
 
 /**
@@ -17,9 +19,12 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
   onAdd,
   onSubtract,
   highlightedAction = null,
+  showVoiceCommandHints = false,
+  disabled = false,
 }) => {
   const isSubtractHighlighted = highlightedAction === 'subtract';
   const isAddHighlighted = highlightedAction === 'add';
+  const voiceHintIconColor = '#767676';
 
   return (
     <View className="absolute top-0 left-0 right-0 bottom-0 flex-row">
@@ -32,15 +37,22 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
         // 이 오버레이는 화면 전체를 덮는 입력 레이어라 접근성/포커스를 열어두면
         // 하드웨어 키보드 포커스가 여기로 들어와 잘못된 하이라이트가 생길 수 있다.
         importantForAccessibility="no-hide-descendants"
-        onStartShouldSetResponder={() => true}
-        onResponderRelease={onSubtract}
+        onStartShouldSetResponder={() => !disabled}
+        onResponderRelease={() => onSubtract()}
       >
-        <Minus
-          size={60}
-          color="#fc3e39"
-          strokeWidth={2}
-          className="ml-3"
-        />
+        <View className="relative ml-3 items-center">
+          <Minus
+            size={60}
+            color="#fc3e39"
+            strokeWidth={2}
+          />
+          {showVoiceCommandHints && (
+            <View className="absolute top-[68px] flex-row items-center">
+              <Speech size={16} color={voiceHintIconColor} strokeWidth={2} />
+              <Text className="ml-1 text-sm text-darkgray">연지</Text>
+            </View>
+          )}
+        </View>
       </View>
 
       {/* 오른쪽 터치 영역 (증가) - 63% */}
@@ -51,15 +63,22 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
         accessible={false}
         // 오른쪽 영역도 같은 이유로 포커스/접근성 대상에서 제외한다.
         importantForAccessibility="no-hide-descendants"
-        onStartShouldSetResponder={() => true}
-        onResponderRelease={onAdd}
+        onStartShouldSetResponder={() => !disabled}
+        onResponderRelease={() => onAdd()}
       >
-        <Plus
-          size={60}
-          color="#fc3e39"
-          strokeWidth={2}
-          className="mr-3"
-        />
+        <View className="relative mr-3 items-center">
+          <Plus
+            size={60}
+            color="#fc3e39"
+            strokeWidth={2}
+          />
+          {showVoiceCommandHints && (
+            <View className="absolute top-[68px] flex-row items-center">
+              <Speech size={16} color={voiceHintIconColor} strokeWidth={2} />
+              <Text className="ml-1 text-sm text-darkgray">곤지</Text>
+            </View>
+          )}
+        </View>
       </View>
     </View>
   );

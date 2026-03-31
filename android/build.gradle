@@ -1,21 +1,48 @@
+// Android 전체 서브프로젝트가 공통으로 쓰는 최상위 Gradle 설정 파일입니다.
+// 이 브랜치에서는 Expo 기반 React Native 구성을 쓰도록 저장소/플러그인 해석 방식을 바꿔
+// node_modules 안의 React Native/Expo Gradle 플러그인을 안정적으로 찾게 했습니다.
+// develop에 있던 ext 버전 상수 블록은 Expo 루트 플러그인이 같은 값을 제공하게 되면서
+// 중복 관리 지점이 되었고, 그대로 두면 Expo가 맞춰 주는 버전과 어긋날 수 있어 삭제
+
 buildscript {
-    ext {
-        buildToolsVersion = "35.0.0"
-        minSdkVersion = 24
-        compileSdkVersion = 35
-        targetSdkVersion = 35
-        ndkVersion = "28.0.13004108"
-        kotlinVersion = "2.0.21"
-    }
-    repositories {
-        google()
-        mavenCentral()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle")
-        classpath("com.facebook.react:react-native-gradle-plugin")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin")
-    }
+  repositories {
+    google()
+    mavenCentral()
+  }
+  dependencies {
+    classpath('com.android.tools.build:gradle')
+    classpath('com.facebook.react:react-native-gradle-plugin')
+    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+  }
 }
 
+def reactNativeAndroidDir = new File(
+  providers.exec {
+    workingDir(rootDir)
+    commandLine("node", "--print", "require.resolve('react-native/package.json')")
+  }.standardOutput.asText.get().trim(),
+  "../android"
+)
+
+allprojects {
+  repositories {
+    maven {
+      // 기존 bare RN 템플릿은 상대경로로 react-native/android를 직접 가리켰지만,
+      // Expo 도입 후에는 실제 설치 위치를 node 해석 결과로 찾는 편이 안전합니다.
+      // 그래서 하드코딩된 ext/상대경로 의존 코드는 삭제하고, 현재 설치된 RN 패키지 위치를 기준으로 다시 연결했습니다.
+      // All of React Native (JS, Obj-C sources, Android binaries) is installed from npm
+      url(reactNativeAndroidDir)
+    }
+
+    google()
+    mavenCentral()
+    maven { url 'https://www.jitpack.io' }
+  }
+}
+
+// expo-root-project를 추가한 이유:
+// app.json의 Expo 플러그인 설정(expo-speech-recognition 등)을 Android 빌드 파이프라인에 반영하려면
+// Expo가 제공하는 버전 카탈로그/공통 설정을 루트 프로젝트에도 연결해야 하기 때문입니다.
+// 즉, bare RN 전용 루트 설정 일부를 삭제한 뒤 Expo 루트 플러그인으로 대체한 변경입니다.
+apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
