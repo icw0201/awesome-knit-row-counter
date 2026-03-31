@@ -41,11 +41,14 @@ export type Info = {
 };
 
 // 반복 규칙 타입
+export type RuleEndMode = 'repeatCount' | 'endNumber';
+
 export type RepeatRule = {
   message: string;      // 메시지
   startNumber: number;  // 시작단
   endNumber: number;   // 종료단
   repeatCount?: number; // 반복 횟수
+  endMode: RuleEndMode | null; // 현재 사용 중인 종료 방식
   ruleNumber: number;   // 룰넘버 (몇 단마다)
   color: string;       // 색상 (필수)
 };

@@ -1,5 +1,43 @@
-import { RepeatRule } from '@storage/types';
+import { RepeatRule, RuleEndMode } from '@storage/types';
 import { RED_ORANGE_SWATCHES } from '@constants/colors';
+
+const resolveRuleEndMode = (
+  endNumber: number,
+  repeatCount: number = 0,
+  endMode?: RuleEndMode | null
+): RuleEndMode | null => {
+  if (endMode === 'endNumber' || endMode === 'repeatCount') {
+    return endMode;
+  }
+
+  if (endMode === null) {
+    return null;
+  }
+
+  if (endNumber > 0) {
+    return 'endNumber';
+  }
+
+  if (repeatCount > 0) {
+    return 'repeatCount';
+  }
+
+  return null;
+};
+
+export const getActiveRuleValues = (
+  endNumber: number,
+  repeatCount: number = 0,
+  endMode?: RuleEndMode | null
+): { endNumber: number; repeatCount: number; endMode: RuleEndMode | null } => {
+  const resolvedEndMode = resolveRuleEndMode(endNumber, repeatCount, endMode);
+
+  return {
+    endMode: resolvedEndMode,
+    endNumber: resolvedEndMode === 'endNumber' ? endNumber : 0,
+    repeatCount: resolvedEndMode === 'repeatCount' ? repeatCount : 0,
+  };
+};
 
 /**
  * 규칙이 적용되는 단인지 확인하는 함수
@@ -8,7 +46,8 @@ import { RED_ORANGE_SWATCHES } from '@constants/colors';
  * @returns 규칙이 적용되는 단이면 true, 아니면 false
  */
 export const isRuleApplied = (count: number, rule: RepeatRule): boolean => {
-  const { startNumber, endNumber, repeatCount = 0, ruleNumber } = rule;
+  const { startNumber, ruleNumber } = rule;
+  const { endNumber, repeatCount } = getActiveRuleValues(rule.endNumber, rule.repeatCount ?? 0, rule.endMode);
 
   // 규칙이 입력되지 않았으면 false
   if (ruleNumber === 0) {
@@ -76,26 +115,28 @@ export const calculateRulePreview = (
   endNumber: number,
   ruleNumber: number,
   maxCount: number = 5,
-  repeatCount: number = 0
+  repeatCount: number = 0,
+  endMode?: RuleEndMode | null
 ): number[] => {
   // 규칙이 입력되지 않았으면 빈 배열 반환
   if (ruleNumber === 0) {
     return [];
   }
 
+  const activeRuleValues = getActiveRuleValues(endNumber, repeatCount, endMode);
   const results: number[] = [];
 
-  if (startNumber > 0 && endNumber > 0) {
+  if (startNumber > 0 && activeRuleValues.endNumber > 0) {
     // 시작단과 종료단 둘 다 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     let current = startNumber;
-    while (current <= endNumber && results.length < maxCount) {
+    while (current <= activeRuleValues.endNumber && results.length < maxCount) {
       results.push(current);
       current += ruleNumber;
     }
-  } else if (startNumber > 0 && repeatCount > 0) {
+  } else if (startNumber > 0 && activeRuleValues.repeatCount > 0) {
     // 시작단과 반복 횟수가 있는 경우: 시작단 포함, repeatCount 횟수만큼 적용
     let current = startNumber;
-    for (let i = 0; i < repeatCount && results.length < maxCount; i++) {
+    for (let i = 0; i < activeRuleValues.repeatCount && results.length < maxCount; i++) {
       results.push(current);
       current += ruleNumber;
     }
@@ -106,17 +147,17 @@ export const calculateRulePreview = (
       results.push(current);
       current += ruleNumber;
     }
-  } else if (endNumber > 0) {
+  } else if (activeRuleValues.endNumber > 0) {
     // 종료단만 있는 경우: ruleNumber부터 종료단까지
     let current = ruleNumber;
-    while (current <= endNumber && results.length < maxCount) {
+    while (current <= activeRuleValues.endNumber && results.length < maxCount) {
       results.push(current);
       current += ruleNumber;
     }
-  } else if (repeatCount > 0) {
+  } else if (activeRuleValues.repeatCount > 0) {
     // 반복 횟수만 있는 경우: ruleNumber부터 repeatCount 횟수만큼 적용
     let current = ruleNumber;
-    for (let i = 0; i < repeatCount && results.length < maxCount; i++) {
+    for (let i = 0; i < activeRuleValues.repeatCount && results.length < maxCount; i++) {
       results.push(current);
       current += ruleNumber;
     }
@@ -138,21 +179,24 @@ export const calculateRuleRepeatCount = (
   startNumber: number,
   endNumber: number,
   ruleNumber: number,
-  repeatCount: number = 0
+  repeatCount: number = 0,
+  endMode?: RuleEndMode | null
 ): number | null => {
-  if (repeatCount > 0) {
-    return repeatCount;
+  const activeRuleValues = getActiveRuleValues(endNumber, repeatCount, endMode);
+
+  if (activeRuleValues.repeatCount > 0) {
+    return activeRuleValues.repeatCount;
   }
 
-  if (endNumber <= 0) {
+  if (activeRuleValues.endNumber <= 0) {
     return null;
   }
 
   if (startNumber > 0) {
-    return Math.floor((endNumber - startNumber) / ruleNumber) + 1;
+    return Math.floor((activeRuleValues.endNumber - startNumber) / ruleNumber) + 1;
   }
 
-  return Math.floor(endNumber / ruleNumber);
+  return Math.floor(activeRuleValues.endNumber / ruleNumber);
 };
 
 /**
@@ -164,15 +208,30 @@ export const calculateRulePreviewSummary = (
   endNumber: number,
   ruleNumber: number,
   maxCount: number = 5,
-  repeatCount: number = 0
+  repeatCount: number = 0,
+  endMode?: RuleEndMode | null
 ): {
   previewRows: number[];
   totalRepeatCount: number | null;
   lastRow: number | null;
   hasMoreRows: boolean;
 } => {
-  const previewRows = calculateRulePreview(startNumber, endNumber, ruleNumber, maxCount, repeatCount);
-  const totalRepeatCount = calculateRuleRepeatCount(startNumber, endNumber, ruleNumber, repeatCount);
+  const activeRuleValues = getActiveRuleValues(endNumber, repeatCount, endMode);
+  const previewRows = calculateRulePreview(
+    startNumber,
+    activeRuleValues.endNumber,
+    ruleNumber,
+    maxCount,
+    activeRuleValues.repeatCount,
+    activeRuleValues.endMode
+  );
+  const totalRepeatCount = calculateRuleRepeatCount(
+    startNumber,
+    activeRuleValues.endNumber,
+    ruleNumber,
+    activeRuleValues.repeatCount,
+    activeRuleValues.endMode
+  );
   const previewStartNumber = startNumber > 0 ? startNumber : ruleNumber;
   const lastRow =
     totalRepeatCount !== null ? previewStartNumber + ruleNumber * (totalRepeatCount - 1) : null;

@@ -6,24 +6,25 @@ import CircleIcon from '@components/common/CircleIcon';
 import CircleRadioButtons, { type CircleRadioOption } from '@components/common/CircleRadioButtons';
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
 import ColorPicker from '@components/counter/ColorPicker';
-import { calculateRulePreviewSummary, calculateRuleRepeatCount } from '@utils/ruleUtils';
+import { getActiveRuleValues, calculateRulePreviewSummary, calculateRuleRepeatCount } from '@utils/ruleUtils';
 import { numberToString } from '@utils/numberUtils';
+import { RuleEndMode } from '@storage/types';
 
 interface RuleCardProps {
   message: string;
   startNumber: number;
   endNumber: number;
   repeatCount: number;
+  endMode: RuleEndMode | null;
   ruleNumber: number;
   color: string; // 색상 (hex 값, 예: '#fc3e39', 필수)
   onDelete?: () => void;
-  onConfirm?: (data: { message: string; startNumber: number; endNumber: number; repeatCount: number; ruleNumber: number; color: string }) => void;
+  onConfirm?: (data: { message: string; startNumber: number; endNumber: number; repeatCount: number; endMode: RuleEndMode | null; ruleNumber: number; color: string }) => void;
   isEditable?: boolean; // 편집 가능 여부
 }
 
 const MESSAGE_ICON_SIZE = 24;
 const MESSAGE_ICON_GAP = 6;
-type RuleEndMode = 'repeatCount' | 'endNumber';
 
 type MessageLastLine = {
   x: number;
@@ -166,6 +167,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
   startNumber,
   endNumber,
   repeatCount,
+  endMode,
   ruleNumber,
   color,
   onDelete,
@@ -179,7 +181,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
   const [editRepeatCount, setEditRepeatCount] = useState(numberToString(repeatCount));
   const [editRuleNumber, setEditRuleNumber] = useState(numberToString(ruleNumber));
   const [editColor, setEditColor] = useState(color);
-  const [editRuleEndMode, setEditRuleEndMode] = useState<RuleEndMode | null>(null);
+  const [editRuleEndMode, setEditRuleEndMode] = useState<RuleEndMode | null>(endMode);
   const [messageLastLine, setMessageLastLine] = useState<MessageLastLine | null>(null);
 
   // TextInputBox refs
@@ -197,18 +199,30 @@ const RuleCard: React.FC<RuleCardProps> = ({
     setEditRepeatCount(numberToString(repeatCount));
     setEditRuleNumber(numberToString(ruleNumber));
     setEditColor(color);
-    setEditRuleEndMode(null);
-  }, [message, startNumber, endNumber, repeatCount, ruleNumber, color]);
+    setEditRuleEndMode(endMode);
+  }, [message, startNumber, endNumber, repeatCount, endMode, ruleNumber, color]);
 
   // 보기 모드 메시지가 바뀌면 마지막 줄 좌표도 초기화
   useEffect(() => {
     setMessageLastLine(null);
   }, [message]);
 
-  const viewRepeatCount = calculateRuleRepeatCount(startNumber, endNumber, ruleNumber, repeatCount);
+  const activeViewRuleValues = getActiveRuleValues(endNumber, repeatCount, endMode);
+  const viewRepeatCount = calculateRuleRepeatCount(
+    startNumber,
+    activeViewRuleValues.endNumber,
+    ruleNumber,
+    activeViewRuleValues.repeatCount,
+    activeViewRuleValues.endMode
+  );
   const viewRepeatCountText = viewRepeatCount !== null ? ` (${viewRepeatCount}회)` : ' (∞)';
-  const activeEditEndNumber = editRuleEndMode === 'endNumber' ? editEndNumber : '';
-  const activeEditRepeatCount = editRuleEndMode === 'repeatCount' ? editRepeatCount : '';
+  const activeEditRuleValues = getActiveRuleValues(
+    parseInt(editEndNumber, 10) || 0,
+    parseInt(editRepeatCount, 10) || 0,
+    editRuleEndMode
+  );
+  const activeEditEndNumber = numberToString(activeEditRuleValues.endNumber);
+  const activeEditRepeatCount = numberToString(activeEditRuleValues.repeatCount);
 
   const handleEditClick = () => {
     setIsEditMode(true);
@@ -229,8 +243,9 @@ const RuleCard: React.FC<RuleCardProps> = ({
     onConfirm?.({
       message: editMessage.trim(),
       startNumber: result.start,
-      endNumber: result.end,
-      repeatCount: result.repeatCount,
+      endNumber: parseInt(editEndNumber, 10) || 0,
+      repeatCount: parseInt(editRepeatCount, 10) || 0,
+      endMode: editRuleEndMode,
       ruleNumber: result.rule,
       color: editColor,
     });
@@ -247,7 +262,6 @@ const RuleCard: React.FC<RuleCardProps> = ({
       return;
     }
     setEditRuleEndMode('repeatCount');
-    setEditEndNumber('');
   };
 
   const handleSelectEndNumberMode = () => {
@@ -257,7 +271,6 @@ const RuleCard: React.FC<RuleCardProps> = ({
       return;
     }
     setEditRuleEndMode('endNumber');
-    setEditRepeatCount('');
   };
 
   const renderRuleEndOptionContent = (
@@ -401,7 +414,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
             </View>
             <Text className="text-base text-black">
               {startNumber > 0 ? `${startNumber}단부터 ` : ''}
-              {endNumber > 0 ? `${endNumber}단까지 ` : ''}
+              {activeViewRuleValues.endNumber > 0 ? `${activeViewRuleValues.endNumber}단까지 ` : ''}
               {ruleNumber}단마다
               {viewRepeatCountText}
             </Text>
