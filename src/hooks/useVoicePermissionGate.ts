@@ -11,7 +11,6 @@ import {
 
 const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
 const REQUIRED_ON_DEVICE_LOCALE = 'ko-KR';
-const REQUIRED_ON_DEVICE_LANGUAGE_LABEL = '한국어';
 
 function normalizeLocaleTag(locale: string): string {
   return locale.trim().replace(/_/g, '-').toLowerCase();
@@ -101,7 +100,7 @@ export function useVoicePermissionGate() {
   // 권한은 있어도 ko-KR 온디바이스 모델이 없어서 기능 자체를 켤 수 없을 때 사용한다.
   const showVoiceUnavailableModal = useCallback(() => {
     setVoicePermissionModalTitle('음성 인식 사용 불가');
-    setVoicePermissionModalDescription(`이 기기에는 ${REQUIRED_ON_DEVICE_LANGUAGE_LABEL} 온디바이스 음성 인식 모델이 설치되어 있지 않아 음성인식 기능을 사용할 수 없습니다.`);
+    setVoicePermissionModalDescription('이 기기에는 한국어 온디바이스 음성 인식 모델이 설치되어 있지 않아 음성인식 기능을 사용할 수 없습니다.');
     setVoicePermissionModalConfirmText('확인');
     setVoicePermissionModalCancelText('');
     setShouldOpenSettingsOnModalConfirm(false);
