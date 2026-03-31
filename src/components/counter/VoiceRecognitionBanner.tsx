@@ -4,6 +4,8 @@ import { View, Text, type NativeSyntheticEvent, type TextLayoutEventData } from 
 import { VOICE_LISTENING_TEXT } from '@hooks/useVoiceCommands';
 
 const MIC_SIZE = 18;
+const ERROR_FONT_SIZE = 12;
+const RECOGNIZED_TEXT_FONT_SIZE = 14;
 /**
  * 배너에서 실제로 보여줄 1줄 높이.
  * 일반 인식 텍스트는 maxWidth(현재 화면의 30%) 안에서 줄바꿈이 생길 수 있으므로,
@@ -50,8 +52,9 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
             // 에러는 잘라내지 않고 전체 문구를 그대로 보여준다.
             <View className="shrink">
               <Text
-                className="text-xs text-red-orange-500"
-                style={{ lineHeight: ONE_LINE_HEIGHT }}
+                allowFontScaling={false}
+                className="text-red-orange-500"
+                style={{ fontSize: ERROR_FONT_SIZE, lineHeight: ONE_LINE_HEIGHT }}
               >
                 에러: {voiceError}
               </Text>
@@ -60,8 +63,13 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
             // 일반 인식 텍스트는 maxWidth 안에서 줄바꿈되면 부모가 감지해 다음 내용부터 다시 보여준다.
             <View style={{ maxHeight: ONE_LINE_HEIGHT, overflow: 'hidden' }}>
               <Text
-                className="text-sm text-black"
-                style={{ lineHeight: ONE_LINE_HEIGHT, maxWidth }}
+                allowFontScaling={false}
+                className="text-black"
+                style={{
+                  fontSize: RECOGNIZED_TEXT_FONT_SIZE,
+                  lineHeight: ONE_LINE_HEIGHT,
+                  maxWidth,
+                }}
                 onTextLayout={onRecognizedTextLayout}
               >
                 {recognizedText || (isResetPending ? '' : VOICE_LISTENING_TEXT)}
