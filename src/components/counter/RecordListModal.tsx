@@ -30,21 +30,26 @@ const RecordListModal: React.FC<RecordListModalProps> = ({
         records.map((record, index) => (
           <Fragment key={`${record.date}-${record.time}-${index}`}>
             <View className="py-1.5">
-              <View className="max-w-full flex-row flex-wrap items-center">
-                <Text className="text-sm font-bold text-black" allowFontScaling={false}>
-                  {formatCompactDate(record.date)}
-                </Text>
-                <Text className="text-sm text-black" allowFontScaling={false}>
-                  {' '}
-                  {record.time}{' '}
-                </Text>
-                <Text className="text-sm font-bold text-black" allowFontScaling={false}>
-                  {getEditContentText(record)}
+              <View className="flex-row items-center">
+                <Text
+                  className="shrink text-sm text-black"
+                  allowFontScaling={false}
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  <Text className="font-bold">{formatCompactDate(record.date)}</Text>
+                  <Text> {record.time} </Text>
+                  <Text className="font-bold">{getEditContentText(record)}</Text>
                 </Text>
                 {record.voiceCommand && (
                   <View className="ml-1 flex-row items-center">
                     <Mic size={12} color="#767676" strokeWidth={2} />
-                    <Text className="ml-1 text-sm text-darkgray" allowFontScaling={false}>
+                    <Text
+                      className="ml-1 text-sm text-darkgray"
+                      allowFontScaling={false}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
                       {record.voiceCommand}
                     </Text>
                   </View>
