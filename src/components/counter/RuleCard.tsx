@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import type { NativeSyntheticEvent } from 'react-native';
-import { View, Text, type TextLayoutEventData } from 'react-native';
+import { View, Text, TouchableOpacity, type TextLayoutEventData } from 'react-native';
 import ColorCompleteIcon from '@assets/images/color_complete.svg';
 import CircleIcon from '@components/common/CircleIcon';
 import CircleRadioButtons, { type CircleRadioOption } from '@components/common/CircleRadioButtons';
@@ -248,7 +248,6 @@ const RuleCard: React.FC<RuleCardProps> = ({
     }
     setEditRuleEndMode('repeatCount');
     setEditEndNumber('');
-    repeatCountInputRef.current?.focus();
   };
 
   const handleSelectEndNumberMode = () => {
@@ -259,52 +258,77 @@ const RuleCard: React.FC<RuleCardProps> = ({
     }
     setEditRuleEndMode('endNumber');
     setEditRepeatCount('');
-    endNumberInputRef.current?.focus();
+  };
+
+  const renderRuleEndOptionContent = (
+    mode: RuleEndMode,
+    input: React.ReactNode,
+    suffixText: string
+  ) => {
+    const isSelected = editRuleEndMode === mode;
+    const handlePress = mode === 'repeatCount' ? handleSelectRepeatCountMode : handleSelectEndNumberMode;
+
+    const content = (
+      <>
+        <View className="mr-2 w-18">
+          {input}
+        </View>
+        <Text className="text-base text-black">{suffixText}</Text>
+      </>
+    );
+
+    if (isSelected) {
+      return content;
+    }
+
+    return (
+      <TouchableOpacity
+        onPress={handlePress}
+        activeOpacity={0.7}
+        className="flex-row items-center"
+      >
+        {content}
+      </TouchableOpacity>
+    );
   };
 
   const ruleEndOptions: CircleRadioOption<RuleEndMode>[] = [
     {
       value: 'repeatCount',
-      content: (
-        <>
-          <View className="mr-2 w-18">
-            <TextInputBox
-              ref={repeatCountInputRef}
-              label=""
-              value={editRepeatCount}
-              onChangeText={setEditRepeatCount}
-              type="number"
-              containerClassName="mb-0"
-              returnKeyType="done"
-              onSubmitEditing={() => repeatCountInputRef.current?.blur()}
-              blurOnSubmit={true}
-              editable={editRuleEndMode === 'repeatCount'}
-            />
-          </View>
-          <Text className="text-base text-black">번 반복</Text>
-        </>
+      content: renderRuleEndOptionContent(
+        'repeatCount',
+        <TextInputBox
+          ref={repeatCountInputRef}
+          label=""
+          value={editRepeatCount}
+          onChangeText={setEditRepeatCount}
+          type="number"
+          containerClassName="mb-0"
+          returnKeyType="done"
+          onSubmitEditing={() => repeatCountInputRef.current?.blur()}
+          blurOnSubmit={true}
+          editable={editRuleEndMode === 'repeatCount'}
+        />,
+        '번 반복'
       ),
     },
     {
       value: 'endNumber',
-      content: (
-        <>
-          <View className="mr-2 w-18">
-            <TextInputBox
-              ref={endNumberInputRef}
-              label=""
-              value={editEndNumber}
-              onChangeText={setEditEndNumber}
-              type="number"
-              containerClassName="mb-0"
-              returnKeyType="done"
-              onSubmitEditing={() => endNumberInputRef.current?.blur()}
-              blurOnSubmit={true}
-              editable={editRuleEndMode === 'endNumber'}
-            />
-          </View>
-          <Text className="text-base text-black">단까지 반복</Text>
-        </>
+      content: renderRuleEndOptionContent(
+        'endNumber',
+        <TextInputBox
+          ref={endNumberInputRef}
+          label=""
+          value={editEndNumber}
+          onChangeText={setEditEndNumber}
+          type="number"
+          containerClassName="mb-0"
+          returnKeyType="done"
+          onSubmitEditing={() => endNumberInputRef.current?.blur()}
+          blurOnSubmit={true}
+          editable={editRuleEndMode === 'endNumber'}
+        />,
+        '단까지 반복'
       ),
     },
   ];
