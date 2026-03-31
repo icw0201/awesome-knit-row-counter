@@ -1,9 +1,10 @@
 // src/screens/Settings.tsx
 import React from 'react';
-import { View, ScrollView } from 'react-native';
+import { ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SettingsCheckBoxes, SettingsLinks, SettingsVersion } from '@components/settings';
-import { screenStyles } from '@styles/screenStyles';
+import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
 
 /**
  * 설정 화면 컴포넌트
@@ -12,7 +13,7 @@ import { screenStyles } from '@styles/screenStyles';
 const Settings = () => {
 
   return (
-    <View className="flex-1">
+    <SafeAreaView style={screenStyles.flex1} edges={safeAreaEdges}>
       {/* 설정 옵션들 */}
       <ScrollView contentContainerStyle={screenStyles.scrollViewContentCentered}>
         <SettingsCheckBoxes />
@@ -21,8 +22,7 @@ const Settings = () => {
 
         <SettingsVersion version="1.3.3-internal.1" />
       </ScrollView>
-
-    </View>
+    </SafeAreaView>
   );
 };
 
