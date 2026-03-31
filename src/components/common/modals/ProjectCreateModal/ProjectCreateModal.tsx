@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { View } from 'react-native';
 import { BaseModal } from '../BaseModal';
 import TextInputBox from '@components/common/TextInputBox';
-import RadioButtonGroup from '@components/common/RadioButtonGroup';
+import CheckRadioButtons, { type CheckRadioOption } from '@components/common/CheckRadioButtons';
 import RoundedButton from '@components/common/RoundedButton';
 
 /**
@@ -47,7 +47,7 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
     onClose();
   };
 
-  const radioOptions = [
+  const radioOptions: CheckRadioOption[] = [
     {
       label: '프로젝트',
       value: 'project',
@@ -66,9 +66,9 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
       onClose={handleClose}
       title={title}
     >
-      {/* 라디오 버튼 그룹 */}
+      {/* 체크형 라디오 버튼 목록 */}
       <View className="mt-4 mb-0">
-        <RadioButtonGroup
+        <CheckRadioButtons
           selected={selectedType}
           onSelect={(value) => setSelectedType(value as 'project' | 'counter')}
           options={radioOptions}
