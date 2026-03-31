@@ -179,9 +179,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
   const [editRepeatCount, setEditRepeatCount] = useState(numberToString(repeatCount));
   const [editRuleNumber, setEditRuleNumber] = useState(numberToString(ruleNumber));
   const [editColor, setEditColor] = useState(color);
-  const [editRuleEndMode, setEditRuleEndMode] = useState<RuleEndMode>(
-    endNumber > 0 ? 'endNumber' : 'repeatCount'
-  );
+  const [editRuleEndMode, setEditRuleEndMode] = useState<RuleEndMode | null>(null);
   const [messageLastLine, setMessageLastLine] = useState<MessageLastLine | null>(null);
 
   // TextInputBox refs
@@ -199,7 +197,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
     setEditRepeatCount(numberToString(repeatCount));
     setEditRuleNumber(numberToString(ruleNumber));
     setEditColor(color);
-    setEditRuleEndMode(endNumber > 0 ? 'endNumber' : 'repeatCount');
+    setEditRuleEndMode(null);
   }, [message, startNumber, endNumber, repeatCount, ruleNumber, color]);
 
   // 보기 모드 메시지가 바뀌면 마지막 줄 좌표도 초기화
@@ -209,6 +207,8 @@ const RuleCard: React.FC<RuleCardProps> = ({
 
   const viewRepeatCount = calculateRuleRepeatCount(startNumber, endNumber, ruleNumber, repeatCount);
   const viewRepeatCountText = viewRepeatCount !== null ? ` (${viewRepeatCount}회)` : ' (∞)';
+  const activeEditEndNumber = editRuleEndMode === 'endNumber' ? editEndNumber : '';
+  const activeEditRepeatCount = editRuleEndMode === 'repeatCount' ? editRepeatCount : '';
 
   const handleEditClick = () => {
     setIsEditMode(true);
@@ -218,9 +218,9 @@ const RuleCard: React.FC<RuleCardProps> = ({
     const result = validateRule(
       editMessage.trim(),
       editStartNumber,
-      editEndNumber,
+      activeEditEndNumber,
       editRuleNumber,
-      editRepeatCount
+      activeEditRepeatCount
     );
     if (result.error) {
       return;
@@ -241,12 +241,22 @@ const RuleCard: React.FC<RuleCardProps> = ({
   };
 
   const handleSelectRepeatCountMode = () => {
+    if (editRuleEndMode === 'repeatCount') {
+      setEditRuleEndMode(null);
+      repeatCountInputRef.current?.blur();
+      return;
+    }
     setEditRuleEndMode('repeatCount');
     setEditEndNumber('');
     repeatCountInputRef.current?.focus();
   };
 
   const handleSelectEndNumberMode = () => {
+    if (editRuleEndMode === 'endNumber') {
+      setEditRuleEndMode(null);
+      endNumberInputRef.current?.blur();
+      return;
+    }
     setEditRuleEndMode('endNumber');
     setEditRepeatCount('');
     endNumberInputRef.current?.focus();
@@ -446,8 +456,10 @@ const RuleCard: React.FC<RuleCardProps> = ({
               onSubmitEditing={() => {
                 if (editRuleEndMode === 'repeatCount') {
                   repeatCountInputRef.current?.focus();
-                } else {
+                } else if (editRuleEndMode === 'endNumber') {
                   endNumberInputRef.current?.focus();
+                } else {
+                  ruleNumberInputRef.current?.blur();
                 }
               }}
               blurOnSubmit={false}
@@ -465,8 +477,12 @@ const RuleCard: React.FC<RuleCardProps> = ({
             onSelect={(value) => {
               if (value === 'repeatCount') {
                 handleSelectRepeatCountMode();
-              } else {
+              } else if (value === 'endNumber') {
                 handleSelectEndNumberMode();
+              } else {
+                setEditRuleEndMode(null);
+                repeatCountInputRef.current?.blur();
+                endNumberInputRef.current?.blur();
               }
             }}
             size="sm"
@@ -474,7 +490,14 @@ const RuleCard: React.FC<RuleCardProps> = ({
         </View>
 
         {/* 규칙 미리보기 / 에러 표시 */}
-        {renderRulePreview(editMessage, editStartNumber, editEndNumber, editRuleNumber, editRepeatCount, validateRule)}
+        {renderRulePreview(
+          editMessage,
+          editStartNumber,
+          activeEditEndNumber,
+          editRuleNumber,
+          activeEditRepeatCount,
+          validateRule
+        )}
       </View>
 
       {/* 삭제/확인 버튼 */}

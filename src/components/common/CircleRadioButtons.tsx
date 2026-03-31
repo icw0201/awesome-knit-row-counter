@@ -10,8 +10,8 @@ export interface CircleRadioOption<T extends string = string> {
 
 interface CircleRadioButtonsProps<T extends string = string> {
   options: CircleRadioOption<T>[];
-  selected: T;
-  onSelect: (value: T) => void;
+  selected: T | null;
+  onSelect: (value: T | null) => void;
   size?: 'sm' | 'base';
   direction?: 'row' | 'column';
   containerClassName?: string;
@@ -41,7 +41,7 @@ const CircleRadioButtons = <T extends string>({
           <View className="mr-2">
             <CircleRadioButton
               selected={selected === option.value}
-              onPress={() => onSelect(option.value)}
+              onPress={() => onSelect(selected === option.value ? null : option.value)}
               size={size}
             />
           </View>
