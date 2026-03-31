@@ -206,6 +206,7 @@ const CounterDetail = () => {
       contentEndPercent,
       shouldStartContentFromTop,
     });
+  const voiceBannerHeightPx = contentHeightPx * voiceBannerSectionFlex;
   const countSectionHeightPx = contentHeightPx * countSectionFlex;
   const shouldFillCountVertically = mascotIsActive && showVoiceBanner;
   const digitCount = Math.max(1, String(counter?.count ?? 0).length);
@@ -452,6 +453,7 @@ const CounterDetail = () => {
                 >
                   <VoiceRecognitionBanner
                     visible={showVoiceBanner}
+                    bannerHeight={voiceBannerHeightPx}
                     maxWidth={Math.max(0, resolvedWidth * 0.3)}
                     voiceError={voiceError}
                     recognizedText={voiceRecognizedText}

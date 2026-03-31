@@ -4,17 +4,19 @@ import { View, Text, type NativeSyntheticEvent, type TextLayoutEventData } from 
 import { VOICE_LISTENING_TEXT } from '@hooks/useVoiceCommands';
 
 const MIC_SIZE = 18;
-const ERROR_FONT_SIZE = 12;
-const RECOGNIZED_TEXT_FONT_SIZE = 14;
+const ERROR_FONT_RATIO = 0.3;
+const RECOGNIZED_TEXT_FONT_RATIO = 0.55;
 /**
- * 배너에서 실제로 보여줄 1줄 높이.
- * 일반 인식 텍스트는 maxWidth(현재 화면의 30%) 안에서 줄바꿈이 생길 수 있으므로,
- * lineHeight와 wrapper maxHeight를 같은 값으로 맞춰 overflow 감지를 안정화한다.
+ * 배너 섹션 높이 대비 1줄 텍스트 높이 비율.
+ * 일반 인식 텍스트는 maxWidth 안에서 줄바꿈 여부를 감지하므로,
+ * lineHeight와 wrapper maxHeight를 같은 값으로 맞춰 한 줄 클리핑을 안정화한다.
  */
-const ONE_LINE_HEIGHT = 22;
+const ONE_LINE_HEIGHT_RATIO = 0.55;
 
 export interface VoiceRecognitionBannerProps {
   visible: boolean;
+  /** 배너가 배치되는 세로 영역의 실제 높이(px) */
+  bannerHeight: number;
   /** 일반 인식 텍스트 영역의 최대 가로 (현재 화면 너비의 30%) */
   maxWidth: number;
   voiceError: string;
@@ -28,6 +30,7 @@ export interface VoiceRecognitionBannerProps {
  */
 const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
   visible,
+  bannerHeight,
   maxWidth,
   voiceError,
   recognizedText,
@@ -35,6 +38,9 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
   onRecognizedTextLayout,
 }) => {
   const hasVoiceError = voiceError.length > 0;
+  const oneLineHeight = Math.max(0, bannerHeight * ONE_LINE_HEIGHT_RATIO);
+  const errorFontSize = Math.max(0, bannerHeight * ERROR_FONT_RATIO);
+  const recognizedTextFontSize = Math.max(0, bannerHeight * RECOGNIZED_TEXT_FONT_RATIO);
 
   if (!visible) {
     return null;
@@ -54,20 +60,20 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
               <Text
                 allowFontScaling={false}
                 className="text-red-orange-500"
-                style={{ fontSize: ERROR_FONT_SIZE, lineHeight: ONE_LINE_HEIGHT }}
+                style={{ fontSize: errorFontSize, lineHeight: oneLineHeight }}
               >
                 에러: {voiceError}
               </Text>
             </View>
           ) : (
             // 일반 인식 텍스트는 maxWidth 안에서 줄바꿈되면 부모가 감지해 다음 내용부터 다시 보여준다.
-            <View style={{ maxHeight: ONE_LINE_HEIGHT, overflow: 'hidden' }}>
+            <View style={{ maxHeight: oneLineHeight, overflow: 'hidden' }}>
               <Text
                 allowFontScaling={false}
                 className="text-black"
                 style={{
-                  fontSize: RECOGNIZED_TEXT_FONT_SIZE,
-                  lineHeight: ONE_LINE_HEIGHT,
+                  fontSize: recognizedTextFontSize,
+                  lineHeight: oneLineHeight,
                   maxWidth,
                 }}
                 onTextLayout={onRecognizedTextLayout}
