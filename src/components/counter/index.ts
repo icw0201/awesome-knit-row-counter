@@ -12,3 +12,4 @@ export { default as ProgressBar } from './ProgressBar';
 export { default as SegmentRecordModal } from './SegmentRecordModal';
 export { default as RuleCard } from './RuleCard';
 export { default as ColorPicker } from './ColorPicker';
+export { default as VoiceRecognitionBanner } from './VoiceRecognitionBanner';

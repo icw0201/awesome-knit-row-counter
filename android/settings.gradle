@@ -1,6 +1,44 @@
-pluginManagement { includeBuild("../node_modules/@react-native/gradle-plugin") }
-plugins { id("com.facebook.react.settings") }
-extensions.configure(com.facebook.react.ReactSettingsExtension){ ex -> ex.autolinkLibrariesFromCommand() }
+pluginManagement {
+  // Android용 Gradle 플러그인 위치를 node_modules에서 동적으로 찾습니다.
+  // 이 브랜치에서 Expo 모듈 자동 링크를 도입했기 때문에 정적 상대경로 대신
+  // 실제 설치 경로를 따라가야 React Native/Expo 플러그인 둘 다 안정적으로 연결됩니다.
+  def reactNativeGradlePlugin = new File(
+    providers.exec {
+      workingDir(rootDir)
+      commandLine("node", "--print", "require.resolve('@react-native/gradle-plugin/package.json', { paths: [require.resolve('react-native/package.json')] })")
+    }.standardOutput.asText.get().trim()
+  ).getParentFile().absolutePath
+  includeBuild(reactNativeGradlePlugin)
+  
+  def expoPluginsPath = new File(
+    providers.exec {
+      workingDir(rootDir)
+      commandLine("node", "--print", "require.resolve('expo-modules-autolinking/package.json', { paths: [require.resolve('expo/package.json')] })")
+    }.standardOutput.asText.get().trim(),
+    "../android/expo-gradle-plugin"
+  ).absolutePath
+  includeBuild(expoPluginsPath)
+}
+
+plugins {
+  id("com.facebook.react.settings")
+  // Expo 자동 링크 설정을 활성화해 expo-speech-recognition 같은 네이티브 모듈을
+  // 수동 include 없이 Android 프로젝트에 연결합니다.
+  id("expo-autolinking-settings")
+}
+
+extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
+  if (System.getenv('EXPO_USE_COMMUNITY_AUTOLINKING') == '1') {
+    ex.autolinkLibrariesFromCommand()
+  } else {
+    ex.autolinkLibrariesFromCommand(expoAutolinking.rnConfigCommand)
+  }
+}
+expoAutolinking.useExpoModules()
+
 rootProject.name = 'SimpleKnitCounter'
+
+expoAutolinking.useExpoVersionCatalog()
+
 include ':app'
-includeBuild('../node_modules/@react-native/gradle-plugin')
+includeBuild(expoAutolinking.reactNativeGradlePlugin)
