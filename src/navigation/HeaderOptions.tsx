@@ -3,7 +3,7 @@ import { ChevronLeft, Settings, Trash2, Info, ArrowDownUp, Timer, Mic } from 'lu
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from './AppNavigator';
 
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, Text } from 'react-native';
 import ActivateToggle from '@components/common/ActivateToggle';
 
 export const getDefaultHeaderLeft = (
@@ -84,6 +84,8 @@ export const getHeaderRightWithActivateInfoSettings = (
   onTimerPress: () => void,
   voiceCommandsEnabled: boolean,
   onVoicePress: () => void,
+  subSlideModalsEnabled: boolean,
+  onSubSlideModalsPress: () => void,
   counterId: string,
   onInfoPress: () => void
 ): React.JSX.Element => {
@@ -99,6 +101,23 @@ export const getHeaderRightWithActivateInfoSettings = (
         accessibilityHint="탭하여 음성 인식 단수 증감 기능을 켜거나 끕니다"
       >
         <Mic size={24} color={voiceCommandsEnabled ? 'black' : '#B8B8B8'} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={onSubSlideModalsPress}
+        className="mr-2"
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="서브 슬라이드 모달"
+        accessibilityHint="탭하여 활동기록 및 보조 카운터 슬라이드 모달 표시를 켜거나 끕니다"
+        accessibilityState={{ selected: subSlideModalsEnabled }}
+      >
+        <Text
+          allowFontScaling={false}
+          className="text-base font-bold"
+          style={{ color: subSlideModalsEnabled ? 'black' : '#B8B8B8' }}
+        >
+          sub
+        </Text>
       </TouchableOpacity>
       <View
         pointerEvents="none"

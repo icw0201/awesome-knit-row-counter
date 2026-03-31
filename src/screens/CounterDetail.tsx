@@ -1,6 +1,6 @@
 // src/screens/CounterDetail.tsx
 
-import { useLayoutEffect, useCallback, useState, useRef } from 'react';
+import { useLayoutEffect, useCallback, useState, useRef, useEffect } from 'react';
 import { View, Text, useWindowDimensions, Animated, LayoutChangeEvent, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
@@ -14,7 +14,12 @@ import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubC
 import Tooltip from '@components/common/Tooltip';
 import { ADD_KEY_CODES, SUBTRACT_KEY_CODES } from '@constants/hardwareKeyCodes';
 import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, ScreenSize } from '@constants/screenSizeConfig';
-import { getTooltipEnabledSetting } from '@storage/settings';
+import {
+  getTooltipEnabledSetting,
+  getSubSlideModalsEnabledSetting,
+  setSubSlideModalsEnabledSetting,
+  subscribeSubSlideModalsEnabledSettingChange,
+} from '@storage/settings';
 import { screenStyles } from '@styles/screenStyles';
 import { useCounter } from '@hooks/useCounter';
 import { useVoiceCommands } from '@hooks/useVoiceCommands';
@@ -132,6 +137,9 @@ const CounterDetail = () => {
   } = useCounter({ counterId });
 
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
+  const [subSlideModalsEnabled, setSubSlideModalsEnabled] = useState(
+    () => getSubSlideModalsEnabledSetting()
+  );
   const [voiceRecognitionError, setVoiceRecognitionError] = useState<string>('');
   const {
     isVoiceCommandsEnabled,
@@ -277,6 +285,22 @@ const CounterDetail = () => {
     }, [])
   );
 
+  useEffect(() => {
+    const syncSubSlideModalsEnabled = () => {
+      setSubSlideModalsEnabled(getSubSlideModalsEnabledSetting());
+    };
+
+    syncSubSlideModalsEnabled();
+
+    return subscribeSubSlideModalsEnabledSettingChange(syncSubSlideModalsEnabled);
+  }, []);
+
+  const toggleSubSlideModalsEnabled = useCallback(() => {
+    const nextValue = !subSlideModalsEnabled;
+    setSubSlideModalsEnabledSetting(nextValue);
+    setSubSlideModalsEnabled(nextValue);
+  }, [subSlideModalsEnabled]);
+
   useFocusEffect(
     useCallback(() => {
       if (Platform.OS !== 'android') {
@@ -337,6 +361,8 @@ const CounterDetail = () => {
           toggleTimerIsActive,
           isVoiceCommandsEnabled,
           toggleVoiceCommands,
+          subSlideModalsEnabled,
+          toggleSubSlideModalsEnabled,
           counter.id,
           () => navigation.navigate('InfoScreen', { itemId: counter.id })
         ),
@@ -347,7 +373,9 @@ const CounterDetail = () => {
     isVoiceCommandsEnabled,
     mascotIsActive,
     screenSize,
+    subSlideModalsEnabled,
     toggleMascotIsActive,
+    toggleSubSlideModalsEnabled,
     toggleTimerIsActive,
     toggleVoiceCommands,
   ]);
@@ -496,7 +524,7 @@ const CounterDetail = () => {
       </Animated.View>
 
       {/* 구간 기록 모달 - LARGE 화면에서만 표시 */}
-      {screenSize === ScreenSize.LARGE && (
+      {screenSize === ScreenSize.LARGE && subSlideModalsEnabled && (
         <SegmentRecordModal
           isOpen={counter.sectionModalIsOpen ?? false}
           onToggle={handleSectionModalToggle}
@@ -510,26 +538,28 @@ const CounterDetail = () => {
       )}
 
       {/* 보조 카운터 모달 */}
-      <SubCounterModal
-        isOpen={subModalIsOpen}
-        onToggle={handleSubModalToggle}
-        onAdd={runHighlightedSubAdd}
-        onSubtract={runHighlightedSubSubtract}
-        showVoiceCommandHints={effectiveVoiceCommandsActive}
-        highlightedAction={subTouchAreaHighlight}
-        inputDisabled={isInputBlocked}
-        onReset={handleSubReset}
-        onEdit={handleSubEdit}
-        onRule={handleSubRule}
-        handleWidth={subModalHandleWidth}
-        subCount={subCount}
-        subRule={subRule}
-        subRuleIsActive={subRuleIsActive}
-        screenSize={screenSize}
-        width={subModalWidth}
-        height={subModalHeight}
-        centerY={subModalCenterY}
-      />
+      {subSlideModalsEnabled && (
+        <SubCounterModal
+          isOpen={subModalIsOpen}
+          onToggle={handleSubModalToggle}
+          onAdd={runHighlightedSubAdd}
+          onSubtract={runHighlightedSubSubtract}
+          showVoiceCommandHints={effectiveVoiceCommandsActive}
+          highlightedAction={subTouchAreaHighlight}
+          inputDisabled={isInputBlocked}
+          onReset={handleSubReset}
+          onEdit={handleSubEdit}
+          onRule={handleSubRule}
+          handleWidth={subModalHandleWidth}
+          subCount={subCount}
+          subRule={subRule}
+          subRuleIsActive={subRuleIsActive}
+          screenSize={screenSize}
+          width={subModalWidth}
+          height={subModalHeight}
+          centerY={subModalCenterY}
+        />
+      )}
 
       {/* 모달들 */}
       <CounterModals

@@ -16,6 +16,7 @@ const KEY_AUTO_PLAY_ELAPSED_TIME = 'settings.autoPlayElapsedTime';
 const KEY_TOOLTIP_ENABLED = 'settings.tooltipEnabled';
 const KEY_SHOW_ELAPSED_TIME_IN_LIST = 'settings.showElapsedTimeInList';
 const KEY_VOICE_COMMANDS_ENABLED = 'settings.voiceCommandsEnabled';
+const KEY_SUB_SLIDE_MODALS_ENABLED = 'settings.subSlideModalsEnabled';
 const KEY_VOICE_RECOGNITION_PERMISSION_STATUS =
   'settings.voiceRecognitionPermissionStatus';
 
@@ -30,6 +31,7 @@ const DEFAULT_AUTO_PLAY_ELAPSED_TIME = true;
 const DEFAULT_TOOLTIP_ENABLED = true;
 const DEFAULT_SHOW_ELAPSED_TIME_IN_LIST = false;
 const DEFAULT_VOICE_COMMANDS_ENABLED = false;
+const DEFAULT_SUB_SLIDE_MODALS_ENABLED = true;
 
 export type VoiceRecognitionPermissionStatus =
   | 'undetermined'
@@ -221,6 +223,41 @@ export const setVoiceCommandsEnabledSetting = (value: boolean) => {
 export const getVoiceCommandsEnabledSetting = (): boolean => {
   const value = storage.getString(KEY_VOICE_COMMANDS_ENABLED);
   return value ? JSON.parse(value) : DEFAULT_VOICE_COMMANDS_ENABLED;
+};
+
+/**
+ * CounterDetail의 슬라이드 모달 표시 설정을 저장합니다.
+ * @param value 슬라이드 모달 표시 여부
+ */
+export const setSubSlideModalsEnabledSetting = (value: boolean) => {
+  storage.set(KEY_SUB_SLIDE_MODALS_ENABLED, JSON.stringify(value));
+};
+
+/**
+ * CounterDetail의 슬라이드 모달 표시 설정을 가져옵니다.
+ * @returns 슬라이드 모달 표시 여부 (기본값: true)
+ */
+export const getSubSlideModalsEnabledSetting = (): boolean => {
+  const value = storage.getString(KEY_SUB_SLIDE_MODALS_ENABLED);
+  return value ? JSON.parse(value) : DEFAULT_SUB_SLIDE_MODALS_ENABLED;
+};
+
+/**
+ * 슬라이드 모달 표시 설정 변경을 구독합니다.
+ * @returns unsubscribe 함수
+ */
+export const subscribeSubSlideModalsEnabledSettingChange = (
+  callback: () => void
+) => {
+  const listener = storage.addOnValueChangedListener((changedKey) => {
+    if (changedKey === KEY_SUB_SLIDE_MODALS_ENABLED) {
+      callback();
+    }
+  });
+
+  return () => {
+    listener.remove();
+  };
 };
 
 /**
