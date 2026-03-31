@@ -10,7 +10,7 @@ import { Counter, RepeatRule, RuleEndMode } from '@storage/types';
  */
 export type RuleConfirmData = {
   message: string;
-  startNumber: number;
+  startNumber: number | null;
   endNumber: number;
   repeatCount: number;
   endMode: RuleEndMode | null;

@@ -59,7 +59,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   const appliedRulesKey = JSON.stringify(
     appliedRules.map((r) => ({
       message: r.message,
-      startNumber: r.startNumber,
+      startNumber: r.startNumber ?? 'none',
       endNumber: r.endNumber,
       repeatCount: r.repeatCount ?? 0,
       ruleNumber: r.ruleNumber,

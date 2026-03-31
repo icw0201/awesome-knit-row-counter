@@ -7,24 +7,43 @@ import CircleRadioButtons, { type CircleRadioOption } from '@components/common/C
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
 import ColorPicker from '@components/counter/ColorPicker';
 import { getActiveRuleValues, calculateRulePreviewSummary, calculateRuleRepeatCount } from '@utils/ruleUtils';
-import { numberToString } from '@utils/numberUtils';
 import { RuleEndMode } from '@storage/types';
 
 interface RuleCardProps {
   message: string;
-  startNumber: number;
+  startNumber: number | null;
   endNumber: number;
   repeatCount: number;
   endMode: RuleEndMode | null;
   ruleNumber: number;
   color: string; // 색상 (hex 값, 예: '#fc3e39', 필수)
   onDelete?: () => void;
-  onConfirm?: (data: { message: string; startNumber: number; endNumber: number; repeatCount: number; endMode: RuleEndMode | null; ruleNumber: number; color: string }) => void;
+  onConfirm?: (data: { message: string; startNumber: number | null; endNumber: number; repeatCount: number; endMode: RuleEndMode | null; ruleNumber: number; color: string }) => void;
   isEditable?: boolean; // 편집 가능 여부
 }
 
 const MESSAGE_ICON_SIZE = 24;
 const MESSAGE_ICON_GAP = 6;
+
+const formatNullableNumberInput = (value: number | null): string => {
+  return value === null ? '' : value.toString();
+};
+
+const formatStoredRuleValue = (value: number, isActive: boolean): string => {
+  return isActive || value !== 0 ? value.toString() : '';
+};
+
+const parseNullableNumber = (value: string | number | null): number | null => {
+  if (typeof value === 'number') {
+    return value;
+  }
+
+  if (value === null || value.trim() === '') {
+    return null;
+  }
+
+  return parseInt(value, 10) || 0;
+};
 
 type MessageLastLine = {
   x: number;
@@ -84,11 +103,12 @@ const calculateIconTop = (messageLastLine: MessageLastLine): number => {
  */
 type ValidateRuleFunction = (
   trimmedMessage: string,
-  start: string | number,
-  end: string | number,
+  start: string | number | null,
+  end: string | number | null,
   rule: string | number,
-  repeatCount: string | number
-) => { error: string | null; start: number; end: number; rule: number; repeatCount: number };
+  repeatCount: string | number | null,
+  endMode: RuleEndMode | null
+) => { error: string | null; start: number | null; end: number; rule: number; repeatCount: number };
 
 /**
  * 규칙 미리보기 렌더링
@@ -100,6 +120,7 @@ const renderRulePreview = (
   editEndNumber: string,
   editRuleNumber: string,
   editRepeatCount: string,
+  editRuleEndMode: RuleEndMode | null,
   validateRule: ValidateRuleFunction
 ) => {
   const { error: ruleError, start, end, rule, repeatCount } = validateRule(
@@ -107,7 +128,8 @@ const renderRulePreview = (
     editStartNumber,
     editEndNumber,
     editRuleNumber,
-    editRepeatCount
+    editRepeatCount,
+    editRuleEndMode
   );
 
   if (ruleError) {
@@ -121,9 +143,10 @@ const renderRulePreview = (
     );
   }
 
-  const hasRuleInput = (start > 0 || end > 0 || repeatCount > 0) && rule > 0;
+  const hasRuleInput =
+    (start !== null || editRuleEndMode === 'endNumber' || editRuleEndMode === 'repeatCount') && rule > 0;
   const { previewRows, totalRepeatCount, lastRow, hasMoreRows } = hasRuleInput
-    ? calculateRulePreviewSummary(start, end, rule, 5, repeatCount)
+    ? calculateRulePreviewSummary(start, end, rule, 5, repeatCount, editRuleEndMode)
     : { previewRows: [], totalRepeatCount: null, lastRow: null, hasMoreRows: false };
 
   if (!hasRuleInput) {
@@ -184,10 +207,10 @@ const RuleCard: React.FC<RuleCardProps> = ({
 }) => {
   const [isEditMode, setIsEditMode] = useState(isEditable);
   const [editMessage, setEditMessage] = useState(message);
-  const [editStartNumber, setEditStartNumber] = useState(numberToString(startNumber));
-  const [editEndNumber, setEditEndNumber] = useState(numberToString(endNumber));
-  const [editRepeatCount, setEditRepeatCount] = useState(numberToString(repeatCount));
-  const [editRuleNumber, setEditRuleNumber] = useState(numberToString(ruleNumber));
+  const [editStartNumber, setEditStartNumber] = useState(formatNullableNumberInput(startNumber));
+  const [editEndNumber, setEditEndNumber] = useState(formatStoredRuleValue(endNumber, endMode === 'endNumber'));
+  const [editRepeatCount, setEditRepeatCount] = useState(formatStoredRuleValue(repeatCount, endMode === 'repeatCount'));
+  const [editRuleNumber, setEditRuleNumber] = useState(ruleNumber === 0 ? '' : ruleNumber.toString());
   const [editColor, setEditColor] = useState(color);
   const [editRuleEndMode, setEditRuleEndMode] = useState<RuleEndMode | null>(endMode);
   const [messageLastLine, setMessageLastLine] = useState<MessageLastLine | null>(null);
@@ -202,10 +225,10 @@ const RuleCard: React.FC<RuleCardProps> = ({
   // props가 변경되면 내부 state도 업데이트
   useEffect(() => {
     setEditMessage(message);
-    setEditStartNumber(numberToString(startNumber));
-    setEditEndNumber(numberToString(endNumber));
-    setEditRepeatCount(numberToString(repeatCount));
-    setEditRuleNumber(numberToString(ruleNumber));
+    setEditStartNumber(formatNullableNumberInput(startNumber));
+    setEditEndNumber(formatStoredRuleValue(endNumber, endMode === 'endNumber'));
+    setEditRepeatCount(formatStoredRuleValue(repeatCount, endMode === 'repeatCount'));
+    setEditRuleNumber(ruleNumber === 0 ? '' : ruleNumber.toString());
     setEditColor(color);
     setEditRuleEndMode(endMode);
   }, [message, startNumber, endNumber, repeatCount, endMode, ruleNumber, color]);
@@ -224,13 +247,8 @@ const RuleCard: React.FC<RuleCardProps> = ({
     activeViewRuleValues.endMode
   );
   const viewRepeatCountText = viewRepeatCount !== null ? ` (${viewRepeatCount}회)` : ' (∞)';
-  const activeEditRuleValues = getActiveRuleValues(
-    parseInt(editEndNumber, 10) || 0,
-    parseInt(editRepeatCount, 10) || 0,
-    editRuleEndMode
-  );
-  const activeEditEndNumber = numberToString(activeEditRuleValues.endNumber);
-  const activeEditRepeatCount = numberToString(activeEditRuleValues.repeatCount);
+  const activeEditEndNumber = editRuleEndMode === 'endNumber' ? editEndNumber : '';
+  const activeEditRepeatCount = editRuleEndMode === 'repeatCount' ? editRepeatCount : '';
 
   const handleEditClick = () => {
     setIsEditMode(true);
@@ -242,7 +260,8 @@ const RuleCard: React.FC<RuleCardProps> = ({
       editStartNumber,
       activeEditEndNumber,
       editRuleNumber,
-      activeEditRepeatCount
+      activeEditRepeatCount,
+      editRuleEndMode
     );
     if (result.error) {
       return;
@@ -251,8 +270,8 @@ const RuleCard: React.FC<RuleCardProps> = ({
     onConfirm?.({
       message: editMessage.trim(),
       startNumber: result.start,
-      endNumber: parseInt(editEndNumber, 10) || 0,
-      repeatCount: parseInt(editRepeatCount, 10) || 0,
+      endNumber: parseNullableNumber(editEndNumber) ?? 0,
+      repeatCount: parseNullableNumber(editRepeatCount) ?? 0,
       endMode: editRuleEndMode,
       ruleNumber: result.rule,
       color: editColor,
@@ -362,28 +381,46 @@ const RuleCard: React.FC<RuleCardProps> = ({
   /** 유효성 검사 + 파싱 (문자열/숫자 모두 받음) */
   const validateRule = (
     trimmedMessage: string,
-    start: string | number,
-    end: string | number,
+    start: string | number | null,
+    end: string | number | null,
     rule: string | number,
-    repeatCountValue: string | number
-  ): { error: string | null; start: number; end: number; rule: number; repeatCount: number } => {
-    const parsedStart = typeof start === 'string' ? parseInt(start, 10) || 0 : start;
-    const parsedEnd = typeof end === 'string' ? parseInt(end, 10) || 0 : end;
-    const parsedRule = typeof rule === 'string' ? parseInt(rule, 10) || 0 : rule;
-    const parsedRepeatCount =
-      typeof repeatCountValue === 'string' ? parseInt(repeatCountValue, 10) || 0 : repeatCountValue;
-    const parsed = { start: parsedStart, end: parsedEnd, rule: parsedRule, repeatCount: parsedRepeatCount };
+    repeatCountValue: string | number | null,
+    currentEndMode: RuleEndMode | null
+  ): { error: string | null; start: number | null; end: number; rule: number; repeatCount: number } => {
+    const parsedStart = parseNullableNumber(start);
+    const parsedEnd = parseNullableNumber(end);
+    const parsedRuleValue = parseNullableNumber(rule);
+    const parsedRule = parsedRuleValue ?? 0;
+    const parsedRepeatCount = parseNullableNumber(repeatCountValue);
+    const parsed = {
+      start: parsedStart,
+      end: parsedEnd ?? 0,
+      rule: parsedRule,
+      repeatCount: parsedRepeatCount ?? 0,
+    };
 
     if (!trimmedMessage) {
       return { ...parsed, error: '메시지를 입력해 주세요.' };
     }
-    if (parsedStart === 0 && parsedEnd === 0 && parsedRepeatCount === 0) {
+    if (currentEndMode === 'endNumber' && parsedEnd === null) {
+      return { ...parsed, error: '종료단을 입력해 주세요.' };
+    }
+    if (currentEndMode === 'repeatCount' && parsedRepeatCount === null) {
+      return { ...parsed, error: '반복 횟수를 입력해 주세요.' };
+    }
+    if (currentEndMode === 'repeatCount' && parsedRepeatCount === 0) {
+      return { ...parsed, error: '반복 횟수에 0을 지정할 수 없습니다.' };
+    }
+    if (parsedStart === null && currentEndMode === null) {
       return { ...parsed, error: '시작단, 종료단 혹은 반복 횟수를 설정해 주세요.' };
     }
-    if (parsedRule === 0) {
+    if (parsedRuleValue === null) {
       return { ...parsed, error: '반복 규칙을 설정해 주세요.' };
     }
-    if (parsedStart > 0 && parsedEnd > 0 && parsedStart > parsedEnd) {
+    if (parsedRule === 0) {
+      return { ...parsed, error: '반복 규칙에 0을 지정할 수 없습니다.' };
+    }
+    if (parsedStart !== null && currentEndMode === 'endNumber' && parsedStart > (parsedEnd ?? 0)) {
       return { ...parsed, error: '시작단이 종료단보다 클 수 없습니다.' };
     }
     return { ...parsed, error: null };
@@ -421,8 +458,8 @@ const RuleCard: React.FC<RuleCardProps> = ({
               )}
             </View>
             <Text className="text-base text-black">
-              {startNumber > 0 ? `${startNumber}단부터 ` : ''}
-              {activeViewRuleValues.endNumber > 0 ? `${activeViewRuleValues.endNumber}단까지 ` : ''}
+              {startNumber !== null ? `${startNumber}단부터 ` : ''}
+              {activeViewRuleValues.endMode === 'endNumber' ? `${activeViewRuleValues.endNumber}단까지 ` : ''}
               {ruleNumber}단마다
               {viewRepeatCountText}
             </Text>
@@ -540,6 +577,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
           activeEditEndNumber,
           editRuleNumber,
           activeEditRepeatCount,
+          editRuleEndMode,
           validateRule
         )}
       </View>

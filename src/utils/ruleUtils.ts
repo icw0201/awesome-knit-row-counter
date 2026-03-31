@@ -47,49 +47,52 @@ export const getActiveRuleValues = (
  */
 export const isRuleApplied = (count: number, rule: RepeatRule): boolean => {
   const { startNumber, ruleNumber } = rule;
-  const { endNumber, repeatCount } = getActiveRuleValues(rule.endNumber, rule.repeatCount ?? 0, rule.endMode);
+  const activeRuleValues = getActiveRuleValues(rule.endNumber, rule.repeatCount ?? 0, rule.endMode);
+  const hasStartNumber = startNumber !== null;
+  const hasEndNumber = activeRuleValues.endMode === 'endNumber';
+  const hasRepeatCount = activeRuleValues.endMode === 'repeatCount';
 
   // 규칙이 입력되지 않았으면 false
   if (ruleNumber === 0) {
     return false;
   }
 
-  if (startNumber > 0 && endNumber > 0) {
+  if (hasStartNumber && hasEndNumber) {
     // 시작단과 종료단 둘 다 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     let current = startNumber;
-    while (current <= endNumber) {
+    while (current <= activeRuleValues.endNumber) {
       if (current === count) {
         return true;
       }
       current += ruleNumber;
     }
-  } else if (startNumber > 0 && repeatCount > 0) {
+  } else if (hasStartNumber && hasRepeatCount) {
     // 시작단과 반복 횟수가 있는 경우: 시작단 포함, repeatCount 횟수만큼 적용
     let current = startNumber;
-    for (let i = 0; i < repeatCount; i++) {
+    for (let i = 0; i < activeRuleValues.repeatCount; i++) {
       if (current === count) {
         return true;
       }
       current += ruleNumber;
     }
-  } else if (startNumber > 0) {
+  } else if (hasStartNumber) {
     // 시작단만 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     if (count >= startNumber) {
       return (count - startNumber) % ruleNumber === 0;
     }
-  } else if (endNumber > 0) {
+  } else if (hasEndNumber) {
     // 종료단만 있는 경우: ruleNumber부터 종료단까지
     let current = ruleNumber;
-    while (current <= endNumber) {
+    while (current <= activeRuleValues.endNumber) {
       if (current === count) {
         return true;
       }
       current += ruleNumber;
     }
-  } else if (repeatCount > 0) {
+  } else if (hasRepeatCount) {
     // 반복 횟수만 있는 경우: ruleNumber부터 repeatCount 횟수만큼 적용
     let current = ruleNumber;
-    for (let i = 0; i < repeatCount; i++) {
+    for (let i = 0; i < activeRuleValues.repeatCount; i++) {
       if (current === count) {
         return true;
       }
@@ -111,7 +114,7 @@ export const isRuleApplied = (count: number, rule: RepeatRule): boolean => {
  * @returns 규칙이 적용되는 단들의 배열
  */
 export const calculateRulePreview = (
-  startNumber: number,
+  startNumber: number | null,
   endNumber: number,
   ruleNumber: number,
   maxCount: number = 5,
@@ -125,36 +128,39 @@ export const calculateRulePreview = (
 
   const activeRuleValues = getActiveRuleValues(endNumber, repeatCount, endMode);
   const results: number[] = [];
+  const hasStartNumber = startNumber !== null;
+  const hasEndNumber = activeRuleValues.endMode === 'endNumber';
+  const hasRepeatCount = activeRuleValues.endMode === 'repeatCount';
 
-  if (startNumber > 0 && activeRuleValues.endNumber > 0) {
+  if (hasStartNumber && hasEndNumber) {
     // 시작단과 종료단 둘 다 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     let current = startNumber;
     while (current <= activeRuleValues.endNumber && results.length < maxCount) {
       results.push(current);
       current += ruleNumber;
     }
-  } else if (startNumber > 0 && activeRuleValues.repeatCount > 0) {
+  } else if (hasStartNumber && hasRepeatCount) {
     // 시작단과 반복 횟수가 있는 경우: 시작단 포함, repeatCount 횟수만큼 적용
     let current = startNumber;
     for (let i = 0; i < activeRuleValues.repeatCount && results.length < maxCount; i++) {
       results.push(current);
       current += ruleNumber;
     }
-  } else if (startNumber > 0) {
+  } else if (hasStartNumber) {
     // 시작단만 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     let current = startNumber;
     for (let i = 0; i < maxCount; i++) {
       results.push(current);
       current += ruleNumber;
     }
-  } else if (activeRuleValues.endNumber > 0) {
+  } else if (hasEndNumber) {
     // 종료단만 있는 경우: ruleNumber부터 종료단까지
     let current = ruleNumber;
     while (current <= activeRuleValues.endNumber && results.length < maxCount) {
       results.push(current);
       current += ruleNumber;
     }
-  } else if (activeRuleValues.repeatCount > 0) {
+  } else if (hasRepeatCount) {
     // 반복 횟수만 있는 경우: ruleNumber부터 repeatCount 횟수만큼 적용
     let current = ruleNumber;
     for (let i = 0; i < activeRuleValues.repeatCount && results.length < maxCount; i++) {
@@ -176,7 +182,7 @@ export const calculateRulePreview = (
  * @returns 반복 횟수, 종료단과 반복 횟수가 모두 없으면 null
  */
 export const calculateRuleRepeatCount = (
-  startNumber: number,
+  startNumber: number | null,
   endNumber: number,
   ruleNumber: number,
   repeatCount: number = 0,
@@ -193,10 +199,13 @@ export const calculateRuleRepeatCount = (
   }
 
   if (activeRuleValues.endNumber <= 0) {
+    if (activeRuleValues.endMode === 'endNumber' && activeRuleValues.endNumber === 0) {
+      return 1;
+    }
     return null;
   }
 
-  if (startNumber > 0) {
+  if (startNumber !== null) {
     return Math.floor((activeRuleValues.endNumber - startNumber) / ruleNumber) + 1;
   }
 
@@ -208,7 +217,7 @@ export const calculateRuleRepeatCount = (
  * 앞에서 보여줄 단 목록, 전체 반복 횟수, 마지막 적용 단, 추가 항목 존재 여부를 함께 반환합니다.
  */
 export const calculateRulePreviewSummary = (
-  startNumber: number,
+  startNumber: number | null,
   endNumber: number,
   ruleNumber: number,
   maxCount: number = 5,
@@ -236,7 +245,7 @@ export const calculateRulePreviewSummary = (
     activeRuleValues.repeatCount,
     activeRuleValues.endMode
   );
-  const previewStartNumber = startNumber > 0 ? startNumber : ruleNumber;
+  const previewStartNumber = startNumber !== null ? startNumber : ruleNumber;
   const lastRow =
     totalRepeatCount !== null
       ? previewStartNumber + ruleNumber * (totalRepeatCount - 1)

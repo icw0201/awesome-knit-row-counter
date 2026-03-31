@@ -45,7 +45,7 @@ export type RuleEndMode = 'repeatCount' | 'endNumber';
 
 export type RepeatRule = {
   message: string;      // 메시지
-  startNumber: number;  // 시작단
+  startNumber: number | null;  // 시작단 (null = 미지정)
   endNumber: number;   // 종료단
   repeatCount?: number; // 반복 횟수
   endMode: RuleEndMode | null; // 현재 사용 중인 종료 방식

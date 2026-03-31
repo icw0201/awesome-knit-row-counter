@@ -145,7 +145,7 @@ const migrateV4_RepeatRulesToArrayAndMoveWay = (items: Item[]): Item[] => {
  * repeatRules에 현재 사용 중인 종료 방식(endMode) 추가
  * 기존 기록은 정확한 날짜 정보가 없으므로 0으로 채운 기본값을 사용하고,
  * endMode는 기존 배포 버전에 반복 횟수 지정이 없었으므로 종료단이 있으면 'endNumber',
- * 없으면 null로 채웁니다.
+ * 없으면 null로 채웁니다. startNumber는 기존 0을 미지정(null)으로 변환합니다.
  * @param items 마이그레이션할 아이템 배열
  * @returns 마이그레이션된 아이템 배열
  */
@@ -172,6 +172,7 @@ const migrateV5_AddSectionRecordDateAndExpandLimit = (items: Item[]): Item[] => 
         .slice(0, MAX_SECTION_RECORDS),
       repeatRules: repeatRules.map((rule: any) => ({
         ...rule,
+        startNumber: typeof rule?.startNumber === 'number' && rule.startNumber > 0 ? rule.startNumber : null,
         endMode:
           rule?.endMode === 'endNumber' || rule?.endMode === 'repeatCount'
             ? rule.endMode
