@@ -182,6 +182,10 @@ export const calculateRuleRepeatCount = (
   repeatCount: number = 0,
   endMode?: RuleEndMode | null
 ): number | null => {
+  if (ruleNumber === 0) {
+    return null;
+  }
+
   const activeRuleValues = getActiveRuleValues(endNumber, repeatCount, endMode);
 
   if (activeRuleValues.repeatCount > 0) {
@@ -234,9 +238,13 @@ export const calculateRulePreviewSummary = (
   );
   const previewStartNumber = startNumber > 0 ? startNumber : ruleNumber;
   const lastRow =
-    totalRepeatCount !== null ? previewStartNumber + ruleNumber * (totalRepeatCount - 1) : null;
+    totalRepeatCount !== null
+      ? previewStartNumber + ruleNumber * (totalRepeatCount - 1)
+      : null;
   const hasMoreRows =
-    totalRepeatCount !== null ? totalRepeatCount > previewRows.length : previewRows.length === maxCount;
+    totalRepeatCount !== null
+      ? totalRepeatCount > previewRows.length
+      : previewRows.length === maxCount;
 
   return {
     previewRows,

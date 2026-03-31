@@ -109,12 +109,24 @@ const renderRulePreview = (
     editRuleNumber,
     editRepeatCount
   );
+
+  if (ruleError) {
+    return (
+      <View className="mt-2 flex-row items-center">
+        <Text className="text-base font-extrabold text-black mr-2">적용 단 :</Text>
+        <View className="flex-1">
+          <Text className="text-sm text-red-orange-500">{ruleError}</Text>
+        </View>
+      </View>
+    );
+  }
+
   const hasRuleInput = (start > 0 || end > 0 || repeatCount > 0) && rule > 0;
   const { previewRows, totalRepeatCount, lastRow, hasMoreRows } = hasRuleInput
     ? calculateRulePreviewSummary(start, end, rule, 5, repeatCount)
     : { previewRows: [], totalRepeatCount: null, lastRow: null, hasMoreRows: false };
 
-  if (!hasRuleInput && !ruleError) {
+  if (!hasRuleInput) {
     return null;
   }
 
@@ -142,16 +154,12 @@ const renderRulePreview = (
     <View className="mt-2 flex-row items-center">
       <Text className="text-base font-extrabold text-black mr-2">적용 단 :</Text>
       <View className="flex-1">
-        {ruleError ? (
-          <Text className="text-sm text-red-orange-500">{ruleError}</Text>
-        ) : (
-          previewText && (
-            <Text className="text-sm text-darkgray">
-              {previewText}
-              {previewTailText}
-              {previewSuffix}
-            </Text>
-          )
+        {previewText && (
+          <Text className="text-sm text-darkgray">
+            {previewText}
+            {previewTailText}
+            {previewSuffix}
+          </Text>
         )}
       </View>
     </View>
