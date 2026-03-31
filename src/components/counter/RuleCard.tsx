@@ -322,9 +322,6 @@ const RuleCard: React.FC<RuleCardProps> = ({
     if (!trimmedMessage) {
       return { ...parsed, error: '메시지를 입력해 주세요.' };
     }
-    if (parsedEnd > 0 && parsedRepeatCount > 0) {
-      return { ...parsed, error: '종료단과 반복 횟수는 동시에 설정할 수 없습니다.' };
-    }
     if (parsedStart === 0 && parsedEnd === 0 && parsedRepeatCount === 0) {
       return { ...parsed, error: '시작단, 종료단 혹은 반복 횟수를 설정해 주세요.' };
     }
