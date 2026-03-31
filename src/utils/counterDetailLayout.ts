@@ -40,6 +40,7 @@ export type CounterDetailModalLayout = {
 
 export type ContentSectionFlexes = {
   directionSectionFlex: number;
+  voiceBannerSectionFlex: number;
   countSectionFlex: number;
   actionsSectionFlex: number;
 };
@@ -63,15 +64,22 @@ export const getCounterDetailVisibility = ({
 
 export const getContentSectionFlexes = (
   mascotIsActive: boolean,
-  showCounterActions: boolean
+  showCounterActions: boolean,
+  showVoiceBanner: boolean
 ): ContentSectionFlexes => {
-  const directionSectionFlex = 0.35;
-  const countSectionFlex = mascotIsActive
-    ? (showCounterActions ? 0.45 : 0.75)
-    : (showCounterActions ? 0.6 : 1);
+  const voiceBannerSectionFlex = showVoiceBanner ? 0.1 : 0;
+  const directionSectionFlex = mascotIsActive ? (showVoiceBanner ? 0.28 : 0.35) : 0;
   const actionsSectionFlex = mascotIsActive ? 0.3 : 0.4;
+  const countSectionFlex = mascotIsActive
+    ? 1 - directionSectionFlex - voiceBannerSectionFlex - (showCounterActions ? actionsSectionFlex : 0)
+    : 1 - voiceBannerSectionFlex - (showCounterActions ? actionsSectionFlex : 0);
 
-  return { directionSectionFlex, countSectionFlex, actionsSectionFlex };
+  return {
+    directionSectionFlex,
+    voiceBannerSectionFlex,
+    countSectionFlex,
+    actionsSectionFlex,
+  };
 };
 
 export const getCounterDetailVerticalPx = ({
