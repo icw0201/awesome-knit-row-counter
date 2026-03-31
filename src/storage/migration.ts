@@ -144,7 +144,8 @@ const migrateV4_RepeatRulesToArrayAndMoveWay = (items: Item[]): Item[] => {
  * 버전 5: sectionRecords에 date 필드 추가, 최대 30개 유지,
  * repeatRules에 현재 사용 중인 종료 방식(endMode) 추가
  * 기존 기록은 정확한 날짜 정보가 없으므로 0으로 채운 기본값을 사용하고,
- * endMode는 저장된 값 기준으로 종료단 우선, 없으면 반복 횟수, 둘 다 없으면 null로 채웁니다.
+ * endMode는 기존 배포 버전에 반복 횟수 지정이 없었으므로 종료단이 있으면 'endNumber',
+ * 없으면 null로 채웁니다.
  * @param items 마이그레이션할 아이템 배열
  * @returns 마이그레이션된 아이템 배열
  */
@@ -176,9 +177,7 @@ const migrateV5_AddSectionRecordDateAndExpandLimit = (items: Item[]): Item[] => 
             ? rule.endMode
             : (rule?.endNumber ?? 0) > 0
               ? 'endNumber'
-              : (rule?.repeatCount ?? 0) > 0
-                ? 'repeatCount'
-                : null,
+              : null,
       })),
     };
   });
