@@ -1,5 +1,5 @@
 import { RepeatRule, RuleEndMode } from '@storage/types';
-import { RED_ORANGE_SWATCHES } from '@constants/colors';
+import { RULE_SWATCH_COLORS } from '@constants/colors';
 
 const resolveRuleEndMode = (
   endNumber: number,
@@ -263,25 +263,20 @@ export const calculateRulePreviewSummary = (
   };
 };
 
-/** 색상 우선순위: 2단계씩 건너뛰며 (1,3,5,7,9,11 → 2, 4,6,8,10) */
-// 100번 컬러(index 1)는 배경색과 동일하여 제거
-const COLOR_PRIORITY_INDICES = [0, 2, 4, 6, 8, 10, 3, 5, 7, 9];
-
 /**
  * 신규 규칙 카드의 기본 색상 반환
- * 기존 규칙과 겹치지 않는 red-orange 색상을 우선순위에 따라 선택, 모두 사용 중이면 첫 번째 색상 반환
+ * 기존 규칙과 겹치지 않는 스와치 색상을 순서대로 선택하고, 모두 사용 중이면 첫 번째 색상부터 순환
  */
 export const getDefaultColorForNewRule = (existingRules: RepeatRule[]): string => {
   const usedColors = new Set(existingRules.map((r) => r.color));
-  const available = COLOR_PRIORITY_INDICES.find(
-    (i) => RED_ORANGE_SWATCHES[i] && !usedColors.has(RED_ORANGE_SWATCHES[i])
-  );
-  if (available !== undefined) {
-    return RED_ORANGE_SWATCHES[available];
+  const available = RULE_SWATCH_COLORS.find((color) => !usedColors.has(color));
+
+  if (available) {
+    return available;
   }
-  // 모두 사용 중이면 우선순위 순서대로 순환
-  const cycleIndex = existingRules.length % COLOR_PRIORITY_INDICES.length;
-  return RED_ORANGE_SWATCHES[COLOR_PRIORITY_INDICES[cycleIndex]];
+
+  const cycleIndex = existingRules.length % RULE_SWATCH_COLORS.length;
+  return RULE_SWATCH_COLORS[cycleIndex];
 };
 
 /** hex 색상이 진하면 true (텍스트 흰색 권장) */

@@ -3,9 +3,11 @@ import React, { useState } from 'react';
 import { Pressable, View } from 'react-native';
 import ColorPickerIcon from '@assets/images/color_picker.svg';
 import ColorPicker, { Panel1, Swatches, HueSlider } from 'reanimated-color-picker';
-import { RED_ORANGE_SWATCHES } from '@constants/colors';
+import { RULE_SWATCH_COLORS } from '@constants/colors';
 import RoundedButton from '@components/common/RoundedButton';
 import BaseModal from '@components/common/modals/BaseModal/BaseModal';
+
+const SWATCH_ROW_SIZE = 5;
 
 interface ColorPickerProps {
   selectedColor: string; // hex 색상 값 (예: '#fc3e39', 필수)
@@ -77,11 +79,11 @@ const ColorPickerComponent: React.FC<ColorPickerProps> = ({
             <HueSlider />
             <View className="h-4" />{/* 슬라이더 ↔ 스와치 간격 */}
             <View>
-              {/* 스와치 1행 (인덱스 0, 2, 3, 4, 5) */}
-              <Swatches colors={[0, 2, 3, 4, 5].map((i) => RED_ORANGE_SWATCHES[i]).filter(Boolean)} />
+              {/* 스와치 1행 (인덱스 0~4) */}
+              <Swatches colors={RULE_SWATCH_COLORS.slice(0, SWATCH_ROW_SIZE)} />
               <View className="h-2" />{/* 스와치 행 간격 */}
-              {/* 스와치 2행 (인덱스 6~10) */}
-              <Swatches colors={RED_ORANGE_SWATCHES.slice(6, 11).filter(Boolean)} />
+              {/* 스와치 2행 (인덱스 5~9) */}
+              <Swatches colors={RULE_SWATCH_COLORS.slice(SWATCH_ROW_SIZE, SWATCH_ROW_SIZE * 2)} />
             </View>
           </ColorPicker>
           <View className="mt-4 flex-row justify-evenly">{/* 컨텐츠 ↔ 버튼 영역 간격 */}
