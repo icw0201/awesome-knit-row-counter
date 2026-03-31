@@ -38,12 +38,13 @@ const CircleRadioButtons = <T extends string>({
             isColumn ? index < options.length - 1 && 'mb-2' : index < options.length - 1 && 'mr-6'
           )}
         >
-          <CircleRadioButton
-            selected={selected === option.value}
-            onPress={() => onSelect(option.value)}
-            size={size}
-            className="mr-2"
-          />
+          <View className="mr-2">
+            <CircleRadioButton
+              selected={selected === option.value}
+              onPress={() => onSelect(option.value)}
+              size={size}
+            />
+          </View>
           <View className="flex-row items-center flex-shrink">
             {option.content}
           </View>
