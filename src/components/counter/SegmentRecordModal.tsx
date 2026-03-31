@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, DimensionValue, Pressable } from 'react-native';
+import { View, Text, DimensionValue } from 'react-native';
 import { SlideModal } from '@components/common/modals/SlideModal/SlideModal';
 import { ScreenSize, SEGMENT_UNDO_ICON_SIZE } from '@constants/screenSizeConfig';
 import { SectionRecord } from '@storage/types';
@@ -68,9 +68,13 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
           {sectionRecords.length > 0 ? (
             <View className="flex-row items-center justify-between">
               {/* 최신 3개 기록 요약 - 터치 시 전체 기록 모달 표시 */}
-              <Pressable
+              <View
                 className="flex-[0.8] items-center"
-                onPress={() => setShowAllRecordsModal(true)}
+                focusable={false}
+                accessible={false}
+                importantForAccessibility="no-hide-descendants"
+                onStartShouldSetResponder={() => true}
+                onResponderRelease={() => setShowAllRecordsModal(true)}
               >
                 <View className="w-full items-start">
                   {recentRecords.map((record, index) => {
@@ -104,7 +108,7 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
                     );
                   })}
                 </View>
-              </Pressable>
+              </View>
               {/* 실행 취소 버튼 - 20% 너비 */}
               <View className="flex-[0.2] items-end">
                 <CircleIcon
