@@ -4,7 +4,6 @@ import { SlideModal } from '@components/common/modals/SlideModal/SlideModal';
 import { ScreenSize, SEGMENT_UNDO_ICON_SIZE } from '@constants/screenSizeConfig';
 import { SectionRecord } from '@storage/types';
 import { getEditContentText } from '@utils/sectionRecordUtils';
-import { formatCompactDate } from '@utils/timeUtils';
 import CircleIcon from '@components/common/CircleIcon';
 import RecordListModal from './RecordListModal';
 import { Mic } from 'lucide-react-native';
@@ -37,16 +36,6 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
   const [showAllRecordsModal, setShowAllRecordsModal] = useState(false);
 
   const recentRecords = useMemo(() => sectionRecords.slice(0, 3), [sectionRecords]);
-  const allRecords = useMemo(
-    () =>
-      sectionRecords.map(
-        (record) =>
-          `${formatCompactDate(record.date)} ${record.time} ${getEditContentText(record)}${
-            record.voiceCommand ? ` [음성: ${record.voiceCommand}]` : ''
-          }`
-      ),
-    [sectionRecords]
-  );
 
   return (
     <>
@@ -134,7 +123,7 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
         visible={showAllRecordsModal}
         onClose={() => setShowAllRecordsModal(false)}
         title="활동 기록(최신 30개)"
-        records={allRecords}
+        records={sectionRecords}
       />
     </>
   );
