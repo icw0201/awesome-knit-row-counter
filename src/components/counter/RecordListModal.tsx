@@ -65,7 +65,7 @@ const RecordListModal: React.FC<RecordListModalProps> = ({
                 )}
               </View>
             </View>
-            {index === 2 && (
+            {records.length > 3 && index === 2 && (
               // 요약 3개와 그 이후 기록의 시각적 경계를 위한 구분선
               <View className="my-1.5 w-full flex-row items-center justify-center">
                 <View className="h-px w-20 bg-red-orange-400" />
