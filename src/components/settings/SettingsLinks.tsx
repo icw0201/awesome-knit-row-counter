@@ -2,7 +2,7 @@
 import React from 'react';
 import { View, Linking } from 'react-native';
 import InAppReview from 'react-native-in-app-review';
-import { PLAY_STORE_URL } from '@constants/storeUrls';
+import { PLAY_STORE_URL, RELEASE_NOTES_URL } from '@constants/storeUrls';
 import IconBox from './IconBox';
 
 interface SettingsLinksProps {}
@@ -13,6 +13,10 @@ interface SettingsLinksProps {}
  * - 원스토어 AAB 빌드 시: handleReviewPress를 아래 주석 블록 코드로 교체 후 빌드
  */
 const SettingsLinks: React.FC<SettingsLinksProps> = () => {
+  const openExternalLink = (url: string) => {
+    Linking.openURL(url).catch(() => {});
+  };
+
   // 플레이스토어용: 인앱 리뷰 시도 후, 안 되면 스토어 링크로 폴백
   const handleReviewPress = async () => {
     try {
@@ -23,7 +27,7 @@ const SettingsLinks: React.FC<SettingsLinksProps> = () => {
     } catch {
       // In-App Review 실패 시 아래 폴백으로 진행
     }
-    Linking.openURL(PLAY_STORE_URL).catch(() => {});
+    openExternalLink(PLAY_STORE_URL);
   };
 
   /*
@@ -35,11 +39,25 @@ const SettingsLinks: React.FC<SettingsLinksProps> = () => {
    * };
    */
 
+  const handleStoreLinkPress = () => {
+    openExternalLink(PLAY_STORE_URL);
+  };
+
+  const handleReleaseNotesPress = () => {
+    openExternalLink(RELEASE_NOTES_URL);
+  };
+
   const handleContactPress = () => {
     const subject = encodeURIComponent('어쩜! 단수 카운터 문의');
+    const body = encodeURIComponent(
+      [
+        '출시 버전* : (설정 페이지의 하단에서 확인해서 입력해주세요)',
+        '기기 정보 : ',
+      ].join('\n')
+    );
     const email = 'Gaebal0201@gmail.com';
-    const url = `mailto:${email}?subject=${subject}`;
-    Linking.openURL(url).catch(() => {});
+    const url = `mailto:${email}?subject=${subject}&body=${body}`;
+    openExternalLink(url);
   };
 
   return (
@@ -53,6 +71,16 @@ const SettingsLinks: React.FC<SettingsLinksProps> = () => {
         title="문의하기"
         iconName="mail"
         onPress={handleContactPress}
+      />
+      <IconBox
+        title="스토어 링크"
+        iconName="external-link"
+        onPress={handleStoreLinkPress}
+      />
+      <IconBox
+        title="출시 노트"
+        iconName="file-text"
+        onPress={handleReleaseNotesPress}
       />
     </View>
   );
