@@ -3,6 +3,7 @@ import type { NativeSyntheticEvent } from 'react-native';
 import { View, Text, type TextLayoutEventData } from 'react-native';
 import ColorCompleteIcon from '@assets/images/color_complete.svg';
 import CircleIcon from '@components/common/CircleIcon';
+import CircleRadioButtons, { type CircleRadioOption } from '@components/common/CircleRadioButtons';
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
 import ColorPicker from '@components/counter/ColorPicker';
 import { calculateRulePreviewSummary, calculateRuleRepeatCount } from '@utils/ruleUtils';
@@ -22,6 +23,7 @@ interface RuleCardProps {
 
 const MESSAGE_ICON_SIZE = 24;
 const MESSAGE_ICON_GAP = 6;
+type RuleEndMode = 'repeatCount' | 'endNumber';
 
 type MessageLastLine = {
   x: number;
@@ -177,6 +179,9 @@ const RuleCard: React.FC<RuleCardProps> = ({
   const [editRepeatCount, setEditRepeatCount] = useState(numberToString(repeatCount));
   const [editRuleNumber, setEditRuleNumber] = useState(numberToString(ruleNumber));
   const [editColor, setEditColor] = useState(color);
+  const [editRuleEndMode, setEditRuleEndMode] = useState<RuleEndMode>(
+    endNumber > 0 ? 'endNumber' : 'repeatCount'
+  );
   const [messageLastLine, setMessageLastLine] = useState<MessageLastLine | null>(null);
 
   // TextInputBox refs
@@ -194,6 +199,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
     setEditRepeatCount(numberToString(repeatCount));
     setEditRuleNumber(numberToString(ruleNumber));
     setEditColor(color);
+    setEditRuleEndMode(endNumber > 0 ? 'endNumber' : 'repeatCount');
   }, [message, startNumber, endNumber, repeatCount, ruleNumber, color]);
 
   // 보기 모드 메시지가 바뀌면 마지막 줄 좌표도 초기화
@@ -233,6 +239,65 @@ const RuleCard: React.FC<RuleCardProps> = ({
   const handleColorSelect = (selectedColor: string) => {
     setEditColor(selectedColor);
   };
+
+  const handleSelectRepeatCountMode = () => {
+    setEditRuleEndMode('repeatCount');
+    setEditEndNumber('');
+    repeatCountInputRef.current?.focus();
+  };
+
+  const handleSelectEndNumberMode = () => {
+    setEditRuleEndMode('endNumber');
+    setEditRepeatCount('');
+    endNumberInputRef.current?.focus();
+  };
+
+  const ruleEndOptions: CircleRadioOption<RuleEndMode>[] = [
+    {
+      value: 'repeatCount',
+      content: (
+        <>
+          <View className="mr-2 w-18">
+            <TextInputBox
+              ref={repeatCountInputRef}
+              label=""
+              value={editRepeatCount}
+              onChangeText={setEditRepeatCount}
+              type="number"
+              containerClassName="mb-0"
+              returnKeyType="done"
+              onSubmitEditing={() => repeatCountInputRef.current?.blur()}
+              blurOnSubmit={true}
+              editable={editRuleEndMode === 'repeatCount'}
+            />
+          </View>
+          <Text className="text-base text-black">번 반복</Text>
+        </>
+      ),
+    },
+    {
+      value: 'endNumber',
+      content: (
+        <>
+          <View className="mr-2 w-18">
+            <TextInputBox
+              ref={endNumberInputRef}
+              label=""
+              value={editEndNumber}
+              onChangeText={setEditEndNumber}
+              type="number"
+              containerClassName="mb-0"
+              returnKeyType="done"
+              onSubmitEditing={() => endNumberInputRef.current?.blur()}
+              blurOnSubmit={true}
+              editable={editRuleEndMode === 'endNumber'}
+            />
+          </View>
+          <Text className="text-base text-black">단까지 반복</Text>
+        </>
+      ),
+    },
+  ];
 
   const handleDelete = () => {
     // 편집 모드는 유지하고 삭제 확인만 수행
@@ -355,8 +420,8 @@ const RuleCard: React.FC<RuleCardProps> = ({
 
       {/* 규칙 섹션 */}
       <View className="mb-0">
-        {/* 시작단부터 종료단까지 */}
-        <View className="flex-row items-center mb-0">
+        {/* 시작단과 반복 규칙 */}
+        <View className="flex-row items-center mb-2">
           <Text className="text-base font-extrabold text-black mr-2">규칙 :</Text>
           <View className="mr-2 w-18">
             <TextInputBox
@@ -367,63 +432,48 @@ const RuleCard: React.FC<RuleCardProps> = ({
               type="number"
               containerClassName="mb-2"
               returnKeyType="next"
-              onSubmitEditing={() => endNumberInputRef.current?.focus()}
+              onSubmitEditing={() => ruleNumberInputRef.current?.focus()}
               blurOnSubmit={false}
             />
           </View>
           <Text className="text-base text-black mr-2">단부터</Text>
           <View className="mr-2 w-18">
             <TextInputBox
-              ref={endNumberInputRef}
+              ref={ruleNumberInputRef}
               label=""
-              value={editEndNumber}
-              onChangeText={setEditEndNumber}
+              value={editRuleNumber}
+              onChangeText={setEditRuleNumber}
               type="number"
               containerClassName="mb-2"
               returnKeyType="next"
-              onSubmitEditing={() => ruleNumberInputRef.current?.focus()}
+              onSubmitEditing={() => {
+                if (editRuleEndMode === 'repeatCount') {
+                  repeatCountInputRef.current?.focus();
+                } else {
+                  endNumberInputRef.current?.focus();
+                }
+              }}
               blurOnSubmit={false}
             />
           </View>
-          <Text className="text-base text-black">단까지</Text>
+          <Text className="text-base text-black">단 마다</Text>
         </View>
-        {/* 단마다 반복 규칙 */}
+
         <View className="flex-row items-start mb-0">
           {/* 정렬을 위한 투명한 "규칙 :" 텍스트 */}
           <Text className="text-base font-extrabold text-black mr-2 opacity-0">규칙 :</Text>
-          <View className="flex-1 min-w-0 flex-row flex-wrap items-start">
-            <View className="mr-2 w-18">
-              <TextInputBox
-                ref={ruleNumberInputRef}
-                label=""
-                value={editRuleNumber}
-                onChangeText={setEditRuleNumber}
-                type="number"
-                containerClassName="mb-0"
-                returnKeyType="next"
-                onSubmitEditing={() => repeatCountInputRef.current?.focus()}
-                blurOnSubmit={false}
-              />
-            </View>
-            <Text className="self-center text-base text-black mr-2">단마다 반복 규칙</Text>
-            <View className="flex-row items-center flex-shrink-0">
-              <Text className="text-base text-black mr-2">(</Text>
-              <View className="mr-2 w-18">
-                <TextInputBox
-                  ref={repeatCountInputRef}
-                  label=""
-                  value={editRepeatCount}
-                  onChangeText={setEditRepeatCount}
-                  type="number"
-                  containerClassName="mb-0"
-                  returnKeyType="done"
-                  onSubmitEditing={() => repeatCountInputRef.current?.blur()}
-                  blurOnSubmit={true}
-                />
-              </View>
-              <Text className="text-base text-black">회 반복)</Text>
-            </View>
-          </View>
+          <CircleRadioButtons
+            options={ruleEndOptions}
+            selected={editRuleEndMode}
+            onSelect={(value) => {
+              if (value === 'repeatCount') {
+                handleSelectRepeatCountMode();
+              } else {
+                handleSelectEndNumberMode();
+              }
+            }}
+            size="sm"
+          />
         </View>
 
         {/* 규칙 미리보기 / 에러 표시 */}
