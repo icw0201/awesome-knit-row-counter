@@ -522,7 +522,6 @@ const RuleCard: React.FC<RuleCardProps> = ({
                 endNumberInputRef.current?.blur();
               }
             }}
-            size="sm"
           />
         </View>
 

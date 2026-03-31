@@ -12,7 +12,6 @@ interface CircleRadioButtonsProps<T extends string = string> {
   options: CircleRadioOption<T>[];
   selected: T | null;
   onSelect: (value: T | null) => void;
-  size?: 'sm' | 'base';
   direction?: 'row' | 'column';
   containerClassName?: string;
 }
@@ -22,7 +21,6 @@ const CircleRadioButtons = <T extends string>({
   options,
   selected,
   onSelect,
-  size = 'base',
   direction = 'column',
   containerClassName,
 }: CircleRadioButtonsProps<T>) => {
@@ -42,7 +40,6 @@ const CircleRadioButtons = <T extends string>({
             <CircleRadioButton
               selected={selected === option.value}
               onPress={() => onSelect(selected === option.value ? null : option.value)}
-              size={size}
             />
           </View>
           <View className="flex-row items-center flex-shrink">
