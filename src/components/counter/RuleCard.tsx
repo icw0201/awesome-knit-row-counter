@@ -5,7 +5,7 @@ import ColorCompleteIcon from '@assets/images/color_complete.svg';
 import CircleIcon from '@components/common/CircleIcon';
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
 import ColorPicker from '@components/counter/ColorPicker';
-import { calculateRulePreview, calculateRuleRepeatCount } from '@utils/ruleUtils';
+import { calculateRulePreviewSummary, calculateRuleRepeatCount } from '@utils/ruleUtils';
 import { numberToString } from '@utils/numberUtils';
 
 interface RuleCardProps {
@@ -107,19 +107,28 @@ const renderRulePreview = (
     editRepeatCount
   );
   const hasRuleInput = (start > 0 || end > 0 || repeatCount > 0) && rule > 0;
-  const rulePreview = hasRuleInput ? calculateRulePreview(start, end, rule, 5, repeatCount) : [];
-  const totalRepeatCount = hasRuleInput ? calculateRuleRepeatCount(start, end, rule, repeatCount) : null;
+  const { previewRows, totalRepeatCount, lastRow, hasMoreRows } = hasRuleInput
+    ? calculateRulePreviewSummary(start, end, rule, 5, repeatCount)
+    : { previewRows: [], totalRepeatCount: null, lastRow: null, hasMoreRows: false };
 
   if (!hasRuleInput && !ruleError) {
     return null;
   }
 
   const previewText =
-    hasRuleInput && rulePreview.length > 0
-      ? rulePreview.map((n) => `${n}단`).join(', ')
+    hasRuleInput && previewRows.length > 0
+      ? previewRows.map((n) => `${n}단`).join(', ')
       : '';
-  const hasMorePreviewItems =
-    totalRepeatCount !== null ? totalRepeatCount > rulePreview.length : rulePreview.length === 5;
+  const shouldShowLastPreviewRow =
+    lastRow !== null &&
+    totalRepeatCount !== null &&
+    totalRepeatCount > previewRows.length &&
+    previewRows[previewRows.length - 1] !== lastRow;
+  const previewTailText = shouldShowLastPreviewRow
+    ? ` ... ${lastRow}단`
+    : hasMoreRows
+      ? '...'
+      : '';
   const previewSuffix = hasRuleInput
     ? totalRepeatCount !== null
       ? ` (${totalRepeatCount}회)`
@@ -136,7 +145,7 @@ const renderRulePreview = (
           previewText && (
             <Text className="text-sm text-darkgray">
               {previewText}
-              {hasMorePreviewItems ? '...' : ''}
+              {previewTailText}
               {previewSuffix}
             </Text>
           )

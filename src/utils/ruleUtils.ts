@@ -155,6 +155,38 @@ export const calculateRuleRepeatCount = (
   return Math.floor(endNumber / ruleNumber);
 };
 
+/**
+ * 규칙 미리보기에 필요한 요약 정보 계산
+ * 앞에서 보여줄 단 목록, 전체 반복 횟수, 마지막 적용 단, 추가 항목 존재 여부를 함께 반환합니다.
+ */
+export const calculateRulePreviewSummary = (
+  startNumber: number,
+  endNumber: number,
+  ruleNumber: number,
+  maxCount: number = 5,
+  repeatCount: number = 0
+): {
+  previewRows: number[];
+  totalRepeatCount: number | null;
+  lastRow: number | null;
+  hasMoreRows: boolean;
+} => {
+  const previewRows = calculateRulePreview(startNumber, endNumber, ruleNumber, maxCount, repeatCount);
+  const totalRepeatCount = calculateRuleRepeatCount(startNumber, endNumber, ruleNumber, repeatCount);
+  const previewStartNumber = startNumber > 0 ? startNumber : ruleNumber;
+  const lastRow =
+    totalRepeatCount !== null ? previewStartNumber + ruleNumber * (totalRepeatCount - 1) : null;
+  const hasMoreRows =
+    totalRepeatCount !== null ? totalRepeatCount > previewRows.length : previewRows.length === maxCount;
+
+  return {
+    previewRows,
+    totalRepeatCount,
+    lastRow,
+    hasMoreRows,
+  };
+};
+
 /** 색상 우선순위: 2단계씩 건너뛰며 (1,3,5,7,9,11 → 2, 4,6,8,10) */
 // 100번 컬러(index 1)는 배경색과 동일하여 제거
 const COLOR_PRIORITY_INDICES = [0, 2, 4, 6, 8, 10, 3, 5, 7, 9];
