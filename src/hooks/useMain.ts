@@ -28,17 +28,20 @@ export const useMain = () => {
     isEditMode,
     modalVisible,
     deleteModalVisible,
-    itemToDelete,
+    itemsPendingDelete,
     duplicateModalVisible,
     pendingItem,
+    selectedItemIds,
     setItems,
     setIsEditMode,
     setModalVisible,
     setDuplicateModalVisible,
     setPendingItem,
+    setSelectedItemIds,
     handlePress,
     handleLongPress,
-    handleDelete,
+    toggleItemSelection,
+    openBulkDeleteModal,
     resetModalState,
     resetDeleteModalState,
     resetDuplicateModalState,
@@ -137,42 +140,62 @@ export const useMain = () => {
    * 삭제 모달 설명 텍스트 생성
    */
   const getDeleteDescription = useCallback(() => {
-    if (!itemToDelete) {
+    const pending = itemsPendingDelete;
+    if (!pending?.length) {
       return '';
     }
 
-    const isProject = itemToDelete.type === 'project';
-    const count = isProject ? itemToDelete.counterIds.length : 0;
+    if (pending.length === 1) {
+      const item = pending[0];
+      const isProject = item.type === 'project';
+      const count = isProject ? item.counterIds.length : 0;
 
-    return isProject
-      ? `"${itemToDelete.title}" 프로젝트를 삭제하면 하위 카운터 ${count}개도 함께 삭제됩니다. 진행하시겠습니까?`
-      : `"${itemToDelete.title}" 카운터를 삭제하시겠습니까?`;
-  }, [itemToDelete]);
+      return isProject
+        ? `"${item.title}" 프로젝트를 삭제하면 하위 카운터 ${count}개도 함께 삭제됩니다. 진행하시겠습니까?`
+        : `"${item.title}" 카운터를 삭제하시겠습니까?`;
+    }
+
+    const hasProject = pending.some((i) => i.type === 'project');
+    const n = pending.length;
+    let msg = `선택한 ${n}개 항목을 삭제하시겠습니까?`;
+    if (hasProject) {
+      msg += ' 프로젝트를 삭제하면 하위 카운터도 함께 삭제됩니다.';
+    }
+    return msg;
+  }, [itemsPendingDelete]);
 
   /**
    * 삭제 확인 시 실제 삭제 처리
    */
   const handleDeleteConfirm = useCallback(() => {
-    if (!itemToDelete) {
+    const pending = itemsPendingDelete;
+    if (!pending?.length) {
       return;
     }
 
-    // 프로젝트 삭제 시 하위 카운터들도 함께 삭제
-    if (itemToDelete.type === 'project') {
-      const { counterIds } = itemToDelete;
-      counterIds.forEach((id) => removeItem(id));
-    }
+    const removedIds = new Set<string>();
 
-    removeItem(itemToDelete.id);
+    pending.forEach((itemToDelete) => {
+      if (itemToDelete.type === 'project') {
+        const { counterIds } = itemToDelete;
+        counterIds.forEach((id) => {
+          removeItem(id);
+          removedIds.add(id);
+        });
+      }
+      removeItem(itemToDelete.id);
+      removedIds.add(itemToDelete.id);
+    });
+
     resetDeleteModalState();
+    setSelectedItemIds([]);
 
-    const nextItems = items.filter((item) => item.id !== itemToDelete.id);
+    const nextItems = items.filter((item) => !removedIds.has(item.id));
     setItems(nextItems);
-    // 삭제 후 목록이 비면 편집할 항목이 없으므로 edit 모드 자동 해제
     if (nextItems.length === 0) {
       setIsEditMode(false);
     }
-  }, [itemToDelete, items, resetDeleteModalState, setItems, setIsEditMode]);
+  }, [itemsPendingDelete, items, resetDeleteModalState, setItems, setIsEditMode, setSelectedItemIds]);
 
   const handleSortSelect = useCallback((_option: string) => {
     // 정렬 설정이 storage에 저장되었으므로, 현재 items를 다시 정렬하여 즉시 반영
@@ -195,9 +218,10 @@ export const useMain = () => {
     isEditMode,
     modalVisible,
     deleteModalVisible,
-    itemToDelete,
+    itemsPendingDelete,
     duplicateModalVisible,
     pendingItem,
+    selectedItemIds,
     sortDropdownVisible,
 
     // 상태 설정 함수들
@@ -207,7 +231,8 @@ export const useMain = () => {
     // 액션 함수들
     handlePress,
     handleLongPress,
-    handleDelete,
+    toggleItemSelection,
+    openBulkDeleteModal,
     handleCreateItemConfirm,
     handleDeleteConfirm,
     resetModalState,

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { BackHandler } from 'react-native';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -25,9 +25,10 @@ interface UseItemListReturn {
   isEditMode: boolean;
   modalVisible: boolean;
   deleteModalVisible: boolean;
-  itemToDelete: Item | null;
+  itemsPendingDelete: Item[] | null;
   duplicateModalVisible: boolean;
   pendingItem: Item | null;
+  selectedItemIds: string[];
 
   // 핸들러
   setItems: React.Dispatch<React.SetStateAction<Item[]>>;
@@ -35,14 +36,16 @@ interface UseItemListReturn {
   setIsEditMode: React.Dispatch<React.SetStateAction<boolean>>;
   setModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setDeleteModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
-  setItemToDelete: React.Dispatch<React.SetStateAction<Item | null>>;
+  setItemsPendingDelete: React.Dispatch<React.SetStateAction<Item[] | null>>;
   setDuplicateModalVisible: React.Dispatch<React.SetStateAction<boolean>>;
   setPendingItem: React.Dispatch<React.SetStateAction<Item | null>>;
+  setSelectedItemIds: React.Dispatch<React.SetStateAction<string[]>>;
 
   // 액션 함수들
   handlePress: (item: Item) => void;
   handleLongPress: (item: Item) => void;
-  handleDelete: (item: Item) => void;
+  toggleItemSelection: (itemId: string) => void;
+  openBulkDeleteModal: () => void;
   resetModalState: () => void;
   resetDeleteModalState: () => void;
   resetDuplicateModalState: () => void;
@@ -60,9 +63,12 @@ export const useItemList = ({ projectId, headerSetup }: UseItemListProps): UseIt
   const [isEditMode, setIsEditMode] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [deleteModalVisible, setDeleteModalVisible] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<Item | null>(null);
+  const [itemsPendingDelete, setItemsPendingDelete] = useState<Item[] | null>(null);
   const [duplicateModalVisible, setDuplicateModalVisible] = useState(false);
   const [pendingItem, setPendingItem] = useState<Item | null>(null);
+  const [selectedItemIds, setSelectedItemIds] = useState<string[]>([]);
+  const selectedItemIdsRef = useRef<string[]>([]);
+  selectedItemIdsRef.current = selectedItemIds;
 
   /**
    * Main 화면용: 저장된 아이템(프로젝트, 카운터) 불러와서 정렬 후 상태에 저장
@@ -123,36 +129,39 @@ export const useItemList = ({ projectId, headerSetup }: UseItemListProps): UseIt
    * 아이템 클릭 시 상세화면 이동 또는 삭제 모달 표시
    */
   const handlePress = useCallback((item: Item) => {
-    if (!isEditMode) {
-      if (item.type === 'project') {
-        navigation.navigate('ProjectDetail', { projectId: item.id });
-      } else {
-        navigation.navigate('CounterDetail', { counterId: item.id });
-      }
+    if (isEditMode) {
+      return;
+    }
+    if (item.type === 'project') {
+      navigation.navigate('ProjectDetail', { projectId: item.id });
     } else {
-      setItemToDelete(item);
-      setDeleteModalVisible(true);
+      navigation.navigate('CounterDetail', { counterId: item.id });
     }
   }, [isEditMode, navigation]);
 
   /**
-   * 아이템 길게 누르기 시 편집 모드 진입 및 삭제 모달 표시
+   * 아이템 길게 누르기 시 편집 모드 진입
    */
-  const handleLongPress = useCallback((item: Item) => {
+  const handleLongPress = useCallback((_item: Item) => {
     if (!isEditMode) {
       setIsEditMode(true);
     }
-    setItemToDelete(item);
-    setDeleteModalVisible(true);
   }, [isEditMode]);
 
-  /**
-   * 삭제 핸들러
-   */
-  const handleDelete = useCallback((item: Item) => {
-    setItemToDelete(item);
-    setDeleteModalVisible(true);
+  const toggleItemSelection = useCallback((itemId: string) => {
+    setSelectedItemIds((prev) =>
+      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]
+    );
   }, []);
+
+  const openBulkDeleteModal = useCallback(() => {
+    const ids = selectedItemIdsRef.current;
+    if (ids.length === 0) {
+      return;
+    }
+    setItemsPendingDelete(items.filter((i) => ids.includes(i.id)));
+    setDeleteModalVisible(true);
+  }, [items]);
 
   /**
    * 모달 상태 초기화 함수들
@@ -163,7 +172,7 @@ export const useItemList = ({ projectId, headerSetup }: UseItemListProps): UseIt
 
   const resetDeleteModalState = useCallback(() => {
     setDeleteModalVisible(false);
-    setItemToDelete(null);
+    setItemsPendingDelete(null);
   }, []);
 
   const resetDuplicateModalState = useCallback(() => {
@@ -195,6 +204,12 @@ export const useItemList = ({ projectId, headerSetup }: UseItemListProps): UseIt
     return () => subscription.remove();
   }, [isEditMode]);
 
+  useEffect(() => {
+    if (!isEditMode) {
+      setSelectedItemIds([]);
+    }
+  }, [isEditMode]);
+
   // ProjectDetail에서 프로젝트 정보 업데이트
   useEffect(() => {
     if (projectId) {
@@ -207,28 +222,28 @@ export const useItemList = ({ projectId, headerSetup }: UseItemListProps): UseIt
   }, [projectId]);
 
   return {
-    // 상태
     items,
     project,
     isEditMode,
     modalVisible,
     deleteModalVisible,
-    itemToDelete,
+    itemsPendingDelete,
     duplicateModalVisible,
     pendingItem,
-    // 상태 설정 함수들
+    selectedItemIds,
     setItems,
     setProject,
     setIsEditMode,
     setModalVisible,
     setDeleteModalVisible,
-    setItemToDelete,
+    setItemsPendingDelete,
     setDuplicateModalVisible,
     setPendingItem,
-    // 액션 함수들
+    setSelectedItemIds,
     handlePress,
     handleLongPress,
-    handleDelete,
+    toggleItemSelection,
+    openBulkDeleteModal,
     resetModalState,
     resetDeleteModalState,
     resetDuplicateModalState,

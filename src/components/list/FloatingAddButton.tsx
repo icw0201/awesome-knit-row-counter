@@ -5,6 +5,8 @@ import CircleIcon from '@components/common/CircleIcon';
 interface FloatingAddButtonProps {
   onPress: () => void;
   bottom: number;
+  /** true이면 추가(plus) 대신 삭제(trash-2) 아이콘 */
+  isEditMode?: boolean;
 }
 
 /**
@@ -15,6 +17,7 @@ interface FloatingAddButtonProps {
 const FloatingAddButton: React.FC<FloatingAddButtonProps> = ({
   onPress,
   bottom,
+  isEditMode = false,
 }) => {
   return (
     <View
@@ -23,7 +26,7 @@ const FloatingAddButton: React.FC<FloatingAddButtonProps> = ({
     >
       <CircleIcon
         size={64}
-        iconName="plus"
+        iconName={isEditMode ? 'trash-2' : 'plus'}
         colorStyle="light"
         isButton
         onPress={onPress}

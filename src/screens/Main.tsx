@@ -22,7 +22,9 @@ const Main = () => {
     setSortDropdownVisible,
     handlePress,
     handleLongPress,
-    handleDelete,
+    selectedItemIds,
+    toggleItemSelection,
+    openBulkDeleteModal,
     handleCreateItemConfirm,
     handleDeleteConfirm,
     resetModalState,
@@ -42,16 +44,18 @@ const Main = () => {
             key={item.id}
             item={item}
             isEditMode={isEditMode}
+            isSelected={selectedItemIds.includes(item.id)}
+            onToggleSelect={toggleItemSelection}
             onPress={handlePress}
             onLongPress={handleLongPress}
-            onDelete={handleDelete}
           />
         ))}
       </ScrollView>
 
       {/* 플로팅 추가 버튼 */}
       <FloatingAddButton
-        onPress={() => setModalVisible(true)}
+        isEditMode={isEditMode}
+        onPress={() => (isEditMode ? openBulkDeleteModal() : setModalVisible(true))}
         bottom={insets.bottom}
       />
 

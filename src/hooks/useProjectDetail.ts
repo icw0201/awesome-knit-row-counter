@@ -32,18 +32,21 @@ export const useProjectDetail = () => {
     isEditMode,
     modalVisible,
     deleteModalVisible,
-    itemToDelete,
+    itemsPendingDelete,
     duplicateModalVisible,
     pendingItem,
+    selectedItemIds,
     setItems,
     setProject,
     setIsEditMode,
     setModalVisible,
     setDuplicateModalVisible,
     setPendingItem,
+    setSelectedItemIds,
     handlePress,
     handleLongPress,
-    handleDelete,
+    toggleItemSelection,
+    openBulkDeleteModal,
     resetModalState,
     resetDeleteModalState,
     resetDuplicateModalState,
@@ -163,26 +166,41 @@ export const useProjectDetail = () => {
     return true;
   }, [createNewCounter, checkDuplicateName, completeCounterCreation, setPendingItem, setDuplicateModalVisible]);
 
+  const getDeleteDescription = useCallback(() => {
+    const pending = itemsPendingDelete;
+    if (!pending?.length) {
+      return '';
+    }
+    if (pending.length === 1) {
+      return `"${pending[0].title}" 카운터를 삭제하시겠습니까?`;
+    }
+    return `선택한 ${pending.length}개의 카운터를 삭제하시겠습니까?`;
+  }, [itemsPendingDelete]);
+
   /**
    * 삭제 확인 시 실제 삭제 처리
    */
   const handleDeleteConfirm = useCallback(() => {
-    if (!itemToDelete || itemToDelete.type !== 'counter') {
+    const pending = itemsPendingDelete;
+    if (!pending?.length || !project) {
       return;
     }
 
-    if (project) {
-      removeCounterFromProject(project.id, itemToDelete.id);
-    }
+    pending.forEach((item) => {
+      if (item.type === 'counter') {
+        removeCounterFromProject(project.id, item.id);
+      }
+    });
 
-    const nextItems = items.filter((i) => i.id !== itemToDelete.id);
+    const removedIds = new Set(pending.map((i) => i.id));
+    const nextItems = items.filter((i) => !removedIds.has(i.id));
     setItems(nextItems);
     resetDeleteModalState();
-    // 삭제 후 목록이 비면 편집할 항목이 없으므로 edit 모드 자동 해제
+    setSelectedItemIds([]);
     if (nextItems.length === 0) {
       setIsEditMode(false);
     }
-  }, [itemToDelete, project, items, setItems, resetDeleteModalState, setIsEditMode]);
+  }, [itemsPendingDelete, project, items, setItems, resetDeleteModalState, setIsEditMode, setSelectedItemIds]);
 
   const handleSortSelect = useCallback((_option: string) => {
     // 정렬 설정이 storage에 저장되었으므로, 현재 items를 다시 정렬하여 즉시 반영
@@ -206,9 +224,10 @@ export const useProjectDetail = () => {
     isEditMode,
     modalVisible,
     deleteModalVisible,
-    itemToDelete,
+    itemsPendingDelete,
     duplicateModalVisible,
     pendingItem,
+    selectedItemIds,
     sortDropdownVisible,
 
     // 상태 설정 함수들
@@ -218,9 +237,11 @@ export const useProjectDetail = () => {
     // 액션 함수들
     handlePress,
     handleLongPress,
-    handleDelete,
+    toggleItemSelection,
+    openBulkDeleteModal,
     handleCreateCounterConfirm,
     handleDeleteConfirm,
+    getDeleteDescription,
     resetModalState,
     resetDeleteModalState,
     resetDuplicateModalState,

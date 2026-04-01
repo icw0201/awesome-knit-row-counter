@@ -3,6 +3,7 @@ import React from 'react';
 import { View } from 'react-native';
 import ItemBox from './ItemBox';
 import CircleIcon from '@components/common/CircleIcon';
+import CheckBox from '@components/common/CheckBox';
 import { Item } from '@storage/types';
 import { getProgressPercentage, isItemCompleted, getElapsedTimeValue } from '@utils/sortUtils';
 import { getShowElapsedTimeInListSetting } from '@storage/settings';
@@ -11,9 +12,10 @@ import { formatElapsedTime } from '@utils/timeUtils';
 interface ItemRowProps {
   item: Item;
   isEditMode: boolean;
+  isSelected: boolean;
+  onToggleSelect: (itemId: string) => void;
   onPress: (item: Item) => void;
   onLongPress: (item: Item) => void;
-  onDelete: (item: Item) => void;
 }
 
 /**
@@ -24,9 +26,10 @@ interface ItemRowProps {
 const ItemRow: React.FC<ItemRowProps> = ({
   item,
   isEditMode,
+  isSelected,
+  onToggleSelect,
   onPress,
   onLongPress,
-  onDelete,
 }) => {
   const getSubtitle = () => {
     return item.type === 'project' ? '프로젝트' : '카운터';
@@ -59,7 +62,18 @@ const ItemRow: React.FC<ItemRowProps> = ({
 
   return (
     <View className="mb-4 flex-row items-center">
-      <View className="flex-1 mr-2">
+      {isEditMode && (
+        <View className="mr-2">
+          <CheckBox
+            checked={isSelected}
+            onToggle={() => onToggleSelect(item.id)}
+            variant="chunky"
+            accessibilityLabel={`${item.title} 선택`}
+          />
+        </View>
+      )}
+
+      <View className="mr-2 flex-1">
         <ItemBox
           title={item.title}
           subtitle={getSubtitle()}
@@ -73,15 +87,14 @@ const ItemRow: React.FC<ItemRowProps> = ({
         />
       </View>
 
-      {/* 편집 모드일 때 삭제 아이콘 */}
       {isEditMode && (
         <View className="ml-2">
           <CircleIcon
             size={48}
-            iconName="trash-2"
+            iconName="copy"
             colorStyle="lightest"
             isButton
-            onPress={() => onDelete(item)}
+            onPress={() => {}}
           />
         </View>
       )}

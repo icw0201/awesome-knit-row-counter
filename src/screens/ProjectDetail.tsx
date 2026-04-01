@@ -16,7 +16,6 @@ const ProjectDetail = () => {
     isEditMode,
     modalVisible,
     deleteModalVisible,
-    itemToDelete,
     duplicateModalVisible,
     pendingItem,
     sortDropdownVisible,
@@ -24,7 +23,9 @@ const ProjectDetail = () => {
     setSortDropdownVisible,
     handlePress,
     handleLongPress,
-    handleDelete,
+    selectedItemIds,
+    toggleItemSelection,
+    openBulkDeleteModal,
     handleCreateCounterConfirm,
     handleDeleteConfirm,
     resetModalState,
@@ -32,6 +33,7 @@ const ProjectDetail = () => {
     resetDuplicateModalState,
     completeCounterCreation,
     handleSortSelect,
+    getDeleteDescription,
   } = useProjectDetail();
 
 
@@ -44,16 +46,18 @@ const ProjectDetail = () => {
             key={item.id}
             item={item}
             isEditMode={isEditMode}
+            isSelected={selectedItemIds.includes(item.id)}
+            onToggleSelect={toggleItemSelection}
             onPress={handlePress}
             onLongPress={handleLongPress}
-            onDelete={handleDelete}
           />
         ))}
       </ScrollView>
 
       {/* 플로팅 추가 버튼 */}
       <FloatingAddButton
-        onPress={() => setModalVisible(true)}
+        isEditMode={isEditMode}
+        onPress={() => (isEditMode ? openBulkDeleteModal() : setModalVisible(true))}
         bottom={insets.bottom}
       />
 
@@ -66,7 +70,7 @@ const ProjectDetail = () => {
         deleteModalVisible={deleteModalVisible}
         onDeleteModalClose={resetDeleteModalState}
         onDeleteConfirm={handleDeleteConfirm}
-        deleteDescription={`"${itemToDelete?.title}" 카운터를 삭제하시겠습니까?`}
+        deleteDescription={getDeleteDescription()}
         duplicateModalVisible={duplicateModalVisible}
         onDuplicateModalClose={() => {
           resetDuplicateModalState();
