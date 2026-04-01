@@ -30,68 +30,39 @@ const BaseModal: React.FC<BaseModalProps> = ({
 }) => {
   const preferReducedMotion = usePreferReducedMotion();
   const [contentReady, setContentReady] = useState(false);
-  /** 네이티브 onShow + 제목·children이 포함된 영역 레이아웃 완료 후에만 표시 */
   const gatesRef = useRef({ show: false, innerLayout: false });
-  const rafRef = useRef<{ a?: number; b?: number }>({});
+  const rafRef = useRef<number | undefined>(undefined);
   const visibleRef = useRef(visible);
 
   useEffect(() => {
     visibleRef.current = visible;
   }, [visible]);
 
-  const clearRevealRaf = useCallback(() => {
-    if (rafRef.current.a != null) {
-      cancelAnimationFrame(rafRef.current.a);
+  const cancelRevealRaf = useCallback(() => {
+    if (rafRef.current != null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = undefined;
     }
-    if (rafRef.current.b != null) {
-      cancelAnimationFrame(rafRef.current.b);
-    }
-    rafRef.current = {};
   }, []);
 
   const scheduleReveal = useCallback(() => {
-    if (!visibleRef.current) {
+    if (!visibleRef.current || !gatesRef.current.show || !gatesRef.current.innerLayout) {
       return;
     }
-    if (!gatesRef.current.show || !gatesRef.current.innerLayout) {
-      return;
-    }
-    clearRevealRaf();
-    rafRef.current.a = requestAnimationFrame(() => {
-      rafRef.current.b = requestAnimationFrame(() => {
-        if (visibleRef.current) {
-          setContentReady(true);
-        }
-      });
+    cancelRevealRaf();
+    rafRef.current = requestAnimationFrame(() => {
+      if (visibleRef.current) {
+        setContentReady(true);
+      }
     });
-  }, [clearRevealRaf]);
+  }, [cancelRevealRaf]);
 
   useEffect(() => {
     gatesRef.current = { show: false, innerLayout: false };
     setContentReady(false);
-    clearRevealRaf();
-  }, [visible, clearRevealRaf]);
-
-  useEffect(() => {
-    if (!visible) {
-      return;
-    }
-    const fallbackMs = 500;
-    const t = setTimeout(() => {
-      if (!visibleRef.current) {
-        return;
-      }
-      setContentReady((prev) => (prev ? prev : true));
-    }, fallbackMs);
-    return () => clearTimeout(t);
-  }, [visible]);
-
-  useEffect(
-    () => () => {
-      clearRevealRaf();
-    },
-    [clearRevealRaf],
-  );
+    cancelRevealRaf();
+    return cancelRevealRaf;
+  }, [visible, cancelRevealRaf]);
 
   const handleModalShow = useCallback(() => {
     gatesRef.current.show = true;
@@ -112,10 +83,8 @@ const BaseModal: React.FC<BaseModalProps> = ({
       onShow={handleModalShow}
     >
       <View style={modalStyles.overlay}>
-        {/* 배경 터치 영역 */}
         <Pressable style={modalStyles.backdrop} onPress={onClose} />
 
-        {/* 모달 컨테이너 — 네이티브 표시·카드 레이아웃·자식 측정이 끝날 때까지 숨김 */}
         <View
           style={[
             modalStyles.container,
@@ -128,10 +97,7 @@ const BaseModal: React.FC<BaseModalProps> = ({
             style={baseModalStyles.innerStack}
             onLayout={handleInnerLayout}
           >
-            {/* 모달 제목 */}
             <Text style={modalStyles.title}>{title}</Text>
-
-            {/* 모달 내용 */}
             {children}
           </View>
         </View>
@@ -144,7 +110,6 @@ const baseModalStyles = StyleSheet.create({
   containerHidden: {
     opacity: 0,
   },
-  /** modalStyles.container의 gap과 동일 — 내부 래퍼가 자식이 되면서 밖의 gap이 적용되지 않음 */
   innerStack: {
     gap: 12,
   },

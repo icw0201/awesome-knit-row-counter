@@ -1,10 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AccessibilityInfo } from 'react-native';
 
-/**
- * 접근성의 "동작 줄이기"(iOS Reduce Motion, Android에서도 동일 API로 반영) 여부.
- * 시스템 애니메이션을 끈 환경에서 네이티브 Modal fade 등과 충돌할 때 사용한다.
- */
+/** 접근성 "동작 줄이기" — Modal 네이티브 fade와 맞출 때 사용 */
 export const usePreferReducedMotion = (): boolean => {
   const [preferReducedMotion, setPreferReducedMotion] = useState(false);
 
@@ -17,9 +14,7 @@ export const usePreferReducedMotion = (): boolean => {
     });
     const subscription = AccessibilityInfo.addEventListener(
       'reduceMotionChanged',
-      (enabled: boolean) => {
-        setPreferReducedMotion(enabled);
-      },
+      setPreferReducedMotion,
     );
     return () => {
       cancelled = true;
