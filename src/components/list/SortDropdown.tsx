@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import { Modal, View, Text, Pressable, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { Modal, View, Text, Pressable, TouchableOpacity, StyleSheet } from 'react-native';
 import CheckBox from '@components/common/CheckBox';
+import { usePreferReducedMotion } from '@hooks/usePreferReducedMotion';
 import {
   getSortCriteriaSetting,
   setSortCriteriaSetting,
@@ -46,6 +47,19 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
   const [showElapsedTimeInList, setShowElapsedTimeInList] = useState<boolean>(() => {
     return getShowElapsedTimeInListSetting();
   });
+
+  const preferReducedMotion = usePreferReducedMotion();
+  const [backdropLaidOut, setBackdropLaidOut] = useState(false);
+
+  useEffect(() => {
+    if (visible) {
+      setBackdropLaidOut(false);
+    }
+  }, [visible]);
+
+  const handleBackdropLayout = useCallback(() => {
+    setBackdropLaidOut(true);
+  }, []);
 
   // visible이 true가 될 때마다 storage에서 최신 값 가져오기
   useEffect(() => {
@@ -102,15 +116,17 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
     <Modal
       visible={visible}
       transparent
-      animationType="fade"
+      animationType={preferReducedMotion ? 'none' : 'fade'}
       onRequestClose={onClose}
     >
       <Pressable
         className="flex-1"
         onPress={onClose}
+        onLayout={handleBackdropLayout}
       >
         <Pressable
           className="absolute right-3 top-16 bg-white rounded-2xl w-40 p-4 shadow-lg"
+          style={!backdropLaidOut ? sortDropdownStyles.panelHidden : undefined}
           onPress={(e) => e.stopPropagation()}
         >
           <Text className="text-s font-bold text-black mb-2">정렬</Text>
@@ -199,5 +215,11 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
     </Modal>
   );
 };
+
+const sortDropdownStyles = StyleSheet.create({
+  panelHidden: {
+    opacity: 0,
+  },
+});
 
 export default SortDropdown;
