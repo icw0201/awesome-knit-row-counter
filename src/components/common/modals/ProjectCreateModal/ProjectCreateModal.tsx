@@ -1,5 +1,5 @@
 // src/components/common/modals/ProjectCreateModal/ProjectCreateModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { BaseModal } from '../BaseModal';
 import TextInputBox from '@components/common/TextInputBox';
@@ -10,12 +10,12 @@ import ProjectTypeSelector from './ProjectTypeSelector';
  * ProjectCreateModal 컴포넌트의 Props 인터페이스
  * @param visible - 모달 표시 여부
  * @param onClose - 모달 닫기 콜백 함수
- * @param onConfirm - 생성 확인 시 콜백 함수
+ * @param onConfirm - 생성 확인 시 콜백. `false`를 반환하면 모달을 닫지 않음(예: 중복 확인 모달 위에 유지)
  */
 interface ProjectCreateModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (name: string, type: 'project' | 'counter') => void;
+  onConfirm: (name: string, type: 'project' | 'counter') => boolean | void;
   title?: string;
 }
 
@@ -32,12 +32,21 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
   const [textValue, setTextValue] = useState('');
   const [selectedType, setSelectedType] = useState<'project' | 'counter'>('counter');
 
-  const handleConfirm = () => {
-    if (textValue.trim()) {
-      onConfirm(textValue.trim(), selectedType);
+  useEffect(() => {
+    if (!visible) {
       setTextValue('');
       setSelectedType('counter');
-      onClose();
+    }
+  }, [visible]);
+
+  const handleConfirm = () => {
+    if (textValue.trim()) {
+      const keepOpen = onConfirm(textValue.trim(), selectedType) === false;
+      if (!keepOpen) {
+        setTextValue('');
+        setSelectedType('counter');
+        onClose();
+      }
     }
   };
 

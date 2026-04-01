@@ -1,5 +1,5 @@
 // src/components/common/modals/CounterCreateModal/CounterCreateModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { BaseModal } from '../BaseModal';
 import TextInputBox from '@components/common/TextInputBox';
@@ -9,13 +9,13 @@ import RoundedButton from '@components/common/RoundedButton';
  * CounterCreateModal 컴포넌트의 Props 인터페이스
  * @param visible - 모달 표시 여부
  * @param onClose - 모달 닫기 콜백 함수
- * @param onConfirm - 생성 확인 시 콜백 함수
+ * @param onConfirm - 생성 확인 시 콜백. `false`를 반환하면 모달을 닫지 않음(예: 중복 확인 모달 위에 유지)
  * @param title - 모달 제목 (기본값: '새 카운터 생성하기')
  */
 interface CounterCreateModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (name: string) => void;
+  onConfirm: (name: string) => boolean | void;
   title?: string;
 }
 
@@ -31,11 +31,19 @@ const CounterCreateModal: React.FC<CounterCreateModalProps> = ({
 }) => {
   const [textValue, setTextValue] = useState('');
 
+  useEffect(() => {
+    if (!visible) {
+      setTextValue('');
+    }
+  }, [visible]);
+
   const handleConfirm = () => {
     if (textValue.trim()) {
-      onConfirm(textValue.trim());
-      setTextValue('');
-      onClose();
+      const keepOpen = onConfirm(textValue.trim()) === false;
+      if (!keepOpen) {
+        setTextValue('');
+        onClose();
+      }
     }
   };
 
