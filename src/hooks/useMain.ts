@@ -183,7 +183,7 @@ export const useMain = () => {
   /**
    * 복제 모달에서 확인: 독립 카운터는 clone 후 즉시 저장 또는 중복 시 pendingItem 으로 이중 모달.
    * 프로젝트는 번들 생성 후 즉시 저장하거나, 제목 충돌 시 pendingProjectReplicate 로 이중 모달.
-   * @returns false 이면 CounterCreateModal 이 닫히지 않음(중복 분기에서는 복제 모달만 먼저 닫음)
+   * 중복 분기에서는 return false 만 하고 복제 모달은 유지(ProjectCreateModal 과 동일하게 중복 확인이 위에 겹침).
    */
   const handleReplicateConfirm = useCallback(
     (name: string) => {
@@ -199,8 +199,6 @@ export const useMain = () => {
           setPendingItem(cloned);
           setPendingProjectReplicate(null);
           setDuplicateModalVisible(true);
-          setReplicateModalVisible(false);
-          setItemToReplicate(null);
           return false;
         }
         addItem(cloned);
@@ -215,8 +213,6 @@ export const useMain = () => {
           setPendingProjectReplicate(bundle);
           setPendingItem(null);
           setDuplicateModalVisible(true);
-          setReplicateModalVisible(false);
-          setItemToReplicate(null);
           return false;
         }
         persistReplicatedProjectBundle(bundle);
@@ -244,17 +240,19 @@ export const useMain = () => {
     setPendingProjectReplicate(null);
   }, [resetDuplicateModalState]);
 
-  /** 중복 이름 모달에서 확인: 프로젝트 번들이면 일괄 저장, 아니면(카운터/일반 생성) completeItemCreation */
+  /** 중복 이름 모달에서 확인: 프로젝트 번들이면 일괄 저장, 아니면(카운터/일반 생성) completeItemCreation. 복제 모달이 열린 채였다면 함께 닫음 */
   const handleDuplicateConfirm = useCallback(() => {
     if (pendingProjectReplicate) {
       persistReplicatedProjectBundle(pendingProjectReplicate);
       setPendingProjectReplicate(null);
+      resetReplicateModalState();
       return;
     }
     if (pendingItem) {
       completeItemCreation(pendingItem);
+      resetReplicateModalState();
     }
-  }, [pendingProjectReplicate, pendingItem, persistReplicatedProjectBundle, completeItemCreation]);
+  }, [pendingProjectReplicate, pendingItem, persistReplicatedProjectBundle, completeItemCreation, resetReplicateModalState]);
 
   /** 중복 이름 모달 본문: 프로젝트 복제 대기 / 프로젝트 생성 / 카운터 에 맞게 문구 분기 */
   const duplicateModalDescription = useMemo(() => {

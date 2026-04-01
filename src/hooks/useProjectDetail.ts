@@ -210,8 +210,6 @@ export const useProjectDetail = () => {
       if (checkDuplicateName(cloned)) {
         setPendingItem(cloned);
         setDuplicateModalVisible(true);
-        setReplicateModalVisible(false);
-        setCounterToReplicate(null);
         return false;
       }
 
@@ -233,8 +231,9 @@ export const useProjectDetail = () => {
   const handleDuplicateConfirm = useCallback(() => {
     if (pendingItem && pendingItem.type === 'counter') {
       completeCounterCreation(pendingItem);
+      resetReplicateModalState();
     }
-  }, [pendingItem, completeCounterCreation]);
+  }, [pendingItem, completeCounterCreation, resetReplicateModalState]);
 
   const getDeleteDescription = useCallback(() => {
     const pending = itemsPendingDelete;
