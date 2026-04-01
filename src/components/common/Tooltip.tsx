@@ -31,22 +31,37 @@ const Tooltip: React.FC<TooltipProps> = ({
   /** 화살표·박스 경계 서브픽셀 틈 방지(1px만 박스 쪽으로 겹침; 삼각형 스케일 키우는 것과 달리 두께는 그대로) */
   const ARROW_BOX_OVERLAP_PX = 1;
 
+  /** auto-hide 완료 시점의 visuallyHidden(타이머는 마운트당 1회만 — deps에 넣지 않음) */
+  const visuallyHiddenRef = useRef(visuallyHidden);
+  visuallyHiddenRef.current = visuallyHidden;
+
   useEffect(() => {
     if (AUTO_HIDE_MS <= 0) {
-      return;
+      return undefined;
     }
+    let cancelled = false;
     const t = setTimeout(() => {
+      if (cancelled) {
+        return;
+      }
       Animated.timing(opacity, {
         toValue: 0,
         duration: FADE_OUT_MS,
         useNativeDriver: true,
       }).start(({ finished }) => {
-        if (finished) {
+        if (cancelled || !finished) {
+          return;
+        }
+        if (!visuallyHiddenRef.current) {
           setVisible(false);
         }
       });
     }, AUTO_HIDE_MS);
-    return () => clearTimeout(t);
+    return () => {
+      cancelled = true;
+      clearTimeout(t);
+      opacity.stopAnimation();
+    };
   }, [AUTO_HIDE_MS, FADE_OUT_MS, opacity]);
 
   // targetAnchorX가 바뀌면(ex: onLayout으로 resolvedWidth 갱신)
