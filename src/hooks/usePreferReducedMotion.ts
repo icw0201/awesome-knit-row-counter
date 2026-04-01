@@ -7,11 +7,21 @@ export const usePreferReducedMotion = (): boolean => {
 
   useEffect(() => {
     let cancelled = false;
-    AccessibilityInfo.isReduceMotionEnabled().then((enabled) => {
-      if (!cancelled) {
-        setPreferReducedMotion(enabled);
-      }
-    });
+    AccessibilityInfo.isReduceMotionEnabled()
+      .then((enabled) => {
+        if (!cancelled) {
+          setPreferReducedMotion(enabled);
+        }
+      })
+      .catch((error: unknown) => {
+        if (cancelled) {
+          return;
+        }
+        console.warn(
+          'usePreferReducedMotion: isReduceMotionEnabled failed',
+          error,
+        );
+      });
     const subscription = AccessibilityInfo.addEventListener(
       'reduceMotionChanged',
       setPreferReducedMotion,

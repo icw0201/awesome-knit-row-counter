@@ -1,5 +1,5 @@
 // src/components/common/modals/BaseModal/BaseModal.tsx
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Modal, Text, Pressable, View, StyleSheet } from 'react-native';
 import { usePreferReducedMotion } from '@hooks/usePreferReducedMotion';
 import { modalStyles } from '@styles/modalStyle';
@@ -57,7 +57,7 @@ const BaseModal: React.FC<BaseModalProps> = ({
     });
   }, [cancelRevealRaf]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     gatesRef.current = { show: false, innerLayout: false };
     setContentReady(false);
     cancelRevealRaf();
