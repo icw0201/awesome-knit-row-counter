@@ -177,8 +177,8 @@ const InfoScreen = () => {
         title="저장하기"
         description="저장하지 않은 내용이 있습니다. 저장하시겠습니까?"
         onConfirm={handleSaveConfirm}
-        confirmText="확인"
-        cancelText="취소"
+        confirmText="저장"
+        cancelText="나가기"
       />
 
       {/* 제목 필수 에러 모달 */}
