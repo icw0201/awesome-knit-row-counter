@@ -11,37 +11,51 @@ import clsx from 'clsx';
  * @param checked - 체크박스의 체크 상태 (true: 체크됨, false: 체크 안됨)
  * @param onToggle - 체크박스 클릭 시 실행될 콜백 함수
  * @param size - 체크박스 크기 ('base' | 'xs'), 기본값: 'base'
+ * @param variant - 'default': 채움 + 체크 아이콘 / 'chunky': 흰 박스·검은 테두리·체크 시 안쪽 검은 사각형
  * @param children - 체크박스 왼쪽에 표시할 추가 요소 (선택사항)
+ * @param accessibilityLabel - 라벨이 없을 때 접근성 라벨 (선택사항)
  */
 interface CheckBoxProps {
   label?: string;
   checked: boolean;
   onToggle: () => void;
   size?: 'base' | 'xs';
+  variant?: 'default' | 'chunky';
   children?: React.ReactNode;
+  accessibilityLabel?: string;
 }
 
 /**
  * 체크박스 컴포넌트
  * 라벨과 함께 표시되는 체크박스로, 클릭 시 상태를 토글할 수 있습니다.
  */
-const CheckBox: React.FC<CheckBoxProps> = ({ label, checked, onToggle, size = 'base', children }) => {
-  // 체크박스 색상 설정
-  const activeColor = colorStyles.vivid.container; // 활성화 상태일 때의 배경색 (체크된 상태)
-  const inactiveColor = 'bg-red-orange-100'; // 체크되지 않은 상태일 때의 배경색
+const CheckBox: React.FC<CheckBoxProps> = ({
+  label,
+  checked,
+  onToggle,
+  size = 'base',
+  variant = 'default',
+  children,
+  accessibilityLabel: accessibilityLabelProp,
+}) => {
+  const activeColor = colorStyles.vivid.container;
+  const inactiveColor = 'bg-red-orange-100';
 
-  // 사이즈에 따른 스타일 설정
   const isXs = size === 'xs';
   const checkboxSizeClass = isXs ? 'w-4 h-4' : 'w-6 h-6';
   const textSizeClass = isXs ? 'text-xs' : 'text-base';
   const iconSize = isXs ? 12 : 16;
   const paddingClass = isXs ? 'px-3 py-2' : 'px-4 py-3';
 
-  // 체크박스 컨테이너 스타일 클래스
+  const isChunky = variant === 'chunky';
+  const innerSquareClass = isXs ? 'h-1.5 w-1.5 rounded-sm' : 'h-2.5 w-2.5 rounded-sm';
+
   const checkboxClass = clsx(
     checkboxSizeClass,
-    'rounded-md items-center justify-center',
-    checked ? activeColor : inactiveColor
+    'items-center justify-center',
+    isChunky
+      ? ['rounded-md border-2 border-black bg-white']
+      : ['rounded-md', checked ? activeColor : inactiveColor]
   );
 
   return (
@@ -52,7 +66,7 @@ const CheckBox: React.FC<CheckBoxProps> = ({ label, checked, onToggle, size = 'b
       accessible={true}
       accessibilityRole="checkbox"
       accessibilityState={{ checked: !!checked }}
-      accessibilityLabel={label ?? '선택'}
+      accessibilityLabel={accessibilityLabelProp ?? label ?? '선택'}
       accessibilityHint="탭하여 선택하거나 해제합니다"
     >
       {/* 체크박스 라벨 텍스트 - label이 있을 때만 표시 */}
@@ -67,12 +81,9 @@ const CheckBox: React.FC<CheckBoxProps> = ({ label, checked, onToggle, size = 'b
         </View>
       )}
 
-      {/* 체크박스 아이콘 컨테이너 */}
       <View className={checkboxClass}>
-        {/* 체크된 상태일 때만 체크 아이콘 표시 */}
-        {checked && (
-          <Check size={iconSize} color="white" />
-        )}
+        {checked && isChunky && <View className={clsx('bg-black', innerSquareClass)} />}
+        {checked && !isChunky && <Check size={iconSize} color="white" />}
       </View>
     </TouchableOpacity>
   );
