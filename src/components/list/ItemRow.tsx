@@ -16,6 +16,7 @@ interface ItemRowProps {
   onToggleSelect: (itemId: string) => void;
   onPress: (item: Item) => void;
   onLongPress: (item: Item) => void;
+  onCopyPress?: (item: Item) => void;
 }
 
 /**
@@ -30,6 +31,7 @@ const ItemRow: React.FC<ItemRowProps> = ({
   onToggleSelect,
   onPress,
   onLongPress,
+  onCopyPress,
 }) => {
   const getSubtitle = () => {
     return item.type === 'project' ? '프로젝트' : '카운터';
@@ -87,14 +89,14 @@ const ItemRow: React.FC<ItemRowProps> = ({
         />
       </View>
 
-      {isEditMode && (
+      {isEditMode && onCopyPress && (
         <View className="ml-2">
           <CircleIcon
             size={48}
             iconName="copy"
             colorStyle="lightest"
             isButton
-            onPress={() => {}}
+            onPress={() => onCopyPress(item)}
           />
         </View>
       )}

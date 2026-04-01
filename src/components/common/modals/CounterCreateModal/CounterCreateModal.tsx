@@ -11,12 +11,18 @@ import RoundedButton from '@components/common/RoundedButton';
  * @param onClose - 모달 닫기 콜백 함수
  * @param onConfirm - 생성 확인 시 콜백. `false`를 반환하면 모달을 닫지 않음(예: 중복 확인 모달 위에 유지)
  * @param title - 모달 제목 (기본값: '새 카운터 생성하기')
+ * @param initialName - 모달이 열릴 때 입력창 초기값 (복제 모달 등)
+ * @param confirmButtonTitle - 확인 버튼 라벨 (기본값: '생성')
+ * @param placeholder - 입력창 플레이스홀더
  */
 interface CounterCreateModalProps {
   visible: boolean;
   onClose: () => void;
   onConfirm: (name: string) => boolean | void;
   title?: string;
+  initialName?: string;
+  confirmButtonTitle?: string;
+  placeholder?: string;
 }
 
 /**
@@ -28,14 +34,19 @@ const CounterCreateModal: React.FC<CounterCreateModalProps> = ({
   onClose,
   onConfirm,
   title = '새 카운터 생성하기',
+  initialName,
+  confirmButtonTitle = '생성',
+  placeholder = '카운터 이름을 입력하세요',
 }) => {
   const [textValue, setTextValue] = useState('');
 
   useEffect(() => {
     if (!visible) {
       setTextValue('');
+      return;
     }
-  }, [visible]);
+    setTextValue(initialName ?? '');
+  }, [visible, initialName]);
 
   const handleConfirm = () => {
     if (textValue.trim()) {
@@ -63,7 +74,7 @@ const CounterCreateModal: React.FC<CounterCreateModalProps> = ({
         label=""
         value={textValue}
         onChangeText={setTextValue}
-        placeholder="카운터 이름을 입력하세요"
+        placeholder={placeholder}
         type="text"
       />
 
@@ -75,9 +86,8 @@ const CounterCreateModal: React.FC<CounterCreateModalProps> = ({
           onPress={handleClose}
           colorStyle="light"
         />
-        {/* 생성 버튼 - 입력값이 있을 때만 활성화 */}
         <RoundedButton
-          title="생성"
+          title={confirmButtonTitle}
           onPress={() => {
             if (textValue?.trim()) {
               handleConfirm();

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '@navigation/AppNavigator';
@@ -12,6 +12,12 @@ import {
   getMoveCompletedToBottomSetting,
 } from '@storage/settings';
 import { sortItems } from '@utils/sortUtils';
+import {
+  suggestDuplicateTitle,
+  cloneCounterForReplication,
+  buildReplicatedProjectBundle,
+  ReplicatedProjectBundle,
+} from '@utils/replicationUtils';
 import { useItemList } from './useItemList';
 
 /**
@@ -21,6 +27,10 @@ export const useMain = () => {
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   // 정렬 드롭다운 표시 여부 상태
   const [sortDropdownVisible, setSortDropdownVisible] = useState(false);
+  const [replicateModalVisible, setReplicateModalVisible] = useState(false);
+  const [itemToReplicate, setItemToReplicate] = useState<Item | null>(null);
+  const [replicateInitialName, setReplicateInitialName] = useState('');
+  const [pendingProjectReplicate, setPendingProjectReplicate] = useState<ReplicatedProjectBundle | null>(null);
 
   // useItemList 훅 사용
   const {
@@ -119,6 +129,131 @@ export const useMain = () => {
     resetModalState();
     setItems(prev => [item, ...prev]);
   }, [resetModalState, setItems]);
+
+  const getMainDuplicateTitleScope = useCallback((): string[] => {
+    const allItems = getStoredItems();
+    const titles: string[] = [];
+    for (const i of allItems) {
+      if (i.type === 'project') {
+        titles.push(i.title);
+      }
+      if (i.type === 'counter' && i.parentProjectId == null) {
+        titles.push(i.title);
+      }
+    }
+    return titles;
+  }, []);
+
+  const resetReplicateModalState = useCallback(() => {
+    setReplicateModalVisible(false);
+    setItemToReplicate(null);
+    setReplicateInitialName('');
+  }, []);
+
+  const handleCopyPress = useCallback(
+    (item: Item) => {
+      const suggested = suggestDuplicateTitle(item.title, getMainDuplicateTitleScope());
+      setReplicateInitialName(suggested);
+      setItemToReplicate(item);
+      setReplicateModalVisible(true);
+    },
+    [getMainDuplicateTitleScope]
+  );
+
+  const persistReplicatedProjectBundle = useCallback(
+    (bundle: ReplicatedProjectBundle) => {
+      bundle.counters.forEach((c) => addItem(c));
+      addItem(bundle.project);
+      setItems((prev) => [bundle.project, ...prev]);
+    },
+    [setItems]
+  );
+
+  const handleReplicateConfirm = useCallback(
+    (name: string) => {
+      const trimmed = name.trim();
+      if (!itemToReplicate || !trimmed) {
+        return false;
+      }
+
+      if (itemToReplicate.type === 'counter') {
+        const newId = `counter_${Date.now()}`;
+        const cloned = cloneCounterForReplication(itemToReplicate, trimmed, newId, null);
+        if (checkDuplicateName(cloned)) {
+          setPendingItem(cloned);
+          setPendingProjectReplicate(null);
+          setDuplicateModalVisible(true);
+          setReplicateModalVisible(false);
+          setItemToReplicate(null);
+          return false;
+        }
+        addItem(cloned);
+        setItems((prev) => [cloned, ...prev]);
+        resetReplicateModalState();
+        return true;
+      }
+
+      if (itemToReplicate.type === 'project') {
+        const bundle = buildReplicatedProjectBundle(itemToReplicate, trimmed, getStoredItems());
+        if (checkDuplicateName(bundle.project)) {
+          setPendingProjectReplicate(bundle);
+          setPendingItem(null);
+          setDuplicateModalVisible(true);
+          setReplicateModalVisible(false);
+          setItemToReplicate(null);
+          return false;
+        }
+        persistReplicatedProjectBundle(bundle);
+        resetReplicateModalState();
+        return true;
+      }
+
+      return true;
+    },
+    [
+      itemToReplicate,
+      checkDuplicateName,
+      setPendingItem,
+      setPendingProjectReplicate,
+      setDuplicateModalVisible,
+      setItems,
+      persistReplicatedProjectBundle,
+      resetReplicateModalState,
+    ]
+  );
+
+  const handleDuplicateModalClose = useCallback(() => {
+    resetDuplicateModalState();
+    setPendingProjectReplicate(null);
+  }, [resetDuplicateModalState]);
+
+  const handleDuplicateConfirm = useCallback(() => {
+    if (pendingProjectReplicate) {
+      persistReplicatedProjectBundle(pendingProjectReplicate);
+      setPendingProjectReplicate(null);
+      return;
+    }
+    if (pendingItem) {
+      completeItemCreation(pendingItem);
+    }
+  }, [pendingProjectReplicate, pendingItem, persistReplicatedProjectBundle, completeItemCreation]);
+
+  const duplicateModalDescription = useMemo(() => {
+    if (pendingProjectReplicate) {
+      return '같은 이름의 프로젝트가 이미 존재합니다. 복제하시겠습니까?';
+    }
+    if (pendingItem?.type === 'project') {
+      return '같은 이름을 가진 프로젝트가 이미 존재합니다. 생성하시겠습니까?';
+    }
+    return '같은 이름을 가진 카운터가 이미 존재합니다. 생성하시겠습니까?';
+  }, [pendingProjectReplicate, pendingItem]);
+
+  const duplicateConfirmText = pendingProjectReplicate ? '복제' : '생성';
+
+  const replicateModalTitle =
+    itemToReplicate?.type === 'project' ? '프로젝트 복제하기' : '카운터 복제하기';
+  const replicatePlaceholder =
+    itemToReplicate?.type === 'project' ? '프로젝트 이름을 입력하세요' : '카운터 이름을 입력하세요';
 
   /**
    * 프로젝트/카운터 생성 모달에서 확인 시 아이템 생성 및 중복 체크
@@ -241,5 +376,17 @@ export const useMain = () => {
     completeItemCreation,
     getDeleteDescription,
     handleSortSelect,
+
+    replicateModalVisible,
+    replicateModalTitle,
+    replicateInitialName,
+    replicatePlaceholder,
+    resetReplicateModalState,
+    handleCopyPress,
+    handleReplicateConfirm,
+    handleDuplicateModalClose,
+    handleDuplicateConfirm,
+    duplicateModalDescription,
+    duplicateConfirmText,
   };
 };

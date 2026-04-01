@@ -6,7 +6,6 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { ItemRow, FloatingAddButton, ItemModals, SortDropdown } from '@components/list';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
 import { useProjectDetail } from '@hooks/useProjectDetail';
-import { Counter } from '@storage/types';
 
 const ProjectDetail = () => {
   const insets = useSafeAreaInsets();
@@ -17,7 +16,6 @@ const ProjectDetail = () => {
     modalVisible,
     deleteModalVisible,
     duplicateModalVisible,
-    pendingItem,
     sortDropdownVisible,
     setModalVisible,
     setSortDropdownVisible,
@@ -31,11 +29,15 @@ const ProjectDetail = () => {
     resetModalState,
     resetDeleteModalState,
     resetDuplicateModalState,
-    completeCounterCreation,
     handleSortSelect,
     getDeleteDescription,
+    replicateModalVisible,
+    replicateInitialName,
+    resetReplicateModalState,
+    handleCopyPress,
+    handleReplicateConfirm,
+    handleDuplicateConfirm,
   } = useProjectDetail();
-
 
   return (
     <SafeAreaView style={screenStyles.flex1} className={isEditMode ? 'bg-red-orange-400' : undefined} edges={safeAreaEdges}>
@@ -50,6 +52,7 @@ const ProjectDetail = () => {
             onToggleSelect={toggleItemSelection}
             onPress={handlePress}
             onLongPress={handleLongPress}
+            onCopyPress={handleCopyPress}
           />
         ))}
       </ScrollView>
@@ -75,12 +78,13 @@ const ProjectDetail = () => {
         onDuplicateModalClose={() => {
           resetDuplicateModalState();
         }}
-        onDuplicateConfirm={() => {
-          if (pendingItem) {
-            completeCounterCreation(pendingItem as Counter);
-          }
-        }}
+        onDuplicateConfirm={handleDuplicateConfirm}
         duplicateDescription="같은 이름의 카운터가 이미 존재합니다. 생성하시겠습니까?"
+        replicateModalVisible={replicateModalVisible}
+        replicateModalTitle="카운터 복제하기"
+        replicateInitialName={replicateInitialName}
+        onReplicateModalClose={resetReplicateModalState}
+        onReplicateModalConfirm={handleReplicateConfirm}
       />
 
       {/* 정렬 드롭다운: 정렬 버튼 바로 아래 표시*/}
