@@ -1,5 +1,5 @@
 // src/components/common/modals/CounterCreateModal/CounterCreateModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { BaseModal } from '../BaseModal';
 import TextInputBox from '@components/common/TextInputBox';
@@ -39,13 +39,19 @@ const CounterCreateModal: React.FC<CounterCreateModalProps> = ({
   placeholder = '카운터 이름을 입력하세요',
 }) => {
   const [textValue, setTextValue] = useState('');
+  /** 직전 프레임에 visible 이었는지 — false→true 일 때만 initialName 으로 시드(열려 있는 동안 initialName 변경 시 입력 유지) */
+  const wasVisibleRef = useRef(false);
 
   useEffect(() => {
     if (!visible) {
       setTextValue('');
+      wasVisibleRef.current = false;
       return;
     }
-    setTextValue(initialName ?? '');
+    if (!wasVisibleRef.current) {
+      setTextValue(initialName ?? '');
+    }
+    wasVisibleRef.current = true;
   }, [visible, initialName]);
 
   const handleConfirm = () => {
