@@ -151,7 +151,7 @@ export const useMain = () => {
       const count = isProject ? item.counterIds.length : 0;
 
       return isProject
-        ? `"${item.title}" 프로젝트를 삭제하면 하위 카운터 ${count}개도 함께 삭제됩니다. 진행하시겠습니까?`
+        ? `"${item.title}" 프로젝트를 삭제하시겠습니까? 하위 카운터 ${count}개도 함께 삭제됩니다.`
         : `"${item.title}" 카운터를 삭제하시겠습니까?`;
     }
 
