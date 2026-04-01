@@ -125,19 +125,29 @@ export const useItemList = ({ projectId, headerSetup }: UseItemListProps): UseIt
    */
   const fetchData = projectId ? fetchProjectData : fetchMainItems;
 
+  const toggleItemSelection = useCallback((itemId: string) => {
+    setSelectedItemIds((prev) =>
+      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]
+    );
+  }, []);
+
   /**
-   * 아이템 클릭 시 상세화면 이동 또는 삭제 모달 표시
+   * 아이템 클릭 시 상세 이동, 편집 모드에서는 행 탭으로 선택 토글
    */
-  const handlePress = useCallback((item: Item) => {
-    if (isEditMode) {
-      return;
-    }
-    if (item.type === 'project') {
-      navigation.navigate('ProjectDetail', { projectId: item.id });
-    } else {
-      navigation.navigate('CounterDetail', { counterId: item.id });
-    }
-  }, [isEditMode, navigation]);
+  const handlePress = useCallback(
+    (item: Item) => {
+      if (isEditMode) {
+        toggleItemSelection(item.id);
+        return;
+      }
+      if (item.type === 'project') {
+        navigation.navigate('ProjectDetail', { projectId: item.id });
+      } else {
+        navigation.navigate('CounterDetail', { counterId: item.id });
+      }
+    },
+    [isEditMode, navigation, toggleItemSelection]
+  );
 
   /**
    * 아이템 길게 누르기 시 편집 모드 진입
@@ -147,12 +157,6 @@ export const useItemList = ({ projectId, headerSetup }: UseItemListProps): UseIt
       setIsEditMode(true);
     }
   }, [isEditMode]);
-
-  const toggleItemSelection = useCallback((itemId: string) => {
-    setSelectedItemIds((prev) =>
-      prev.includes(itemId) ? prev.filter((id) => id !== itemId) : [...prev, itemId]
-    );
-  }, []);
 
   const openBulkDeleteModal = useCallback(() => {
     const ids = selectedItemIdsRef.current;
