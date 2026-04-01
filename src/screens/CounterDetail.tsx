@@ -12,7 +12,12 @@ import { getHeaderRightWithActivateInfoSettings } from '@navigation/HeaderOption
 
 import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal, VoiceRecognitionBanner } from '@components/counter';
 import Tooltip from '@components/common/Tooltip';
-import { ADD_KEY_CODES, SUBTRACT_KEY_CODES } from '@constants/hardwareKeyCodes';
+import {
+  ADD_KEY_CODES,
+  SUBTRACT_KEY_CODES,
+  SUB_COUNTER_ADD_KEY_CODES,
+  SUB_COUNTER_SUBTRACT_KEY_CODES,
+} from '@constants/hardwareKeyCodes';
 import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, ScreenSize } from '@constants/screenSizeConfig';
 import {
   getTooltipEnabledSetting,
@@ -308,10 +313,12 @@ const CounterDetail = () => {
       }
 
       /**
-       * 외장 키보드 key up 이벤트를 메인 카운터 액션으로 매핑한다.
+       * 외장 키보드 key up 이벤트를 카운터 액션으로 매핑한다.
        *
-       * - add 계열 키: 메인 증가 공통 액션 실행
-       * - subtract 계열 키: 메인 감소 공통 액션 실행
+       * - add 계열 키: 메인 증가
+       * - subtract 계열 키: 메인 감소
+       * - 위 방향키: 보조 증가
+       * - 아래 방향키: 보조 감소
        *
        * 여기서 key down 대신 key up을 쓰는 이유는,
        * 키를 길게 누를 때 발생할 수 있는 연속 입력을 줄이고
@@ -327,6 +334,10 @@ const CounterDetail = () => {
           runHighlightedAdd();
         } else if (SUBTRACT_KEY_CODES.has(keyCode)) {
           runHighlightedSubtract();
+        } else if (SUB_COUNTER_ADD_KEY_CODES.has(keyCode)) {
+          runHighlightedSubAdd();
+        } else if (SUB_COUNTER_SUBTRACT_KEY_CODES.has(keyCode)) {
+          runHighlightedSubSubtract();
         }
       };
 
@@ -336,7 +347,13 @@ const CounterDetail = () => {
         // 화면 포커스를 잃으면 전역 key up 리스너를 반드시 제거한다.
         KeyEvent.removeKeyUpListener();
       };
-    }, [isInputBlocked, runHighlightedAdd, runHighlightedSubtract])
+    }, [
+      isInputBlocked,
+      runHighlightedAdd,
+      runHighlightedSubtract,
+      runHighlightedSubAdd,
+      runHighlightedSubSubtract,
+    ])
   );
 
 
