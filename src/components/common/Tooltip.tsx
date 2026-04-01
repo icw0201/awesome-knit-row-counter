@@ -83,9 +83,7 @@ const Tooltip: React.FC<TooltipProps> = ({
               style={{ maxWidth: 240, marginLeft: -ARROW_BOX_OVERLAP_PX }}
             >
               {text ? (
-                <Text className="text-white text-xs text-center" allowFontScaling={false}>
-                  {text}
-                </Text>
+                <Text className="text-white text-xs text-center">{text}</Text>
               ) : null}
             </View>
           </View>
@@ -131,9 +129,7 @@ const Tooltip: React.FC<TooltipProps> = ({
               }}
             >
               {text ? (
-                <Text className="text-white text-xs text-center" allowFontScaling={false}>
-                  {text}
-                </Text>
+                <Text className="text-white text-xs text-center">{text}</Text>
               ) : null}
             </View>
           </View>
