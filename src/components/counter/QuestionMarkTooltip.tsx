@@ -29,6 +29,8 @@ const QuestionMarkTooltip: React.FC<QuestionMarkTooltipProps> = ({ tooltipText }
   const AUTO_HIDE_MS = 4000;
   const FADE_OUT_MS = 400;
   const ARROW_HALF_WIDTH = 6; // SVG 화살표 너비 12px의 절반
+  /** 화살표·박스 경계 서브픽셀 틈 방지(1px만 박스 쪽으로 겹침) */
+  const ARROW_BOX_OVERLAP_PX = 1;
   const TOOLTIP_BOX_MAX_WIDTH = 240;
   const TOOLTIP_BOX_HALF_WIDTH = TOOLTIP_BOX_MAX_WIDTH / 2;
   const PADDING = 16; // 화면 양쪽 여백
@@ -154,7 +156,7 @@ const QuestionMarkTooltip: React.FC<QuestionMarkTooltipProps> = ({ tooltipText }
                     style={{
                       position: 'absolute',
                       left: arrowLeftPx ?? 120, // 기본값은 박스 중앙 (240px / 2 = 120px)
-                      bottom: -8,
+                      bottom: -8 + ARROW_BOX_OVERLAP_PX,
                       transform: [{ translateX: -(arrowLeftPx != null ? ARROW_HALF_WIDTH : 6) }, { rotate: '180deg' }],
                     }}
                   >

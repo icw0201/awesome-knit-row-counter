@@ -18,6 +18,8 @@ const Tooltip: React.FC<TooltipProps> = ({ text, containerClassName, targetAncho
   const bodyRef = useRef<View | null>(null);
   const [arrowLeftPx, setArrowLeftPx] = useState<number | null>(null);
   const ARROW_HALF_WIDTH = 6; // Svg width 12 기준
+  /** 화살표·박스 경계 서브픽셀 틈 방지(1px만 박스 쪽으로 겹침; 삼각형 스케일 키우는 것과 달리 두께는 그대로) */
+  const ARROW_BOX_OVERLAP_PX = 1;
 
   useEffect(() => {
     if (AUTO_HIDE_MS > 0) {
@@ -62,7 +64,12 @@ const Tooltip: React.FC<TooltipProps> = ({ text, containerClassName, targetAncho
           <Svg
             width={12}
             height={20}
-            style={{ position: 'absolute', left: arrowLeftPx ?? '50%', top: -8, transform: [{ translateX: -(arrowLeftPx != null ? ARROW_HALF_WIDTH : 6) }] }}
+            style={{
+              position: 'absolute',
+              left: arrowLeftPx ?? '50%',
+              top: -8 + ARROW_BOX_OVERLAP_PX,
+              transform: [{ translateX: -(arrowLeftPx != null ? ARROW_HALF_WIDTH : 6) }],
+            }}
           >
             <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill="rgba(0,0,0,0.6)" />
           </Svg>
