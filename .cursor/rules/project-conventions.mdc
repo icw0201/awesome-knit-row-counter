@@ -1,5 +1,5 @@
 ---
-description: 프로젝트 공통 규칙 - 셸, 패키지 매니저, 스타일
+description: 프로젝트 공통 규칙 - 셸, 패키지 매니저, 스타일, 주석 보존
 alwaysApply: true
 ---
 
@@ -25,3 +25,10 @@ alwaysApply: true
   - 정의된 컬러: `red-orange` 팔레트, `black`, `darkgray`, `mediumgray`, `lightgray`
   - 예: `text-black`, `bg-lightgray`, `text-red-orange-500` 등
 - `tailwind.config.js`에 없는 임의의 hex/rgb 값으로 클래스를 만들지 않는다.
+
+## 4. 주석 보존
+
+- 코드를 수정할 때 **작성자(사용자)가 남긴 기존 주석·JSDoc·블록 주석을 임의로 삭제하지 않는다.**
+- 리팩터나 포맷만 할 때도, 요청과 무관한 주석 제거는 하지 않는다.
+- 주석이 달린 코드를 바꿔 주석 내용이 틀려지는 경우에만, **내용을 맞게 고치거나** 사용자가 정리를 요청한 경우에 한해 조정한다.
+- 불필요하다고 판단되어도 **명시적으로 “주석 정리”를 요청받기 전까지는 제거하지 않는다.**
