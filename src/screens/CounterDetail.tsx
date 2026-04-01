@@ -210,6 +210,7 @@ const CounterDetail = () => {
     screenSize === ScreenSize.LARGE && effectiveVoiceCommandsActive;
   const { directionSectionFlex, voiceBannerSectionFlex, countSectionFlex, actionsSectionFlex } =
     getContentSectionFlexes(mascotIsActive, showCounterActions, showVoiceBanner);
+  const showSlideModalSideTooltips = tooltipEnabled && screenSize !== ScreenSize.COMPACT;
   const { timerHeightPx, gapBetweenTimerAndContentPx, contentHeightPx, bottomReservedHeightPx } =
     getCounterDetailVerticalPx({
       contentAreaHeight,
@@ -551,6 +552,15 @@ const CounterDetail = () => {
           height={segmentModalHeight}
           centerY={segmentModalCenterY}
           sectionRecords={counter.sectionRecords}
+          sideTooltip={
+            showSlideModalSideTooltips ? (
+              <Tooltip
+                placement="left"
+                text="활동 기록 보기"
+                visuallyHidden={!!(counter.sectionModalIsOpen ?? false)}
+              />
+            ) : undefined
+          }
         />
       )}
 
@@ -575,6 +585,15 @@ const CounterDetail = () => {
           width={subModalWidth}
           height={subModalHeight}
           centerY={subModalCenterY}
+          sideTooltip={
+            showSlideModalSideTooltips ? (
+              <Tooltip
+                placement="left"
+                text="보조 카운터 사용하기"
+                visuallyHidden={subModalIsOpen}
+              />
+            ) : undefined
+          }
         />
       )}
 

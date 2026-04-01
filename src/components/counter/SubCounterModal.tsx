@@ -26,6 +26,8 @@ interface SubCounterModalProps {
   width: number;
   height: number;
   centerY: DimensionValue;
+  /** SlideModal 패널 오른쪽에 표시 */
+  sideTooltip?: React.ReactNode;
 }
 
 // ===== 메인 컴포넌트 =====
@@ -48,6 +50,7 @@ export const SubCounterModal: React.FC<SubCounterModalProps> = ({
   width,
   height,
   centerY,
+  sideTooltip,
 }) => {
   // 아이콘 크기 및 간격 정보
   const iconSize = getSubIconSize(screenSize);
@@ -62,6 +65,7 @@ export const SubCounterModal: React.FC<SubCounterModalProps> = ({
       backgroundColor="white"
       padding={0}
       centerY={centerY}
+      sideTooltip={sideTooltip}
     >
       {/* 터치 영역 - 배경 100% 차지 */}
       <SubCounterTouchArea

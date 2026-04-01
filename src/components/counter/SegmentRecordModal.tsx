@@ -19,6 +19,8 @@ interface SegmentRecordModalProps {
   height: number;
   centerY: DimensionValue;
   sectionRecords?: SectionRecord[];
+  /** SlideModal 패널 오른쪽에 표시 */
+  sideTooltip?: React.ReactNode;
 }
 
 // ===== 메인 컴포넌트 =====
@@ -32,6 +34,7 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
   height,
   centerY,
   sectionRecords = [],
+  sideTooltip,
 }) => {
   const [showAllRecordsModal, setShowAllRecordsModal] = useState(false);
 
@@ -48,6 +51,7 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
         backgroundColor="white"
         padding={0}
         centerY={centerY}
+        sideTooltip={sideTooltip}
       >
         {/* 콘텐츠 영역 */}
         <View
