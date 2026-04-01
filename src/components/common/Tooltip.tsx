@@ -76,10 +76,10 @@ const Tooltip: React.FC<TooltipProps> = ({
           <View className="relative flex-row items-center">
             {/* placement top의 Path를 -90° 회전한 형태와 동일한 둥근 삼각형(왼쪽 끝이 뾰족, 오른쪽이 밑변) */}
             <Svg width={20} height={12} viewBox="0 0 20 12">
-              <Path d="M20 0 L6 5 Q5 6 6 7 L20 12 Z" fill="rgba(0,0,0,0.6)" />
+              <Path d="M20 0 L6 5 Q5 6 6 7 L20 12 Z" fill="rgba(0,0,0,1)" />
             </Svg>
             <View
-              className="rounded-md bg-black/60 px-2 py-3"
+              className="rounded-md bg-black px-2 py-3"
               style={{ maxWidth: 240, marginLeft: -ARROW_BOX_OVERLAP_PX }}
             >
               {text ? (
@@ -112,11 +112,11 @@ const Tooltip: React.FC<TooltipProps> = ({
                 ],
               }}
             >
-              <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill="rgba(0,0,0,0.6)" />
+              <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill="rgba(0,0,0,1)" />
             </Svg>
             <View
               ref={(ref) => { bodyRef.current = ref; }}
-              className="px-2 py-3 rounded-md bg-black/60 mb-3"
+              className="px-2 py-3 rounded-md bg-black mb-3"
               style={{ maxWidth: 240 }}
               onLayout={(_e: LayoutChangeEvent) => {
                 if (!targetAnchorX || !bodyRef.current) {
@@ -158,11 +158,11 @@ const Tooltip: React.FC<TooltipProps> = ({
                 transform: [{ translateX: -(arrowLeftPx != null ? ARROW_HALF_WIDTH : 6) }],
               }}
             >
-              <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill="rgba(0,0,0,0.6)" />
+              <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill="rgba(0,0,0,1)" />
             </Svg>
             <View
               ref={(ref) => { bodyRef.current = ref; }}
-              className="px-2 py-3 rounded-md bg-black/60 mt-3"
+              className="px-2 py-3 rounded-md bg-black mt-3"
               style={{ maxWidth: 240 }}
               onLayout={(_e: LayoutChangeEvent) => {
                 if (!targetAnchorX || !bodyRef.current) {

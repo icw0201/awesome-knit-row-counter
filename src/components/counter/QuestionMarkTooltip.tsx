@@ -160,11 +160,11 @@ const QuestionMarkTooltip: React.FC<QuestionMarkTooltipProps> = ({ tooltipText }
                       transform: [{ translateX: -(arrowLeftPx != null ? ARROW_HALF_WIDTH : 6) }, { rotate: '180deg' }],
                     }}
                   >
-                    <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill="rgba(0,0,0,0.6)" />
+                    <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill="rgba(0,0,0,1)" />
                   </Svg>
                   <View
                     ref={(ref) => { bodyRef.current = ref; }}
-                    className="px-2 py-3 rounded-md bg-black/60 mb-3"
+                    className="px-2 py-3 rounded-md bg-black mb-3"
                     style={{ maxWidth: 240 }}
                     onLayout={(_e: LayoutChangeEvent) => {
                       if (!iconCenterX || !bodyRef.current) {
