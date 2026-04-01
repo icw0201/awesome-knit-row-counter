@@ -83,8 +83,10 @@ const BaseModal: React.FC<BaseModalProps> = ({
       onShow={handleModalShow}
     >
       <View style={modalStyles.overlay}>
+        {/* 배경 터치 영역 */}
         <Pressable style={modalStyles.backdrop} onPress={onClose} />
 
+        {/* 모달 컨테이너 */}
         <View
           style={[
             modalStyles.container,
@@ -92,12 +94,15 @@ const BaseModal: React.FC<BaseModalProps> = ({
           ]}
           collapsable={false}
         >
+          {/* 모달 내용 영역 */}
           <View
             collapsable={false}
             style={baseModalStyles.innerStack}
             onLayout={handleInnerLayout}
           >
+            {/* 모달 제목 */}
             <Text style={modalStyles.title}>{title}</Text>
+            {/* 모달 내용(children) */}
             {children}
           </View>
         </View>
