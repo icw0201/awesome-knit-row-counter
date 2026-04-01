@@ -6,7 +6,54 @@ import { SectionRecord } from '@storage/types';
 import { getEditContentText } from '@utils/sectionRecordUtils';
 import CircleIcon from '@components/common/CircleIcon';
 import RecordListModal from './RecordListModal';
+import Tooltip from '@components/common/Tooltip';
 import { Mic } from 'lucide-react-native';
+
+/**
+ * SlideModal과 같은 부모 아래 형제로 둠. 패널(열린 상태, 왼쪽 정렬) 박스 밖·상단 Y에 툴팁을 붙임.
+ * 패널 밖 배치를 위해 오버레이로 처리.
+ */
+const SegmentRecordAbovePanelTooltipOverlay: React.FC<{
+  panelWidth: number;
+  panelHeight: number;
+  centerYPx: number;
+  children: React.ReactNode;
+}> = ({ panelWidth, panelHeight, centerYPx, children }) => {
+  const gapPx = 8;
+  const modalTopPx = centerYPx - panelHeight / 2;
+  if (modalTopPx <= gapPx) {
+    return null;
+  }
+  return (
+    <View
+      pointerEvents="none"
+      className="absolute top-0 left-0 right-0 bottom-0"
+      style={{ zIndex: 52 }}
+    >
+      <View
+        style={{
+          position: 'absolute',
+          left: 0,
+          width: panelWidth,
+          top: 0,
+          height: modalTopPx - gapPx,
+          alignItems: 'center',
+        }}
+      >
+        <View
+          style={{
+            flex: 1,
+            width: '100%',
+            justifyContent: 'flex-end',
+            alignItems: 'center',
+          }}
+        >
+          {children}
+        </View>
+      </View>
+    </View>
+  );
+};
 
 // ===== 타입 정의 =====
 interface SegmentRecordModalProps {
@@ -19,6 +66,10 @@ interface SegmentRecordModalProps {
   height: number;
   centerY: DimensionValue;
   sectionRecords?: SectionRecord[];
+  /** SlideModal 패널 오른쪽에 표시 */
+  sideTooltip?: React.ReactNode;
+  /** 툴팁 설정 on일 때, 모달 패널 밖(상단 Y) 안내(4초). 기록이 있을 때만 */
+  inlineRecordTooltipEnabled?: boolean;
 }
 
 // ===== 메인 컴포넌트 =====
@@ -32,6 +83,8 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
   height,
   centerY,
   sectionRecords = [],
+  sideTooltip,
+  inlineRecordTooltipEnabled = false,
 }) => {
   const [showAllRecordsModal, setShowAllRecordsModal] = useState(false);
 
@@ -48,6 +101,7 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
         backgroundColor="white"
         padding={0}
         centerY={centerY}
+        sideTooltip={sideTooltip}
       >
         {/* 콘텐츠 영역 */}
         <View
@@ -118,6 +172,19 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
           )}
         </View>
       </SlideModal>
+
+      {isOpen &&
+      inlineRecordTooltipEnabled &&
+      sectionRecords.length > 0 &&
+      typeof centerY === 'number' ? (
+        <SegmentRecordAbovePanelTooltipOverlay
+          panelWidth={width}
+          panelHeight={height}
+          centerYPx={centerY}
+        >
+          <Tooltip placement="bottom" text="터치하여 기록 더보기" />
+        </SegmentRecordAbovePanelTooltipOverlay>
+      ) : null}
 
       <RecordListModal
         visible={showAllRecordsModal}
