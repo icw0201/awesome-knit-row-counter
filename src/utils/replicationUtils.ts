@@ -15,8 +15,20 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** `stem` + ` (${n})` 형태로 합치되, 전체 길이가 maxLen 이하가 되도록 stem만 잘라 접미사는 항상 보존 */
+function buildNumberedTitle(stem: string, n: number, maxLen: number): string {
+  const suffix = ` (${n})`;
+  if (suffix.length >= maxLen) {
+    return suffix.slice(0, maxLen);
+  }
+  const maxStemLen = maxLen - suffix.length;
+  const trimmedStem = stem.length > maxStemLen ? stem.slice(0, maxStemLen) : stem;
+  return trimmedStem + suffix;
+}
+
 /**
  * Main 화면 이름 충돌 검사와 동일 스코프의 기존 제목들로 다음 복제본 제목 제안 (최대 15자)
+ * 긴 stem 은 ` (N)` 접미사가 잘리지 않도록 stem 만 축약하고, 동일 문자열이 있으면 N 을 올려 반복
  */
 export function suggestDuplicateTitle(originalTitle: string, existingTitles: string[]): string {
   const stem = stripNumericSuffix(originalTitle);
@@ -35,9 +47,19 @@ export function suggestDuplicateTitle(originalTitle: string, existingTitles: str
     }
   }
 
-  const nextN = maxN < 1 ? 2 : maxN + 1;
-  const candidate = `${stem} (${nextN})`;
-  return candidate.length > TITLE_MAX_LENGTH ? candidate.slice(0, TITLE_MAX_LENGTH) : candidate;
+  const existingSet = new Set(existingTitles.map((t) => t.trim()));
+  let n = maxN < 1 ? 2 : maxN + 1;
+  const maxAttempts = 500;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const candidate = buildNumberedTitle(stem, n, TITLE_MAX_LENGTH);
+    if (!existingSet.has(candidate)) {
+      return candidate;
+    }
+    n += 1;
+  }
+
+  return buildNumberedTitle(stem, n, TITLE_MAX_LENGTH);
 }
 
 /**
@@ -57,7 +79,7 @@ export function cloneCounterForReplication(
     parentProjectId,
     elapsedTime: 0,
     sectionRecords: [],
-    repeatRules: source.repeatRules.map((r) => ({ ...r })),
+    repeatRules: (source.repeatRules ?? []).map((r) => ({ ...r })),
     info: source.info ? { ...source.info } : undefined,
   };
 }
