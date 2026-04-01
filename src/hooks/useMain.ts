@@ -126,10 +126,11 @@ export const useMain = () => {
     if (checkDuplicateName(newItem)) {
       setPendingItem(newItem);
       setDuplicateModalVisible(true);
-      return;
+      return false;
     }
 
     completeItemCreation(newItem);
+    return true;
   }, [createNewItem, checkDuplicateName, completeItemCreation, setPendingItem, setDuplicateModalVisible]);
 
   /**

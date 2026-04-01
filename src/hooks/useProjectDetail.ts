@@ -148,7 +148,7 @@ export const useProjectDetail = () => {
    */
   const handleCreateCounterConfirm = useCallback((name?: string) => {
     if (!name?.trim()) {
-      return;
+      return false;
     }
 
     const newCounter = createNewCounter(name);
@@ -156,10 +156,11 @@ export const useProjectDetail = () => {
     if (checkDuplicateName(newCounter)) {
       setPendingItem(newCounter);
       setDuplicateModalVisible(true);
-      return;
+      return false;
     }
 
     completeCounterCreation(newCounter);
+    return true;
   }, [createNewCounter, checkDuplicateName, completeCounterCreation, setPendingItem, setDuplicateModalVisible]);
 
   /**
