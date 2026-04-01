@@ -3,7 +3,7 @@ import React from 'react';
 import { ScrollView } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { ItemRow, FloatingAddButton, ItemModals, SortDropdown } from '@components/list';
+import { ItemRow, FloatingListActionButton, ItemModals, SortDropdown } from '@components/list';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
 import { useMain } from '@hooks/useMain';
 
@@ -61,7 +61,7 @@ const Main = () => {
       </ScrollView>
 
       {/* 플로팅 추가 버튼 */}
-      <FloatingAddButton
+      <FloatingListActionButton
         isEditMode={isEditMode}
         onPress={() => (isEditMode ? openBulkDeleteModal() : setModalVisible(true))}
         bottom={insets.bottom}

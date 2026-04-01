@@ -2,19 +2,18 @@ import React from 'react';
 import { View } from 'react-native';
 import CircleIcon from '@components/common/CircleIcon';
 
-interface FloatingAddButtonProps {
+interface FloatingListActionButtonProps {
   onPress: () => void;
   bottom: number;
-  /** true이면 추가(plus) 대신 삭제(trash-2) 아이콘 */
+  /** true이면 추가(plus) 대신 일괄 삭제(trash-2) 아이콘 */
   isEditMode?: boolean;
 }
 
 /**
- * 플로팅 추가 버튼 컴포넌트
- *
- * Main과 ProjectDetail에서 공통으로 사용되는 플로팅 버튼
+ * Main / ProjectDetail 목록용 플로팅 버튼
+ * 일반 모드: 항목 추가(plus), 편집 모드: 선택 항목 일괄 삭제(trash-2)
  */
-const FloatingAddButton: React.FC<FloatingAddButtonProps> = ({
+const FloatingListActionButton: React.FC<FloatingListActionButtonProps> = ({
   onPress,
   bottom,
   isEditMode = false,
@@ -35,4 +34,4 @@ const FloatingAddButton: React.FC<FloatingAddButtonProps> = ({
   );
 };
 
-export default FloatingAddButton;
+export default FloatingListActionButton;
