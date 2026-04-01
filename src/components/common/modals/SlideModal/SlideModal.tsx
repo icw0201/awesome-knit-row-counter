@@ -70,7 +70,6 @@ export const SlideModal: React.FC<SlideModalProps> = ({
     setTranslateX(newTranslateX);
   };
 
-
   // ===== 렌더링 =====
   return (
     <View

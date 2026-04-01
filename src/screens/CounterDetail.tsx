@@ -552,6 +552,7 @@ const CounterDetail = () => {
           height={segmentModalHeight}
           centerY={segmentModalCenterY}
           sectionRecords={counter.sectionRecords}
+          inlineRecordTooltipEnabled={showSlideModalSideTooltips}
           sideTooltip={
             showSlideModalSideTooltips ? (
               <Tooltip
