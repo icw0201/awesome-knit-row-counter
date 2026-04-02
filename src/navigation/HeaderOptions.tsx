@@ -1,5 +1,5 @@
 import React from 'react';
-import { ChevronLeft, Settings, Trash2, Info, ArrowDownUp, Timer, Mic } from 'lucide-react-native';
+import { ChevronLeft, Settings, SquarePen, Info, ArrowDownUp, Timer, Mic } from 'lucide-react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from './AppNavigator';
 
@@ -41,7 +41,7 @@ export const getHeaderRightWithEditAndSettings = (
         <ArrowDownUp size={24} color="black" />
       </TouchableOpacity>
       <TouchableOpacity onPress={onEditPress} style={{ marginRight: 12 }}>
-        <Trash2 size={24} color="black" />
+        <SquarePen size={24} color="black" />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Setting')}>
         <Settings size={24} color="black" />
@@ -66,7 +66,7 @@ export const getHeaderRightWithInfoEditAndSettings = (
         <ArrowDownUp size={24} color="black" />
       </TouchableOpacity>
       <TouchableOpacity onPress={onEditPress} style={{ marginRight: 12 }}>
-        <Trash2 size={24} color="black" />
+        <SquarePen size={24} color="black" />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Setting')}>
         <Settings size={24} color="black" />
