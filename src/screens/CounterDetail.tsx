@@ -253,22 +253,29 @@ const CounterDetail = () => {
   /**
    * 보조 카운터 공통 진입점.
    * 터치/보이스 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
+   * 서브 슬라이드가 꺼져 있거나 모달이 닫혀 있으면 음성·하드웨어 방향키만 막는다(모달 터치는 열린 상태에서만 발생).
    */
   const runHighlightedSubAdd = useCallback((commandWord?: string) => {
     if (isInputBlocked) {
       return;
     }
+    if (!subSlideModalsEnabled || !subModalIsOpen) {
+      return;
+    }
     flashSubTouchAreaHighlight('add');
     handleSubAdd(commandWord);
-  }, [flashSubTouchAreaHighlight, handleSubAdd, isInputBlocked]);
+  }, [flashSubTouchAreaHighlight, handleSubAdd, isInputBlocked, subModalIsOpen, subSlideModalsEnabled]);
 
   const runHighlightedSubSubtract = useCallback((commandWord?: string) => {
     if (isInputBlocked) {
       return;
     }
+    if (!subSlideModalsEnabled || !subModalIsOpen) {
+      return;
+    }
     flashSubTouchAreaHighlight('subtract');
     handleSubSubtract(commandWord);
-  }, [flashSubTouchAreaHighlight, handleSubSubtract, isInputBlocked]);
+  }, [flashSubTouchAreaHighlight, handleSubSubtract, isInputBlocked, subModalIsOpen, subSlideModalsEnabled]);
 
   /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
   useVoiceCommands(
