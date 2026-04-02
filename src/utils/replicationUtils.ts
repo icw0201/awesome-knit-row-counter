@@ -15,6 +15,18 @@ function escapeRegExp(s: string): string {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+/** UTF-16 slice 대신 코드 포인트 단위로 자름(이모지 서로게이트 쌍 중간 절단 방지) */
+function truncateToMaxCodePoints(str: string, maxCodePoints: number): string {
+  if (maxCodePoints <= 0) {
+    return '';
+  }
+  const points = Array.from(str);
+  if (points.length <= maxCodePoints) {
+    return str;
+  }
+  return points.slice(0, maxCodePoints).join('');
+}
+
 /** `stem` + ` (${n})` 형태로 합치되, 전체 길이가 maxLen 이하가 되도록 stem만 잘라 접미사는 항상 보존 */
 function buildNumberedTitle(stem: string, n: number, maxLen: number): string {
   const suffix = ` (${n})`;
@@ -22,7 +34,8 @@ function buildNumberedTitle(stem: string, n: number, maxLen: number): string {
     return suffix.slice(0, maxLen);
   }
   const maxStemLen = maxLen - suffix.length;
-  const trimmedStem = stem.length > maxStemLen ? stem.slice(0, maxStemLen) : stem;
+  const stemCp = Array.from(stem).length;
+  const trimmedStem = stemCp > maxStemLen ? truncateToMaxCodePoints(stem, maxStemLen) : stem;
   return trimmedStem + suffix;
 }
 
