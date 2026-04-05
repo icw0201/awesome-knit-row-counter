@@ -1,21 +1,18 @@
 <div align="center">
-<img width="750" height="250" alt="헤더" src="https://github.com/user-attachments/assets/5af4bbbd-7119-4dd3-9761-63efbf32dd7d" />
-
-
-# 어쩜! 단수 카운터
-
-
-<img src="./src/assets/images/icon.png" width=250/>
-
-
-📱 **플레이스토어** : https://play.google.com/store/apps/details?id=com.simpleknitcounter
-
-📱 **원스토어** : https://onesto.re/0001001132
-
-👾 **개발 기간** : 2025.04 ~
-
-🎨 **피그마** : https://www.figma.com/design/iJus1gL8k37k0GdTV9aamk/%EC%96%B4%EC%A9%9C--%EB%8B%A8%EC%88%98-%EC%B9%B4%EC%9A%B4%ED%84%B0?node-id=0-1&t=VF4pWbYiaHTTskPY-1
-
+  <img width="750" height="250" alt="헤더" src="https://github.com/user-attachments/assets/f2b8a381-8608-4bff-a43b-24858eb65fa9" />
+  
+  # 어쩜! 단수 카운터
+  
+  <img src="./src/assets/images/icon.png" width=250/>
+  
+  
+  📱 **플레이스토어** : https://play.google.com/store/apps/details?id=com.simpleknitcounter
+  
+  📱 **원스토어** : https://onesto.re/0001001132
+  
+  👾 **개발 기간** : 2025.04 ~
+  
+  🎨 **피그마** : https://www.figma.com/design/iJus1gL8k37k0GdTV9aamk/%EC%96%B4%EC%A9%9C--%EB%8B%A8%EC%88%98-%EC%B9%B4%EC%9A%B4%ED%84%B0?node-id=0-1&t=VF4pWbYiaHTTskPY-1
 </div>
 
 ## 함께 만드는 사람들
