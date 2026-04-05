@@ -5,7 +5,7 @@ import { RootStackParamList } from '@navigation/AppNavigator';
 import { RouteProp } from '@react-navigation/native';
 import { getHeaderRightWithInfoEditAndSettings } from '@navigation/HeaderOptions';
 
-import { Counter, Project } from '@storage/types';
+import { Counter, Item, Project } from '@storage/types';
 import { addItem, removeCounterFromProject, updateItem, getStoredItems } from '@storage/storage';
 import {
   getSortCriteriaSetting,
@@ -13,6 +13,7 @@ import {
   getMoveCompletedToBottomSetting,
 } from '@storage/settings';
 import { sortItems } from '@utils/sortUtils';
+import { suggestDuplicateTitle, cloneCounterForReplication } from '@utils/replicationUtils';
 import { useItemList } from './useItemList';
 
 /**
@@ -24,6 +25,9 @@ export const useProjectDetail = () => {
   const { projectId } = route.params;
   // 정렬 드롭다운 표시 여부 상태
   const [sortDropdownVisible, setSortDropdownVisible] = useState(false);
+  const [replicateModalVisible, setReplicateModalVisible] = useState(false);
+  const [counterToReplicate, setCounterToReplicate] = useState<Counter | null>(null);
+  const [replicateInitialName, setReplicateInitialName] = useState('');
 
   // useItemList 훅 사용
   const {
@@ -32,18 +36,21 @@ export const useProjectDetail = () => {
     isEditMode,
     modalVisible,
     deleteModalVisible,
-    itemToDelete,
+    itemsPendingDelete,
     duplicateModalVisible,
     pendingItem,
+    selectedItemIds,
     setItems,
     setProject,
     setIsEditMode,
     setModalVisible,
     setDuplicateModalVisible,
     setPendingItem,
+    setSelectedItemIds,
     handlePress,
     handleLongPress,
-    handleDelete,
+    toggleItemSelection,
+    openBulkDeleteModal,
     resetModalState,
     resetDeleteModalState,
     resetDuplicateModalState,
@@ -108,47 +115,50 @@ export const useProjectDetail = () => {
     );
   }, [project?.id]);
 
+  const persistCounterInProject = useCallback(
+    (newCounter: Counter) => {
+      addItem(newCounter);
+
+      const allItems = getStoredItems();
+      const latestProject = allItems.find(
+        (item): item is Project => item.id === projectId && item.type === 'project'
+      );
+
+      if (latestProject) {
+        const updatedCounterIds = [newCounter.id, ...latestProject.counterIds];
+
+        updateItem(latestProject.id, {
+          counterIds: updatedCounterIds,
+        });
+
+        setProject({
+          ...latestProject,
+          counterIds: updatedCounterIds,
+        });
+      }
+
+      setItems((prev) => [newCounter, ...prev]);
+    },
+    [projectId, setItems, setProject]
+  );
+
   /**
    * 카운터 생성 완료 처리 (실제 저장 및 상태 업데이트)
    */
-  const completeCounterCreation = useCallback((newCounter: Counter) => {
-    // 카운터 저장
-    addItem(newCounter);
-
-    // 저장소에서 최신 프로젝트 정보 가져오기 (메모리 상태가 아닌 실제 저장소 데이터)
-    const allItems = getStoredItems();
-    const latestProject = allItems.find(
-      (item): item is Project => item.id === projectId && item.type === 'project'
-    );
-
-    if (latestProject) {
-      const updatedCounterIds = [newCounter.id, ...latestProject.counterIds];
-
-      const updatedProject: Partial<Project> = {
-        counterIds: updatedCounterIds,
-      };
-
-      updateItem(latestProject.id, updatedProject);
-
-      // 로컬 상태도 업데이트
-      setProject({
-        ...latestProject,
-        counterIds: updatedCounterIds,
-      });
-    }
-
-    // UI 상태 업데이트
-    setItems((prev) => [newCounter, ...prev]);
-
-    resetModalState();
-  }, [projectId, setItems, setProject, resetModalState]);
+  const completeCounterCreation = useCallback(
+    (newCounter: Counter) => {
+      persistCounterInProject(newCounter);
+      resetModalState();
+    },
+    [persistCounterInProject, resetModalState]
+  );
 
   /**
    * 카운터 생성 모달에서 확인 시 카운터 생성 및 중복 체크
    */
   const handleCreateCounterConfirm = useCallback((name?: string) => {
     if (!name?.trim()) {
-      return;
+      return false;
     }
 
     const newCounter = createNewCounter(name);
@@ -156,32 +166,110 @@ export const useProjectDetail = () => {
     if (checkDuplicateName(newCounter)) {
       setPendingItem(newCounter);
       setDuplicateModalVisible(true);
-      return;
+      return false;
     }
 
     completeCounterCreation(newCounter);
+    return true;
   }, [createNewCounter, checkDuplicateName, completeCounterCreation, setPendingItem, setDuplicateModalVisible]);
+
+  const resetReplicateModalState = useCallback(() => {
+    setReplicateModalVisible(false);
+    setCounterToReplicate(null);
+    setReplicateInitialName('');
+  }, []);
+
+  const handleCopyPress = useCallback(
+    (item: Item) => {
+      if (item.type !== 'counter') {
+        return;
+      }
+      const titles = items.map((c) => c.title);
+      setReplicateInitialName(suggestDuplicateTitle(item.title, titles));
+      setCounterToReplicate(item);
+      setReplicateModalVisible(true);
+    },
+    [items]
+  );
+
+  const handleReplicateConfirm = useCallback(
+    (name: string) => {
+      const trimmed = name.trim();
+      if (!counterToReplicate || !trimmed || !project) {
+        return false;
+      }
+
+      const newId = `counter_${Date.now()}`;
+      const cloned = cloneCounterForReplication(
+        counterToReplicate,
+        trimmed,
+        newId,
+        project.id
+      );
+
+      if (checkDuplicateName(cloned)) {
+        setPendingItem(cloned);
+        setDuplicateModalVisible(true);
+        return false;
+      }
+
+      persistCounterInProject(cloned);
+      resetReplicateModalState();
+      return true;
+    },
+    [
+      counterToReplicate,
+      project,
+      checkDuplicateName,
+      setPendingItem,
+      setDuplicateModalVisible,
+      persistCounterInProject,
+      resetReplicateModalState,
+    ]
+  );
+
+  const handleDuplicateConfirm = useCallback(() => {
+    if (pendingItem && pendingItem.type === 'counter') {
+      completeCounterCreation(pendingItem);
+      resetReplicateModalState();
+    }
+  }, [pendingItem, completeCounterCreation, resetReplicateModalState]);
+
+  const getDeleteDescription = useCallback(() => {
+    const pending = itemsPendingDelete;
+    if (!pending?.length) {
+      return '';
+    }
+    if (pending.length === 1) {
+      return `"${pending[0].title}" 카운터를 삭제하시겠습니까?`;
+    }
+    return `선택한 ${pending.length}개의 카운터를 삭제하시겠습니까?`;
+  }, [itemsPendingDelete]);
 
   /**
    * 삭제 확인 시 실제 삭제 처리
    */
   const handleDeleteConfirm = useCallback(() => {
-    if (!itemToDelete || itemToDelete.type !== 'counter') {
+    const pending = itemsPendingDelete;
+    if (!pending?.length || !project) {
       return;
     }
 
-    if (project) {
-      removeCounterFromProject(project.id, itemToDelete.id);
-    }
+    pending.forEach((item) => {
+      if (item.type === 'counter') {
+        removeCounterFromProject(project.id, item.id);
+      }
+    });
 
-    const nextItems = items.filter((i) => i.id !== itemToDelete.id);
+    const removedIds = new Set(pending.map((i) => i.id));
+    const nextItems = items.filter((i) => !removedIds.has(i.id));
     setItems(nextItems);
     resetDeleteModalState();
-    // 삭제 후 목록이 비면 편집할 항목이 없으므로 edit 모드 자동 해제
+    setSelectedItemIds([]);
     if (nextItems.length === 0) {
       setIsEditMode(false);
     }
-  }, [itemToDelete, project, items, setItems, resetDeleteModalState, setIsEditMode]);
+  }, [itemsPendingDelete, project, items, setItems, resetDeleteModalState, setIsEditMode, setSelectedItemIds]);
 
   const handleSortSelect = useCallback((_option: string) => {
     // 정렬 설정이 storage에 저장되었으므로, 현재 items를 다시 정렬하여 즉시 반영
@@ -205,9 +293,10 @@ export const useProjectDetail = () => {
     isEditMode,
     modalVisible,
     deleteModalVisible,
-    itemToDelete,
+    itemsPendingDelete,
     duplicateModalVisible,
     pendingItem,
+    selectedItemIds,
     sortDropdownVisible,
 
     // 상태 설정 함수들
@@ -217,13 +306,22 @@ export const useProjectDetail = () => {
     // 액션 함수들
     handlePress,
     handleLongPress,
-    handleDelete,
+    toggleItemSelection,
+    openBulkDeleteModal,
     handleCreateCounterConfirm,
     handleDeleteConfirm,
+    getDeleteDescription,
     resetModalState,
     resetDeleteModalState,
     resetDuplicateModalState,
     completeCounterCreation,
     handleSortSelect,
+
+    replicateModalVisible,
+    replicateInitialName,
+    resetReplicateModalState,
+    handleCopyPress,
+    handleReplicateConfirm,
+    handleDuplicateConfirm,
   };
 };

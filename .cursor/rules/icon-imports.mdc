@@ -1,0 +1,22 @@
+---
+description: Prefer direct icon imports in TSX files
+globs: **/*.tsx
+alwaysApply: false
+---
+
+# Icon Import Conventions
+
+- Import icons directly from `lucide-react-native` when a component uses a fixed icon.
+- Do not use `getLucideIcon()` for static icons in component files.
+- Keep icon usage consistent with existing project examples such as `import { Plus } from 'lucide-react-native';`.
+
+```tsx
+// ❌ Avoid
+import { getLucideIcon } from '@utils/iconUtils';
+const CherryIcon = getLucideIcon('cherry');
+<CherryIcon size={14} color="#e15f41" />
+
+// ✅ Prefer
+import { Cherry } from 'lucide-react-native';
+<Cherry size={14} color="#e15f41" />
+```

@@ -59,8 +59,9 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   const appliedRulesKey = JSON.stringify(
     appliedRules.map((r) => ({
       message: r.message,
-      startNumber: r.startNumber,
+      startNumber: r.startNumber ?? 'none',
       endNumber: r.endNumber,
+      repeatCount: r.repeatCount ?? 0,
       ruleNumber: r.ruleNumber,
     }))
   );
@@ -142,6 +143,9 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
       <Pressable
         onPress={wayIsChange ? onToggleWay : undefined}
         style={{ transform: [{ translateY: imageHeight * DIRECTION_VERTICAL_OFFSET_RATIO }] }}
+        focusable={false}
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
       >
         <View className="relative" style={{ width: imageWidth, height: imageHeight }}>
           {/* 규칙이 적용되는 경우: bubble 이미지 (way 이미지 아래, y축으로 위에 위치) */}

@@ -1,9 +1,9 @@
 import React from 'react';
-import { ChevronLeft, Settings, Trash2, Info, ArrowDownUp, Timer } from 'lucide-react-native';
+import { ChevronLeft, Settings, SquarePen, Info, ArrowDownUp, Timer, Mic } from 'lucide-react-native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from './AppNavigator';
 
-import { View, TouchableOpacity } from 'react-native';
+import { View, TouchableOpacity, Text } from 'react-native';
 import ActivateToggle from '@components/common/ActivateToggle';
 
 export const getDefaultHeaderLeft = (
@@ -41,7 +41,7 @@ export const getHeaderRightWithEditAndSettings = (
         <ArrowDownUp size={24} color="black" />
       </TouchableOpacity>
       <TouchableOpacity onPress={onEditPress} style={{ marginRight: 12 }}>
-        <Trash2 size={24} color="black" />
+        <SquarePen size={24} color="black" />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Setting')}>
         <Settings size={24} color="black" />
@@ -66,7 +66,7 @@ export const getHeaderRightWithInfoEditAndSettings = (
         <ArrowDownUp size={24} color="black" />
       </TouchableOpacity>
       <TouchableOpacity onPress={onEditPress} style={{ marginRight: 12 }}>
-        <Trash2 size={24} color="black" />
+        <SquarePen size={24} color="black" />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Setting')}>
         <Settings size={24} color="black" />
@@ -75,20 +75,66 @@ export const getHeaderRightWithInfoEditAndSettings = (
   );
 };
 
-//활성이, 인포, 세팅 (CounterDetail전용)
+//타이머, 음성, 활성, 인포, 세팅 (CounterDetail전용)
 export const getHeaderRightWithActivateInfoSettings = (
   navigation: NativeStackNavigationProp<RootStackParamList>,
   mascotIsActive: boolean,
   onActivatePress: () => void,
   timerIsActive: boolean,
   onTimerPress: () => void,
+  voiceCommandsEnabled: boolean,
+  onVoicePress: () => void,
+  subSlideModalsEnabled: boolean,
+  onSubSlideModalsPress: () => void,
   counterId: string,
-  onInfoPress?: () => void
+  onInfoPress: () => void
 ): React.JSX.Element => {
   return (
     <View className="flex-row items-center">
+      {/* 음성 인식 아이콘 */}
+      <TouchableOpacity
+        onPress={onVoicePress}
+        className="mr-2"
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="음성 인식 단수 증감"
+        accessibilityHint="탭하여 음성 인식 단수 증감 기능을 켜거나 끕니다"
+      >
+        <Mic size={24} color={voiceCommandsEnabled ? 'black' : '#B8B8B8'} />
+      </TouchableOpacity>
+      <TouchableOpacity
+        onPress={onSubSlideModalsPress}
+        className="mr-2"
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="서브 슬라이드 모달"
+        accessibilityHint="탭하여 활동기록 및 보조 카운터 슬라이드 모달 표시를 켜거나 끕니다"
+        accessibilityState={{ selected: subSlideModalsEnabled }}
+      >
+        <Text
+          allowFontScaling={false}
+          className="text-base font-bold"
+          style={{ color: subSlideModalsEnabled ? 'black' : '#B8B8B8' }}
+        >
+          sub
+        </Text>
+      </TouchableOpacity>
+      <View
+        pointerEvents="none"
+        className="mr-2 h-5 w-px bg-lightgray"
+        accessible={false}
+        importantForAccessibility="no-hide-descendants"
+      />
       {/* Timer 아이콘 */}
-      <TouchableOpacity onPress={onTimerPress} style={{ marginRight: 13 }}>
+      <TouchableOpacity
+        onPress={onTimerPress}
+        style={{ marginRight: 13 }}
+        accessible={true}
+        accessibilityRole="button"
+        accessibilityLabel="타이머"
+        accessibilityHint="탭하여 타이머 기능을 켜거나 끕니다"
+        accessibilityState={{ selected: timerIsActive }}
+      >
         <Timer size={24} color={timerIsActive ? 'black' : '#B8B8B8'} />
       </TouchableOpacity>
 
@@ -101,12 +147,10 @@ export const getHeaderRightWithActivateInfoSettings = (
         />
       </View>
 
-      {/* Info 버튼 (선택적) */}
-      {onInfoPress && (
-        <TouchableOpacity onPress={onInfoPress} style={{ marginRight: 12 }}>
-          <Info size={26} color="black" />
-        </TouchableOpacity>
-      )}
+      {/* Info 버튼 */}
+      <TouchableOpacity onPress={onInfoPress} style={{ marginRight: 12 }}>
+        <Info size={26} color="black" />
+      </TouchableOpacity>
 
       {/* 설정 */}
       <TouchableOpacity onPress={() => navigation.navigate('Setting')} style={{ marginRight: 4 }}>

@@ -4,3 +4,4 @@ export { ConfirmModal } from './ConfirmModal';
 export { ProjectCreateModal } from './ProjectCreateModal';
 export { CounterCreateModal } from './CounterCreateModal';
 export { CounterEditModal } from './CounterEditModal';
+export { ScrollModal } from './ScrollModal';

@@ -15,6 +15,8 @@ interface SlideModalProps {
   padding?: number; // 모달 내부 패딩 (기본값: 20)
   centerY?: DimensionValue; // 모달 세로 중앙 위치 (기본값: '50%'). SlideModal이 translateY: -height/2 로 보정함.
   onClose?: () => void; // 닫기 콜백 (선택사항)
+  /** 닫힌 상태(핸들만 노출)일 때 패널 오른쪽 기준 위치에 고정. 드래그/열림 translateX에는 따르지 않음 */
+  sideTooltip?: React.ReactNode;
 }
 
 
@@ -33,6 +35,7 @@ export const SlideModal: React.FC<SlideModalProps> = ({
   padding = 20,
   centerY = '50%',
   onClose,
+  sideTooltip,
 }) => {
   // ===== 상태 관리 =====
   // 왼쪽 모달 기준:
@@ -66,7 +69,6 @@ export const SlideModal: React.FC<SlideModalProps> = ({
   const handleDragUpdate = (newTranslateX: number) => {
     setTranslateX(newTranslateX);
   };
-
 
   // ===== 렌더링 =====
   return (
@@ -134,6 +136,27 @@ export const SlideModal: React.FC<SlideModalProps> = ({
         onToggle={onToggle}
         onDragUpdate={handleDragUpdate}
       />
+
+      {sideTooltip != null ? (
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: centerY,
+            left: 0,
+            zIndex: 51,
+            height,
+            justifyContent: 'center',
+            paddingLeft: 8,
+            transform: [
+              { translateX: handleWidth },
+              { translateY: -height / 2 },
+            ],
+          }}
+        >
+          {sideTooltip}
+        </View>
+      ) : null}
     </View>
   );
 };

@@ -1,12 +1,17 @@
 // src/components/counter/CounterModals.tsx
 import React from 'react';
 import { ConfirmModal, CounterEditModal } from '@components/common/modals';
-import { SubCounterRuleModal } from '@components/counter';
+import SubCounterRuleModal from './SubCounterRuleModal';
 
 interface CounterModalsProps {
   activeModal: 'reset' | 'edit' | 'limit' | 'rule' | 'subReset' | 'subEdit' | 'subLimit' | 'targetCount' | 'timerReset' | null;
   errorModalVisible: boolean;
   errorMessage: string;
+  voicePermissionModalVisible: boolean;
+  voicePermissionModalTitle: string;
+  voicePermissionModalDescription: string;
+  voicePermissionModalConfirmText: string;
+  voicePermissionModalCancelText: string;
   currentCount: string;
   currentTargetCount: string;
   subCount: number;
@@ -17,6 +22,8 @@ interface CounterModalsProps {
   onResetConfirm: () => void;
   onTimerResetConfirm: () => void;
   onErrorModalClose: () => void;
+  onVoicePermissionModalClose: () => void;
+  onVoicePermissionModalConfirm: () => void;
   onTargetCountConfirm: (value: string) => void;
   onSubEditConfirm: (value: string) => void;
   onSubResetConfirm: () => void;
@@ -31,6 +38,11 @@ const CounterModals: React.FC<CounterModalsProps> = ({
   activeModal,
   errorModalVisible,
   errorMessage,
+  voicePermissionModalVisible,
+  voicePermissionModalTitle,
+  voicePermissionModalDescription,
+  voicePermissionModalConfirmText,
+  voicePermissionModalCancelText,
   currentCount,
   currentTargetCount,
   subCount,
@@ -41,6 +53,8 @@ const CounterModals: React.FC<CounterModalsProps> = ({
   onResetConfirm,
   onTimerResetConfirm,
   onErrorModalClose,
+  onVoicePermissionModalClose,
+  onVoicePermissionModalConfirm,
   onTargetCountConfirm,
   onSubEditConfirm,
   onSubResetConfirm,
@@ -148,6 +162,17 @@ const CounterModals: React.FC<CounterModalsProps> = ({
         onConfirm={onErrorModalClose}
         confirmText="확인"
         cancelText=""
+      />
+
+      {/* 음성 인식 권한/사용 불가 안내 모달 */}
+      <ConfirmModal
+        visible={voicePermissionModalVisible}
+        onClose={onVoicePermissionModalClose}
+        title={voicePermissionModalTitle}
+        description={voicePermissionModalDescription}
+        onConfirm={onVoicePermissionModalConfirm}
+        confirmText={voicePermissionModalConfirmText}
+        cancelText={voicePermissionModalCancelText}
       />
     </>
   );

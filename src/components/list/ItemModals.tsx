@@ -22,6 +22,14 @@ interface ItemModalsProps {
   onDuplicateModalClose: () => void;
   onDuplicateConfirm: () => void;
   duplicateDescription: string;
+  duplicateConfirmText?: string;
+
+  replicateModalVisible?: boolean;
+  replicateModalTitle?: string;
+  replicateInitialName?: string;
+  replicatePlaceholder?: string;
+  onReplicateModalClose?: () => void;
+  onReplicateModalConfirm?: (name: string) => boolean | void;
 
   // 모달 타입 구분
   modalType: 'main' | 'project';
@@ -53,6 +61,14 @@ const ItemModals: React.FC<ItemModalsProps> = ({
   onDuplicateModalClose,
   onDuplicateConfirm,
   duplicateDescription,
+  duplicateConfirmText = '생성',
+
+  replicateModalVisible = false,
+  replicateModalTitle = '카운터 복제하기',
+  replicateInitialName = '',
+  replicatePlaceholder = '카운터 이름을 입력하세요',
+  onReplicateModalClose,
+  onReplicateModalConfirm,
 
   modalType,
 }) => {
@@ -77,6 +93,16 @@ const ItemModals: React.FC<ItemModalsProps> = ({
         />
       )}
 
+      <CounterCreateModal
+        visible={replicateModalVisible}
+        onClose={onReplicateModalClose || (() => {})}
+        title={replicateModalTitle}
+        initialName={replicateInitialName}
+        confirmButtonTitle="복제"
+        placeholder={replicatePlaceholder}
+        onConfirm={onReplicateModalConfirm || (() => {})}
+      />
+
       {/* 삭제 확인 모달 */}
       <ConfirmModal
         visible={deleteModalVisible}
@@ -95,7 +121,7 @@ const ItemModals: React.FC<ItemModalsProps> = ({
         title="중복 이름"
         description={duplicateDescription}
         onConfirm={onDuplicateConfirm}
-        confirmText="생성"
+        confirmText={duplicateConfirmText}
         cancelText="취소"
       />
     </>

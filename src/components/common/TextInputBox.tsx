@@ -55,6 +55,7 @@ interface TextInputBoxProps {
   returnKeyType?: TextInputProps['returnKeyType'];
   onSubmitEditing?: TextInputProps['onSubmitEditing'];
   blurOnSubmit?: boolean;
+  editable?: boolean;
 }
 
 /**
@@ -74,6 +75,7 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   returnKeyType = 'done',
   onSubmitEditing,
   blurOnSubmit = false,
+  editable = true,
 }, ref) => {
   // 입력 필드의 포커스 상태 관리
   const [isFocused, setIsFocused] = useState(false);
@@ -154,8 +156,9 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
 
   // 입력 필드 스타일 클래스
   const inputFieldClass = clsx(
-    'w-full px-3 border rounded-xl bg-white text-black',
+    'w-full px-3 border rounded-xl',
     type === 'longText' ? 'text-sm min-h-[54px]' : 'h-[54px]',
+    editable ? 'bg-white text-black' : 'bg-lightgray text-darkgray',
     isFocused ? 'border-red-orange-400' : 'border-lightgray'
   );
 
@@ -206,6 +209,7 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
         returnKeyType={returnKeyType}
         onSubmitEditing={onSubmitEditing}
         blurOnSubmit={blurOnSubmit}
+        editable={editable}
       />
     </View>
   );

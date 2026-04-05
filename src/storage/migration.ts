@@ -8,7 +8,7 @@ const STORAGE_KEY = 'knit_items';
 const DATA_VERSION_KEY = 'data_version';
 
 // 데이터 버전 관리
-export const CURRENT_DATA_VERSION = 4; // repeatRules 배열로 변경, way를 Counter로 이동, RepeatRule에 color 필드 추가
+export const CURRENT_DATA_VERSION = 5; // sectionRecords 보정 + repeatRules에 endMode 추가
 
 /**
  * 버전 1: 기존 'active' 상태를 'auto'로 마이그레이션
@@ -141,6 +141,50 @@ const migrateV4_RepeatRulesToArrayAndMoveWay = (items: Item[]): Item[] => {
 };
 
 /**
+ * 버전 5: sectionRecords에 date 필드 추가, 최대 30개 유지,
+ * repeatRules에 현재 사용 중인 종료 방식(endMode) 추가
+ * 기존 기록은 정확한 날짜 정보가 없으므로 0으로 채운 기본값을 사용하고,
+ * endMode는 기존 배포 버전에 반복 횟수 지정이 없었으므로 종료단이 있으면 'endNumber',
+ * 없으면 null로 채웁니다. startNumber는 기존 0을 미지정(null)으로 변환합니다.
+ * @param items 마이그레이션할 아이템 배열
+ * @returns 마이그레이션된 아이템 배열
+ */
+const MAX_SECTION_RECORDS = 30;
+const EMPTY_SECTION_RECORD_DATE = '00000000';
+
+const migrateV5_AddSectionRecordDateAndExpandLimit = (items: Item[]): Item[] => {
+  return items.map((item) => {
+    if (item.type !== 'counter') {
+      return item;
+    }
+
+    const counter = item as any;
+    const sectionRecords = Array.isArray(counter.sectionRecords) ? counter.sectionRecords : [];
+    const repeatRules = Array.isArray(counter.repeatRules) ? counter.repeatRules : [];
+
+    return {
+      ...counter,
+      sectionRecords: sectionRecords
+        .map((record: any) => ({
+          ...record,
+          date: typeof record?.date === 'string' && /^\d{8}$/.test(record.date) ? record.date : EMPTY_SECTION_RECORD_DATE,
+        }))
+        .slice(0, MAX_SECTION_RECORDS),
+      repeatRules: repeatRules.map((rule: any) => ({
+        ...rule,
+        startNumber: typeof rule?.startNumber === 'number' && rule.startNumber > 0 ? rule.startNumber : null,
+        endMode:
+          rule?.endMode === 'endNumber' || rule?.endMode === 'repeatCount'
+            ? rule.endMode
+            : (rule?.endNumber ?? 0) > 0
+              ? 'endNumber'
+              : null,
+      })),
+    };
+  });
+};
+
+/**
  * 마이그레이션 실행
  * @param items 마이그레이션할 아이템 배열
  * @param fromVersion 시작 버전
@@ -166,6 +210,10 @@ const runMigrations = (items: Item[], fromVersion: number, toVersion: number): I
   if (fromVersion < 4 && toVersion >= 4) {
     migratedItems = migrateV3_AddNewProperties(migratedItems); // 기본값 설정
     migratedItems = migrateV4_RepeatRulesToArrayAndMoveWay(migratedItems); // repeatRules 배열, way 이동, color 필드 추가
+  }
+
+  if (fromVersion < 5 && toVersion >= 5) {
+    migratedItems = migrateV5_AddSectionRecordDateAndExpandLimit(migratedItems);
   }
 
   return migratedItems;

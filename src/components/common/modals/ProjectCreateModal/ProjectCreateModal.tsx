@@ -1,21 +1,21 @@
 // src/components/common/modals/ProjectCreateModal/ProjectCreateModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View } from 'react-native';
 import { BaseModal } from '../BaseModal';
 import TextInputBox from '@components/common/TextInputBox';
-import RadioButtonGroup from '@components/common/RadioButtonGroup';
 import RoundedButton from '@components/common/RoundedButton';
+import ProjectTypeSelector from './ProjectTypeSelector';
 
 /**
  * ProjectCreateModal 컴포넌트의 Props 인터페이스
  * @param visible - 모달 표시 여부
  * @param onClose - 모달 닫기 콜백 함수
- * @param onConfirm - 생성 확인 시 콜백 함수
+ * @param onConfirm - 생성 확인 시 콜백. `false`를 반환하면 모달을 닫지 않음(예: 중복 확인 모달 위에 유지)
  */
 interface ProjectCreateModalProps {
   visible: boolean;
   onClose: () => void;
-  onConfirm: (name: string, type: 'project' | 'counter') => void;
+  onConfirm: (name: string, type: 'project' | 'counter') => boolean | void;
   title?: string;
 }
 
@@ -32,12 +32,21 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
   const [textValue, setTextValue] = useState('');
   const [selectedType, setSelectedType] = useState<'project' | 'counter'>('counter');
 
-  const handleConfirm = () => {
-    if (textValue.trim()) {
-      onConfirm(textValue.trim(), selectedType);
+  useEffect(() => {
+    if (!visible) {
       setTextValue('');
       setSelectedType('counter');
-      onClose();
+    }
+  }, [visible]);
+
+  const handleConfirm = () => {
+    if (textValue.trim()) {
+      const keepOpen = onConfirm(textValue.trim(), selectedType) === false;
+      if (!keepOpen) {
+        setTextValue('');
+        setSelectedType('counter');
+        onClose();
+      }
     }
   };
 
@@ -47,31 +56,17 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
     onClose();
   };
 
-  const radioOptions = [
-    {
-      label: '프로젝트',
-      value: 'project',
-      tooltip: '프로젝트는 하위에 여러 카운터를 생성할 수 있습니다.',
-    },
-    {
-      label: '카운터',
-      value: 'counter',
-      tooltip: '단일 카운터를 생성합니다.',
-    },
-  ];
-
   return (
     <BaseModal
       visible={visible}
       onClose={handleClose}
       title={title}
     >
-      {/* 라디오 버튼 그룹 */}
+      {/* 체크형 라디오 버튼 목록 */}
       <View className="mt-4 mb-0">
-        <RadioButtonGroup
+        <ProjectTypeSelector
           selected={selectedType}
-          onSelect={(value) => setSelectedType(value as 'project' | 'counter')}
-          options={radioOptions}
+          onSelect={setSelectedType}
         />
       </View>
 

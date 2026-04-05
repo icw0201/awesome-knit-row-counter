@@ -5,9 +5,13 @@ import { StyleSheet } from 'react-native';
 export const modalStyles = StyleSheet.create({
   overlay: {
     flex: 1,
+    position: 'relative',
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'rgba(0,0,0,0.3)',
+  },
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
   },
   container: {
     width: 320, // Tailwind 기준 w-80

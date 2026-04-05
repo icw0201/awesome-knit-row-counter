@@ -1,5 +1,43 @@
-import { RepeatRule } from '@storage/types';
-import { RED_ORANGE_SWATCHES } from '@constants/colors';
+import { RepeatRule, RuleEndMode } from '@storage/types';
+import { RULE_SWATCH_COLORS } from '@constants/colors';
+
+const resolveRuleEndMode = (
+  endNumber: number,
+  repeatCount: number = 0,
+  endMode?: RuleEndMode | null
+): RuleEndMode | null => {
+  if (endMode === 'endNumber' || endMode === 'repeatCount') {
+    return endMode;
+  }
+
+  if (endMode === null) {
+    return null;
+  }
+
+  if (endNumber > 0) {
+    return 'endNumber';
+  }
+
+  if (repeatCount > 0) {
+    return 'repeatCount';
+  }
+
+  return null;
+};
+
+export const getActiveRuleValues = (
+  endNumber: number,
+  repeatCount: number = 0,
+  endMode?: RuleEndMode | null
+): { endNumber: number; repeatCount: number; endMode: RuleEndMode | null } => {
+  const resolvedEndMode = resolveRuleEndMode(endNumber, repeatCount, endMode);
+
+  return {
+    endMode: resolvedEndMode,
+    endNumber: resolvedEndMode === 'endNumber' ? endNumber : 0,
+    repeatCount: resolvedEndMode === 'repeatCount' ? repeatCount : 0,
+  };
+};
 
 /**
  * 규칙이 적용되는 단인지 확인하는 함수
@@ -8,31 +46,53 @@ import { RED_ORANGE_SWATCHES } from '@constants/colors';
  * @returns 규칙이 적용되는 단이면 true, 아니면 false
  */
 export const isRuleApplied = (count: number, rule: RepeatRule): boolean => {
-  const { startNumber, endNumber, ruleNumber } = rule;
+  const { startNumber, ruleNumber } = rule;
+  const activeRuleValues = getActiveRuleValues(rule.endNumber, rule.repeatCount ?? 0, rule.endMode);
+  const hasStartNumber = startNumber !== null;
+  const hasEndNumber = activeRuleValues.endMode === 'endNumber';
+  const hasRepeatCount = activeRuleValues.endMode === 'repeatCount';
 
   // 규칙이 입력되지 않았으면 false
   if (ruleNumber === 0) {
     return false;
   }
 
-  if (startNumber > 0 && endNumber > 0) {
+  if (hasStartNumber && hasEndNumber) {
     // 시작단과 종료단 둘 다 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     let current = startNumber;
-    while (current <= endNumber) {
+    while (current <= activeRuleValues.endNumber) {
       if (current === count) {
         return true;
       }
       current += ruleNumber;
     }
-  } else if (startNumber > 0) {
+  } else if (hasStartNumber && hasRepeatCount) {
+    // 시작단과 반복 횟수가 있는 경우: 시작단 포함, repeatCount 횟수만큼 적용
+    let current = startNumber;
+    for (let i = 0; i < activeRuleValues.repeatCount; i++) {
+      if (current === count) {
+        return true;
+      }
+      current += ruleNumber;
+    }
+  } else if (hasStartNumber) {
     // 시작단만 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     if (count >= startNumber) {
       return (count - startNumber) % ruleNumber === 0;
     }
-  } else if (endNumber > 0) {
+  } else if (hasEndNumber) {
     // 종료단만 있는 경우: ruleNumber부터 종료단까지
     let current = ruleNumber;
-    while (current <= endNumber) {
+    while (current <= activeRuleValues.endNumber) {
+      if (current === count) {
+        return true;
+      }
+      current += ruleNumber;
+    }
+  } else if (hasRepeatCount) {
+    // 반복 횟수만 있는 경우: ruleNumber부터 repeatCount 횟수만큼 적용
+    let current = ruleNumber;
+    for (let i = 0; i < activeRuleValues.repeatCount; i++) {
       if (current === count) {
         return true;
       }
@@ -50,39 +110,60 @@ export const isRuleApplied = (count: number, rule: RepeatRule): boolean => {
  * @param endNumber 종료단
  * @param ruleNumber 룰넘버 (몇 단마다)
  * @param maxCount 최대 반환 개수 (기본값: 5)
+ * @param repeatCount 반복 횟수
  * @returns 규칙이 적용되는 단들의 배열
  */
 export const calculateRulePreview = (
-  startNumber: number,
+  startNumber: number | null,
   endNumber: number,
   ruleNumber: number,
-  maxCount: number = 5
+  maxCount: number = 5,
+  repeatCount: number = 0,
+  endMode?: RuleEndMode | null
 ): number[] => {
   // 규칙이 입력되지 않았으면 빈 배열 반환
   if (ruleNumber === 0) {
     return [];
   }
 
+  const activeRuleValues = getActiveRuleValues(endNumber, repeatCount, endMode);
   const results: number[] = [];
+  const hasStartNumber = startNumber !== null;
+  const hasEndNumber = activeRuleValues.endMode === 'endNumber';
+  const hasRepeatCount = activeRuleValues.endMode === 'repeatCount';
 
-  if (startNumber > 0 && endNumber > 0) {
+  if (hasStartNumber && hasEndNumber) {
     // 시작단과 종료단 둘 다 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     let current = startNumber;
-    while (current <= endNumber && results.length < maxCount) {
+    while (current <= activeRuleValues.endNumber && results.length < maxCount) {
       results.push(current);
       current += ruleNumber;
     }
-  } else if (startNumber > 0) {
+  } else if (hasStartNumber && hasRepeatCount) {
+    // 시작단과 반복 횟수가 있는 경우: 시작단 포함, repeatCount 횟수만큼 적용
+    let current = startNumber;
+    for (let i = 0; i < activeRuleValues.repeatCount && results.length < maxCount; i++) {
+      results.push(current);
+      current += ruleNumber;
+    }
+  } else if (hasStartNumber) {
     // 시작단만 있는 경우: 시작단 포함, ruleNumber 간격으로 적용
     let current = startNumber;
     for (let i = 0; i < maxCount; i++) {
       results.push(current);
       current += ruleNumber;
     }
-  } else if (endNumber > 0) {
+  } else if (hasEndNumber) {
     // 종료단만 있는 경우: ruleNumber부터 종료단까지
     let current = ruleNumber;
-    while (current <= endNumber && results.length < maxCount) {
+    while (current <= activeRuleValues.endNumber && results.length < maxCount) {
+      results.push(current);
+      current += ruleNumber;
+    }
+  } else if (hasRepeatCount) {
+    // 반복 횟수만 있는 경우: ruleNumber부터 repeatCount 횟수만큼 적용
+    let current = ruleNumber;
+    for (let i = 0; i < activeRuleValues.repeatCount && results.length < maxCount; i++) {
       results.push(current);
       current += ruleNumber;
     }
@@ -91,25 +172,111 @@ export const calculateRulePreview = (
   return results;
 };
 
-/** 색상 우선순위: 2단계씩 건너뛰며 (1,3,5,7,9,11 → 2, 4,6,8,10) */
-// 100번 컬러(index 1)는 배경색과 동일하여 제거
-const COLOR_PRIORITY_INDICES = [0, 2, 4, 6, 8, 10, 3, 5, 7, 9];
+/**
+ * 규칙 반복 횟수 계산
+ * 종료단이 있는 경우 전체 몇 회 반복되는지 반환합니다.
+ * @param startNumber 시작단
+ * @param endNumber 종료단
+ * @param ruleNumber 룰넘버 (몇 단마다)
+ * @param repeatCount 반복 횟수
+ * @returns 반복 횟수, 종료단과 반복 횟수가 모두 없으면 null
+ */
+export const calculateRuleRepeatCount = (
+  startNumber: number | null,
+  endNumber: number,
+  ruleNumber: number,
+  repeatCount: number = 0,
+  endMode?: RuleEndMode | null
+): number | null => {
+  if (ruleNumber === 0) {
+    return null;
+  }
+
+  const activeRuleValues = getActiveRuleValues(endNumber, repeatCount, endMode);
+
+  if (activeRuleValues.repeatCount > 0) {
+    return activeRuleValues.repeatCount;
+  }
+
+  if (activeRuleValues.endNumber <= 0) {
+    if (activeRuleValues.endMode === 'endNumber' && activeRuleValues.endNumber === 0) {
+      return 1;
+    }
+    return null;
+  }
+
+  if (startNumber !== null) {
+    return Math.floor((activeRuleValues.endNumber - startNumber) / ruleNumber) + 1;
+  }
+
+  return Math.floor(activeRuleValues.endNumber / ruleNumber);
+};
+
+/**
+ * 규칙 미리보기에 필요한 요약 정보 계산
+ * 앞에서 보여줄 단 목록, 전체 반복 횟수, 마지막 적용 단, 추가 항목 존재 여부를 함께 반환합니다.
+ */
+export const calculateRulePreviewSummary = (
+  startNumber: number | null,
+  endNumber: number,
+  ruleNumber: number,
+  maxCount: number = 5,
+  repeatCount: number = 0,
+  endMode?: RuleEndMode | null
+): {
+  previewRows: number[];
+  totalRepeatCount: number | null;
+  lastRow: number | null;
+  hasMoreRows: boolean;
+} => {
+  const activeRuleValues = getActiveRuleValues(endNumber, repeatCount, endMode);
+  const previewRows = calculateRulePreview(
+    startNumber,
+    activeRuleValues.endNumber,
+    ruleNumber,
+    maxCount,
+    activeRuleValues.repeatCount,
+    activeRuleValues.endMode
+  );
+  const totalRepeatCount = calculateRuleRepeatCount(
+    startNumber,
+    activeRuleValues.endNumber,
+    ruleNumber,
+    activeRuleValues.repeatCount,
+    activeRuleValues.endMode
+  );
+  const previewStartNumber = startNumber !== null ? startNumber : ruleNumber;
+  const lastRow =
+    totalRepeatCount !== null
+      ? previewStartNumber + ruleNumber * (totalRepeatCount - 1)
+      : null;
+  const hasMoreRows =
+    totalRepeatCount !== null
+      ? totalRepeatCount > previewRows.length
+      : previewRows.length === maxCount;
+
+  return {
+    previewRows,
+    totalRepeatCount,
+    lastRow,
+    hasMoreRows,
+  };
+};
 
 /**
  * 신규 규칙 카드의 기본 색상 반환
- * 기존 규칙과 겹치지 않는 red-orange 색상을 우선순위에 따라 선택, 모두 사용 중이면 첫 번째 색상 반환
+ * 기존 규칙과 겹치지 않는 스와치 색상을 순서대로 선택하고, 모두 사용 중이면 첫 번째 색상부터 순환
  */
 export const getDefaultColorForNewRule = (existingRules: RepeatRule[]): string => {
   const usedColors = new Set(existingRules.map((r) => r.color));
-  const available = COLOR_PRIORITY_INDICES.find(
-    (i) => RED_ORANGE_SWATCHES[i] && !usedColors.has(RED_ORANGE_SWATCHES[i])
-  );
-  if (available !== undefined) {
-    return RED_ORANGE_SWATCHES[available];
+  const available = RULE_SWATCH_COLORS.find((color) => !usedColors.has(color));
+
+  if (available) {
+    return available;
   }
-  // 모두 사용 중이면 우선순위 순서대로 순환
-  const cycleIndex = existingRules.length % COLOR_PRIORITY_INDICES.length;
-  return RED_ORANGE_SWATCHES[COLOR_PRIORITY_INDICES[cycleIndex]];
+
+  const cycleIndex = existingRules.length % RULE_SWATCH_COLORS.length;
+  return RULE_SWATCH_COLORS[cycleIndex];
 };
 
 /** hex 색상이 진하면 true (텍스트 흰색 권장) */

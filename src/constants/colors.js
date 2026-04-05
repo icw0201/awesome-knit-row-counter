@@ -1,6 +1,6 @@
 /**
  * red-orange 팔레트
- * tailwind.config.js와 ColorPicker Swatches에서 공유
+ * tailwind.config.js에서 사용하는 테마 색상
  */
 
 const RED_ORANGE_PALETTE = {
@@ -17,10 +17,25 @@ const RED_ORANGE_PALETTE = {
   '950': '#490806',
 };
 
-/** ColorPicker Swatches용 배열 (50 ~ 950 순서) */
+/** red-orange 팔레트 기반 배열 (50 ~ 950 순서) */
 const RED_ORANGE_SWATCHES = Object.values(RED_ORANGE_PALETTE);
+
+/** 규칙 카드와 ColorPicker 스와치 전용 색상 */
+const RULE_SWATCH_COLORS = [
+  '#EF5777',
+  '#574559',
+  '#04BFAD',
+  '#F2A922',
+  '#D9B391',
+  '#A9CBD9',
+  '#D4E157',
+  '#DAC6E8',
+  '#FFA685',
+  '#BF2424',
+];
 
 module.exports = {
   RED_ORANGE_PALETTE,
   RED_ORANGE_SWATCHES,
+  RULE_SWATCH_COLORS,
 };

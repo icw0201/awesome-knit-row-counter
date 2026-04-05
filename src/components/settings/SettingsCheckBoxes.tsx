@@ -1,6 +1,6 @@
 // src/components/settings/SettingsCheckBoxes.tsx
-import React, { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 
 import CheckBox from '@components/common/CheckBox';
@@ -21,6 +21,46 @@ import {
 
 interface SettingsCheckBoxesProps {}
 
+interface SettingsItem {
+  label: string;
+  checked: boolean;
+  onToggle: () => void;
+}
+
+interface SettingsSectionProps {
+  title: string;
+  items: SettingsItem[];
+  titleClassName?: string;
+}
+
+const SettingsSection: React.FC<SettingsSectionProps> = ({
+  title,
+  items,
+  titleClassName = 'text-darkgray',
+}) => {
+  return (
+    <View className="mb-6">
+      <View className="mb-2 flex-row items-center px-4">
+        <Text className={`mr-3 text-sm font-semibold ${titleClassName}`}>
+          {title}
+        </Text>
+        <View className="flex-1 border-b border-lightgray" />
+      </View>
+      <View>
+        {items.map((item) => (
+          <View key={item.label}>
+            <CheckBox
+              label={item.label}
+              checked={item.checked}
+              onToggle={item.onToggle}
+            />
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+};
+
 /**
  * 설정 화면의 체크박스들을 묶은 컴포넌트
  */
@@ -34,19 +74,24 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
   const [screenAwake, setScreenAwake] = useState(true);
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
   const [autoPlayElapsedTime, setAutoPlayElapsedTime] = useState(true);
-  const [resetConfirm, setResetConfirm] = useState(false);
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // 앱 시작 시 저장된 설정값 불러오기
   useEffect(() => {
     setSound(getSoundSetting());
     setVibration(getVibrationSetting());
-    const currentSetting = getScreenAwakeSetting();
-    setScreenAwake(currentSetting);
+    setScreenAwake(getScreenAwakeSetting());
     setTooltipEnabled(getTooltipEnabledSetting());
     setAutoPlayElapsedTime(getAutoPlayElapsedTimeSetting());
+  }, []);
+
+  /**
+   * 에러 모달 표시
+   */
+  const showErrorModal = useCallback((message: string) => {
+    setErrorMessage(message);
+    setErrorModalVisible(true);
   }, []);
 
   /**
@@ -110,7 +155,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
       clearAllProjectData();
 
       // 상태 초기화
-      setResetConfirm(false);
       setResetModalVisible(false);
 
       // 앱을 Main 화면으로 재시작
@@ -130,48 +174,56 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
    */
   const handleResetModalClose = () => {
     setResetModalVisible(false);
-    setResetConfirm(false);
   };
 
-  /**
-   * 에러 모달 표시
-   */
-  const showErrorModal = (message: string) => {
-    setErrorMessage(message);
-    setErrorModalVisible(true);
-  };
+  const deviceSettings: SettingsItem[] = [
+    {
+      label: '스크린 항상 켜두기',
+      checked: screenAwake,
+      onToggle: handleScreenAwakeToggle,
+    },
+    {
+      label: '소리',
+      checked: sound,
+      onToggle: handleSoundToggle,
+    },
+    {
+      label: '진동',
+      checked: vibration,
+      onToggle: handleVibrationToggle,
+    },
+  ];
+
+  const counterSettings: SettingsItem[] = [
+    {
+      label: '툴팁 표시하기',
+      checked: tooltipEnabled,
+      onToggle: handleTooltipToggle,
+    },
+    {
+      label: '타이머 자동 재생',
+      checked: autoPlayElapsedTime,
+      onToggle: handleAutoPlayElapsedTimeToggle,
+    },
+  ];
+
+  const dangerSettings: SettingsItem[] = [
+    {
+      label: '초기화하기',
+      checked: false,
+      onToggle: handleResetToggle,
+    },
+  ];
+
   return (
     <>
-      <View className="mb-6 space-y-4">
-        <CheckBox
-          label="소리"
-          checked={sound}
-          onToggle={handleSoundToggle}
-        />
-        <CheckBox
-          label="진동"
-          checked={vibration}
-          onToggle={handleVibrationToggle}
-        />
-        <CheckBox
-          label="스크린 항상 켜두기"
-          checked={screenAwake}
-          onToggle={handleScreenAwakeToggle}
-        />
-        <CheckBox
-          label="툴팁 표시하기"
-          checked={tooltipEnabled}
-          onToggle={handleTooltipToggle}
-        />
-        <CheckBox
-          label="타이머 자동 재생"
-          checked={autoPlayElapsedTime}
-          onToggle={handleAutoPlayElapsedTimeToggle}
-        />
-        <CheckBox
-          label="초기화하기"
-          checked={resetConfirm}
-          onToggle={handleResetToggle}
+      <View className="mb-6">
+        <SettingsSection title="기기 설정" items={deviceSettings} />
+        <SettingsSection title="카운터 설정" items={counterSettings} />
+        <SettingsSection
+          title="데이터 관리"
+          items={dangerSettings}
+          titleClassName="text-red-orange-500"
         />
       </View>
 

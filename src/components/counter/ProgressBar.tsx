@@ -93,7 +93,13 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ count, targetCount, screenSiz
   return isCompact ? (
     <View className={containerClassName}>{content}</View>
   ) : (
-    <Pressable className={containerClassName} onPress={onPress}>
+    <Pressable
+      className={containerClassName}
+      onPress={onPress}
+      focusable={false}
+      accessible={false}
+      importantForAccessibility="no-hide-descendants"
+    >
       {content}
     </Pressable>
   );
