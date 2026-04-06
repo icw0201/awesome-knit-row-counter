@@ -12,6 +12,9 @@ interface CounterModalsProps {
   voicePermissionModalDescription: string;
   voicePermissionModalConfirmText: string;
   voicePermissionModalCancelText: string;
+  voiceMicPrimerModalVisible: boolean;
+  onVoiceMicPrimerModalClose: () => void;
+  onVoiceMicPrimerModalConfirm: () => void;
   currentCount: string;
   currentTargetCount: string;
   subCount: number;
@@ -43,6 +46,9 @@ const CounterModals: React.FC<CounterModalsProps> = ({
   voicePermissionModalDescription,
   voicePermissionModalConfirmText,
   voicePermissionModalCancelText,
+  voiceMicPrimerModalVisible,
+  onVoiceMicPrimerModalClose,
+  onVoiceMicPrimerModalConfirm,
   currentCount,
   currentTargetCount,
   subCount,
@@ -160,6 +166,19 @@ const CounterModals: React.FC<CounterModalsProps> = ({
         title="오류"
         description={errorMessage}
         onConfirm={onErrorModalClose}
+        confirmText="확인"
+        cancelText=""
+      />
+
+      {/* OS 마이크 권한 요청 직전 선택적 접근 안내 */}
+      <ConfirmModal
+        visible={voiceMicPrimerModalVisible}
+        onClose={onVoiceMicPrimerModalClose}
+        title="선택적 접근 권한"
+        description={
+          '마이크 : 음성 인식 단수 증감 기능을 위해 접근이 필요합니다.\n\n음성 인식 단수 증감 기능을 위해 다음 권한을 허용해 주시기 바랍니다.'
+        }
+        onConfirm={onVoiceMicPrimerModalConfirm}
         confirmText="확인"
         cancelText=""
       />
