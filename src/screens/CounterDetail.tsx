@@ -155,14 +155,18 @@ const CounterDetail = () => {
     voicePermissionModalConfirmText,
     voicePermissionModalCancelText,
     voicePermissionError,
+    voiceMicPrimerModalVisible,
     closeVoicePermissionModal,
     handleVoicePermissionModalConfirm,
+    closeVoiceMicPrimerModal,
+    handleVoiceMicPrimerModalConfirm,
     toggleVoiceCommands,
   } = useVoicePermissionGate();
   const isInputBlocked =
     activeModal !== null ||
     errorModalVisible ||
-    voicePermissionModalVisible;
+    voicePermissionModalVisible ||
+    voiceMicPrimerModalVisible;
   const effectiveVoiceCommandsActive = isVoiceCommandsActive && !isInputBlocked;
   const {
     voiceRecognizedText,
@@ -615,6 +619,9 @@ const CounterDetail = () => {
         voicePermissionModalDescription={voicePermissionModalDescription}
         voicePermissionModalConfirmText={voicePermissionModalConfirmText}
         voicePermissionModalCancelText={voicePermissionModalCancelText}
+        voiceMicPrimerModalVisible={voiceMicPrimerModalVisible}
+        onVoiceMicPrimerModalClose={closeVoiceMicPrimerModal}
+        onVoiceMicPrimerModalConfirm={handleVoiceMicPrimerModalConfirm}
         currentCount={currentCount}
         currentTargetCount={currentTargetCount}
         subCount={subCount}

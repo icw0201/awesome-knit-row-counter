@@ -63,6 +63,9 @@ function shouldTrustSupportedLocalesWhenInstalledLocalesEmpty(
 export function useVoicePermissionGate() {
   // 권한 요청/동기화가 중첩 실행되면 모달과 AppState 이벤트가 꼬일 수 있어 재진입을 막는다.
   const isSyncingPermissionRef = useRef(false);
+  // 시스템 마이크 권한 팝업 직전 안내 모달이 떠 있는 동안 syncVoicePermission 재진입을 막는다.
+  const isVoiceMicPrimerOpenRef = useRef(false);
+  const micPrimerContinueRef = useRef<null | (() => Promise<void>)>(null);
   // 현재 화면이 포커스 상태일 때만 실제 음성 인식을 active로 본다.
   const [isScreenFocused, setIsScreenFocused] = useState(false);
   // 사용자가 켜 둔 기능 설정값(저장소와 동기화되는 UI state)
@@ -86,6 +89,33 @@ export function useVoicePermissionGate() {
   const [shouldOpenSettingsOnModalConfirm, setShouldOpenSettingsOnModalConfirm] = useState(true);
   // 권한 확인/설정 이동 과정에서 사용자에게 보여줄 에러 문구
   const [voicePermissionError, setVoicePermissionError] = useState('');
+  // OS 마이크 권한 요청 직전 선택적 접근 안내 모달
+  const [voiceMicPrimerModalVisible, setVoiceMicPrimerModalVisible] =
+    useState(false);
+
+  const showMicPrimerThen = useCallback((continueAsync: () => Promise<void>) => {
+    micPrimerContinueRef.current = continueAsync;
+    isVoiceMicPrimerOpenRef.current = true;
+    setVoiceMicPrimerModalVisible(true);
+  }, []);
+
+  const closeVoiceMicPrimerModal = useCallback(() => {
+    micPrimerContinueRef.current = null;
+    isVoiceMicPrimerOpenRef.current = false;
+    setVoiceMicPrimerModalVisible(false);
+  }, []);
+
+  const handleVoiceMicPrimerModalConfirm = useCallback(() => {
+    const fn = micPrimerContinueRef.current;
+    micPrimerContinueRef.current = null;
+    isVoiceMicPrimerOpenRef.current = false;
+    setVoiceMicPrimerModalVisible(false);
+    if (fn) {
+      Promise.resolve(fn()).catch(() => {
+        /* toggle/sync 연속 처리 내부에서 대부분의 오류를 처리한다 */
+      });
+    }
+  }, []);
 
   // 시스템 권한이 막혀 있을 때 보여줄 설정 이동 안내 모달 상태를 구성한다.
   const showVoicePermissionSettingsModal = useCallback(() => {
@@ -231,6 +261,9 @@ export function useVoicePermissionGate() {
     if (isSyncingPermissionRef.current) {
       return;
     }
+    if (isVoiceMicPrimerOpenRef.current) {
+      return;
+    }
 
     isSyncingPermissionRef.current = true;
     const storedStatus = getVoiceRecognitionPermissionStatusSetting();
@@ -269,22 +302,35 @@ export function useVoicePermissionGate() {
         return;
       }
 
-      const requestedPermission =
-        await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      showMicPrimerThen(async () => {
+        isSyncingPermissionRef.current = true;
+        try {
+          const requestedPermission =
+            await ExpoSpeechRecognitionModule.requestPermissionsAsync();
 
-      if (requestedPermission.granted) {
-        const isModelAvailable = await checkOnDeviceKoModelAvailability();
+          if (requestedPermission.granted) {
+            const isModelAvailable = await checkOnDeviceKoModelAvailability();
 
-        if (!isModelAvailable) {
-          applyUnavailableVoiceRecognition(true);
-          return;
+            if (!isModelAvailable) {
+              applyUnavailableVoiceRecognition(true);
+              return;
+            }
+
+            applyGrantedVoicePermission(true);
+            return;
+          }
+
+          applyDeniedVoicePermission(true);
+        } catch {
+          setVoiceCommandsEnabled(false);
+          setVoicePermissionGranted(false);
+          showVoicePermissionSettingsModal();
+          setVoicePermissionError('음성 인식 권한을 확인할 수 없습니다');
+        } finally {
+          isSyncingPermissionRef.current = false;
         }
-
-        applyGrantedVoicePermission(true);
-        return;
-      }
-
-      applyDeniedVoicePermission(true);
+      });
+      return;
     } catch {
       setVoiceCommandsEnabled(false);
       setVoicePermissionGranted(false);
@@ -298,6 +344,7 @@ export function useVoicePermissionGate() {
     applyGrantedVoicePermission,
     applyUnavailableVoiceRecognition,
     checkOnDeviceKoModelAvailability,
+    showMicPrimerThen,
     showVoicePermissionSettingsModal,
   ]);
 
@@ -367,21 +414,32 @@ export function useVoicePermissionGate() {
         return;
       }
 
-      const granted = await requestVoicePermission();
+      showMicPrimerThen(async () => {
+        try {
+          const granted = await requestVoicePermission();
 
-      if (granted) {
-        const isModelAvailable = await checkOnDeviceKoModelAvailability();
+          if (granted) {
+            const isModelAvailable = await checkOnDeviceKoModelAvailability();
 
-        if (!isModelAvailable) {
-          applyUnavailableVoiceRecognition(true);
-          return;
+            if (!isModelAvailable) {
+              applyUnavailableVoiceRecognition(true);
+              return;
+            }
+
+            applyGrantedVoicePermission(true);
+            return;
+          }
+
+          applyDeniedVoicePermission(true);
+        } catch {
+          setVoiceCommandsEnabledSetting(false);
+          setVoiceCommandsEnabled(false);
+          setVoicePermissionGranted(false);
+          showVoicePermissionSettingsModal();
+          setVoicePermissionError('음성 인식 권한을 확인할 수 없습니다');
         }
-
-        applyGrantedVoicePermission(true);
-        return;
-      }
-
-      applyDeniedVoicePermission(true);
+      });
+      return;
     } catch {
       setVoiceCommandsEnabledSetting(false);
       setVoiceCommandsEnabled(false);
@@ -395,6 +453,7 @@ export function useVoicePermissionGate() {
     applyUnavailableVoiceRecognition,
     checkOnDeviceKoModelAvailability,
     requestVoicePermission,
+    showMicPrimerThen,
     showVoicePermissionSettingsModal,
     voiceCommandsEnabled,
   ]);
@@ -411,8 +470,11 @@ export function useVoicePermissionGate() {
     voicePermissionModalConfirmText,
     voicePermissionModalCancelText,
     voicePermissionError,
+    voiceMicPrimerModalVisible,
     closeVoicePermissionModal,
     handleVoicePermissionModalConfirm,
+    closeVoiceMicPrimerModal,
+    handleVoiceMicPrimerModalConfirm,
     toggleVoiceCommands,
   };
 }
