@@ -20,7 +20,7 @@ const Settings = () => {
 
         <SettingsLinks />
 
-        <SettingsVersion version="1.4.0" />
+        <SettingsVersion version="1.4.1" />
       </ScrollView>
     </SafeAreaView>
   );
