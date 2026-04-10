@@ -153,6 +153,27 @@ function getWordAction(word: string): 'add' | 'subtract' | 'subAdd' | 'subSubtra
 }
 
 /**
+ * 같은 인덱스에서 STT가 "군지" → "건지"처럼 교정만 해도 접두어가 같다고 보기 위해,
+ * 키워드 동작별로 하나의 토큰으로 치환한다. (실제 콜백에는 원문 단어를 그대로 넘긴다.)
+ */
+function canonicalizeKeywordForTranscriptDiff(word: string): string {
+  const action = getWordAction(word);
+  if (action === 'add') {
+    return '\0__kw_add__';
+  }
+  if (action === 'subtract') {
+    return '\0__kw_subtract__';
+  }
+  if (action === 'subAdd') {
+    return '\0__kw_subadd__';
+  }
+  if (action === 'subSubtract') {
+    return '\0__kw_subsubtract__';
+  }
+  return word;
+}
+
+/**
  * 화면 포커스 중 음성으로 "증가" / "감소" 계열 명령을 인식해 콜백을 호출하는 훅.
  * 버튼 없이 계속 듣다가 키워드가 들리면 동작한다.
  */
@@ -210,9 +231,13 @@ export function useVoiceCommands(
 
     // STT 엔진은 같은 문장을 partial -> final로 반복 전달하므로,
     // 이전 transcript와 공통 prefix를 비교해 "새 단어"만 액션으로 변환한다.
+    // 같은 슬롯에서 "군지" → "건지"처럼 유사어 교정만 일어난 경우는
+    // 동작이 같은 키워드면 접두어 길이에 포함해 한 번만 실행되게 한다.
     const runActionsFromTranscript = (text: string) => {
       const nextWords = normalizeTranscriptWords(text);
-      const commonPrefixLength = getCommonPrefixLength(lastTranscriptWords, nextWords);
+      const prevCanonical = lastTranscriptWords.map(canonicalizeKeywordForTranscriptDiff);
+      const nextCanonical = nextWords.map(canonicalizeKeywordForTranscriptDiff);
+      const commonPrefixLength = getCommonPrefixLength(prevCanonical, nextCanonical);
       const newWords = nextWords.slice(commonPrefixLength);
 
       lastTranscriptWords = nextWords;
