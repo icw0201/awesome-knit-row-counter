@@ -7,7 +7,7 @@ import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 const LOCALE = 'ko-KR';
 const KEYWORDS_ADD = ['곤지', '군지', '건지', '본지'];
 const KEYWORDS_SUBTRACT = ['연지', '현지', '연기'];
-const KEYWORDS_SUB_ADD = ['홍실', '홍신', '동실', '통실', '봉실', '뽕실', '통신'];
+const KEYWORDS_SUB_ADD = ['홍실', '홍신', '동실', '통실', '봉실', '뽕실', '통신', '공실'];
 const KEYWORDS_SUB_SUBTRACT = ['청실', '청신', '창실', '정신', '정실'];
 const KEYWORD_SET_ADD = new Set(KEYWORDS_ADD);
 const KEYWORD_SET_SUBTRACT = new Set(KEYWORDS_SUBTRACT);
@@ -24,6 +24,8 @@ const IDLE_RECYCLE_MS = 30000;
 const IDLE_RESTART_DELAY_MS = 1500;
 // start() 호출 후 이 시간 안에 start 이벤트가 없으면 시작이 멈춘 것으로 보고 abort()한다.
 const START_WATCHDOG_MS = 5000;
+// 세션 경계·지연 final 등으로 같은 키워드가 짧은 간격에 두 번 오는 경우 1회만 실행한다.
+const KEYWORD_ACTION_DEDUP_MS = 400;
 export const VOICE_LISTENING_TEXT = '듣는 중...';
 const MODEL_NOT_DOWNLOADED_MESSAGE_FRAGMENT =
   'requested language is supported, but not yet downloaded';
@@ -119,6 +121,11 @@ function normalizeTranscriptWords(text: string): string[] {
     .split(/\s+/)
     .map((word) => word.trim())
     .filter(Boolean);
+}
+
+/** STT가 같은 토큰을 연속으로 넣을 때 1번만 남긴다(배너·newWords 처리용). */
+function collapseConsecutiveDuplicateWords(words: string[]): string[] {
+  return words.filter((w, i) => i === 0 || w !== words[i - 1]);
 }
 
 function getCommonPrefixLength(previousWords: string[], nextWords: string[]): number {
@@ -222,11 +229,30 @@ export function useVoiceCommands(
     let nextRestartDelayMs = DEFAULT_RESTART_DELAY_MS;
     let lastActivityAt = Date.now();
     let isWaitingForOfflineModelDownload = false;
-    // partial/final result가 같은 prefix를 반복 전달하므로, 새로 들어온 단어만 액션으로 소비한다.
+    // partial/final이 같은 접두어를 반복하면 새 단어만 액션으로 소비한다.
+    // 리셋 타이밍은 아래 'start' 리스너를 본다(end에서 비우면 지연 final이 같은 말을 두 번 실행할 수 있다).
     let lastTranscriptWords: string[] = [];
+    let lastKeywordDedupKey = '';
+    let lastKeywordDedupAt = 0;
 
     const resetTranscriptTracking = () => {
       lastTranscriptWords = [];
+    };
+
+    const resetKeywordDedup = () => {
+      lastKeywordDedupKey = '';
+      lastKeywordDedupAt = 0;
+    };
+
+    const shouldSkipDuplicateKeywordAction = (action: string, word: string): boolean => {
+      const key = `${action}:${word}`;
+      const now = Date.now();
+      if (key === lastKeywordDedupKey && now - lastKeywordDedupAt < KEYWORD_ACTION_DEDUP_MS) {
+        return true;
+      }
+      lastKeywordDedupKey = key;
+      lastKeywordDedupAt = now;
+      return false;
     };
 
     // STT 엔진은 같은 문장을 partial -> final로 반복 전달하므로,
@@ -238,28 +264,48 @@ export function useVoiceCommands(
       const prevCanonical = lastTranscriptWords.map(canonicalizeKeywordForTranscriptDiff);
       const nextCanonical = nextWords.map(canonicalizeKeywordForTranscriptDiff);
       const commonPrefixLength = getCommonPrefixLength(prevCanonical, nextCanonical);
-      const newWords = nextWords.slice(commonPrefixLength);
+      let newWords = nextWords.slice(commonPrefixLength);
+
+      const prevTail = lastTranscriptWords[lastTranscriptWords.length - 1];
+      if (
+        prevTail !== undefined &&
+        newWords.length > 0 &&
+        newWords.every((w) => w === prevTail)
+      ) {
+        lastTranscriptWords = nextWords;
+        return;
+      }
+
+      newWords = collapseConsecutiveDuplicateWords(newWords);
 
       lastTranscriptWords = nextWords;
       newWords.forEach((word) => {
         const action = getWordAction(word);
         if (action === 'add') {
-          onAddRef.current(word);
+          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+            onAddRef.current(word);
+          }
           return;
         }
 
         if (action === 'subtract') {
-          onSubtractRef.current(word);
+          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+            onSubtractRef.current(word);
+          }
           return;
         }
 
         if (action === 'subAdd') {
-          onSubAddRef.current?.(word);
+          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+            onSubAddRef.current?.(word);
+          }
           return;
         }
 
         if (action === 'subSubtract') {
-          onSubSubtractRef.current?.(word);
+          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+            onSubSubtractRef.current?.(word);
+          }
         }
       });
     };
@@ -413,7 +459,6 @@ export function useVoiceCommands(
       }
 
       isStarting = true;
-      resetTranscriptTracking();
       clearAllTimeouts();
       onErrorRef.current?.('');
       onRecognizedRef.current?.('마이크 준비 중...');
@@ -504,6 +549,8 @@ export function useVoiceCommands(
         isStarting = false;
         isRecognizing = true;
         clearStartWatchdog();
+        resetTranscriptTracking();
+        resetKeywordDedup();
         onErrorRef.current?.('');
         onRecognizedRef.current?.(VOICE_LISTENING_TEXT);
         touchActivity('start');
@@ -533,11 +580,12 @@ export function useVoiceCommands(
         clearStartWatchdog();
         const transcript = event.results[0]?.transcript ?? '';
         if (transcript) {
-          // partial/final 결과 모두 배너 표시에는 전달하되,
-          // 실제 add/subtract 액션은 runActionsFromTranscript가 중복을 걸러낸다.
           touchActivity(event.isFinal ? 'result-final' : 'result-partial');
-          onRecognizedRef.current?.(transcript);
           onErrorRef.current?.('');
+          const forDisplay = collapseConsecutiveDuplicateWords(
+            normalizeTranscriptWords(transcript)
+          ).join(' ');
+          onRecognizedRef.current?.(forDisplay);
           runActionsFromTranscript(transcript);
         }
       }
@@ -625,8 +673,7 @@ export function useVoiceCommands(
       () => {
         clearStartWatchdog();
         clearIdleRecycleTimeout();
-        // 세션 경계가 바뀌면 transcript diff 기준도 함께 리셋한다.
-        resetTranscriptTracking();
+        // transcript는 'start'에서만 리셋한다. 여기서 비우면 partial 직후 end·지연 final 조합에서 같은 말이 두 번 실행된다.
         isStarting = false;
         isRecognizing = false;
 
@@ -652,6 +699,7 @@ export function useVoiceCommands(
       cancelled = true;
       ignoreNextAbortedError = true;
       resetTranscriptTracking();
+      resetKeywordDedup();
       clearAllTimeouts();
       // unmount/disable 시에는 현재 세션을 중단시키고,
       // 뒤따라오는 aborted 에러는 ignoreNextAbortedError로 무시한다.
