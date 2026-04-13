@@ -486,6 +486,8 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                 <View
                   key={section.title}
                   className={`pl-4 ${
+                    index === DEFAULT_VOICE_COMMAND_SECTIONS.length - 1 ? 'pb-2' : ''
+                  } ${
                     index === 0 ? 'mb-3' : ''
                   }`}
                 >
