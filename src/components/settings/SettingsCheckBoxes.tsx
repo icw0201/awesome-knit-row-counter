@@ -62,7 +62,7 @@ interface SectionHeaderProps {
 const DEFAULT_VOICE_COMMAND_SECTIONS = [
   {
     title: '메인 카운터',
-    description: '연지(현지, 연기) / 곤지(군지, 건기)',
+    description: '연지(현지, 연기) / 곤지(군지, 건지)',
   },
   {
     title: '보조 카운터',
