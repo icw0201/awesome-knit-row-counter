@@ -1,27 +1,46 @@
 // src/components/settings/SettingsLinks.tsx
 import React from 'react';
 import { View, Linking } from 'react-native';
-import { ONE_STORE_URL, RELEASE_NOTES_URL } from '@constants/storeUrls';
+import InAppReview from 'react-native-in-app-review';
+import { PLAY_STORE_URL, RELEASE_NOTES_URL } from '@constants/storeUrls';
 import IconBox from './IconBox';
 
 interface SettingsLinksProps {}
 
 /**
  * 설정 화면의 외부 링크 버튼들을 묶은 컴포넌트
- * - 원스토어 배포 기준: 별점/스토어 링크는 ONE_STORE_URL로 연결
- *   (Google Play 인앱 리뷰 API는 원스토어와 연동되지 않음)
+ * - 기본: 플레이스토어 기준 (인앱 리뷰 시도 → 실패 시 스토어 링크)
+ * - 원스토어 AAB 빌드 시: handleReviewPress를 아래 주석 블록 코드로 교체 후 빌드
  */
 const SettingsLinks: React.FC<SettingsLinksProps> = () => {
   const openExternalLink = (url: string) => {
     Linking.openURL(url).catch(() => {});
   };
 
-  const handleReviewPress = () => {
-    openExternalLink(ONE_STORE_URL);
+  // 플레이스토어용: 인앱 리뷰 시도 후, 안 되면 스토어 링크로 폴백
+  const handleReviewPress = async () => {
+    try {
+      if (InAppReview.isAvailable()) {
+        await InAppReview.RequestInAppReview();
+        return; // 인앱 리뷰 성공 시 링크는 열지 않음
+      }
+    } catch {
+      // In-App Review 실패 시 아래 폴백으로 진행
+    }
+    openExternalLink(PLAY_STORE_URL);
   };
 
+  /*
+   * [원스토어 AAB 빌드 시] 위 handleReviewPress 대신 아래를 사용 (링크로만 이동)
+   * storeUrls에서 ONE_STORE_URL import 추가 후:
+   *
+   * const handleReviewPress = () => {
+   *   Linking.openURL(ONE_STORE_URL).catch(() => {});
+   * };
+   */
+
   const handleStoreLinkPress = () => {
-    openExternalLink(ONE_STORE_URL);
+    openExternalLink(PLAY_STORE_URL);
   };
 
   const handleReleaseNotesPress = () => {
