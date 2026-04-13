@@ -63,7 +63,6 @@ interface TextInputBoxProps {
   autoCorrect?: boolean;
   textAlign?: TextInputProps['textAlign'];
   fillWidth?: boolean;
-  allowComposingOverflow?: boolean;
 }
 
 /**
@@ -91,11 +90,11 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   autoCorrect = true,
   textAlign,
   fillWidth = true,
-  allowComposingOverflow = false,
 }, ref) => {
   // 입력 필드의 포커스 상태 관리
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = React.useRef<RNTextInput>(null);
+  const shouldAllowComposingOverflow = type === 'text' || type === 'longText';
 
   // ref를 통해 focus, blur 메서드 노출
   useImperativeHandle(ref, () => ({
@@ -109,16 +108,15 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
 
   const trimTextToMaxLength = React.useCallback(() => {
     if (
-      type !== 'text'
-      || !allowComposingOverflow
+      !shouldAllowComposingOverflow
       || typeof maxLength !== 'number'
-      || value.length <= maxLength
+      || Array.from(value).length <= maxLength
     ) {
       return;
     }
 
-    onChangeText?.(value.slice(0, maxLength));
-  }, [allowComposingOverflow, maxLength, onChangeText, type, value]);
+    onChangeText?.(Array.from(value).slice(0, maxLength).join(''));
+  }, [maxLength, onChangeText, shouldAllowComposingOverflow, value]);
 
   /**
    * 숫자 입력 처리 함수
@@ -158,11 +156,11 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
    */
   const handleTextInput = (text: string) => {
     const limit = maxLength ?? (type === 'longText' ? INPUT_LIMITS.longText : INPUT_LIMITS.text);
-    const allowedLimit = allowComposingOverflow && type === 'text'
+    const allowedLimit = shouldAllowComposingOverflow
       ? limit + 1
       : limit;
 
-    if (text.length > allowedLimit) {
+    if (Array.from(text).length > allowedLimit) {
       return;
     }
     onChangeText?.(text);
@@ -246,7 +244,7 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
           setIsFocused(false);
           trimTextToMaxLength();
         }}
-        maxLength={allowComposingOverflow && type === 'text' ? undefined : maxLength}
+        maxLength={shouldAllowComposingOverflow ? undefined : maxLength}
         returnKeyType={returnKeyType}
         onSubmitEditing={(event) => {
           trimTextToMaxLength();

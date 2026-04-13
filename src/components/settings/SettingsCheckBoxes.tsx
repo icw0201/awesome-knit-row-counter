@@ -422,7 +422,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                 autoCorrect={false}
                 textAlign="center"
                 fillWidth={false}
-                allowComposingOverflow
                 returnKeyType="next"
                 onSubmitEditing={() =>
                   handleVoiceCommandSubmitEditing(config.key, 0)
@@ -460,7 +459,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                     autoCorrect={false}
                     textAlign="center"
                     fillWidth={false}
-                    allowComposingOverflow
                     returnKeyType={
                       config.key === 'subIncrease' && index === 2 ? 'done' : 'next'
                     }
