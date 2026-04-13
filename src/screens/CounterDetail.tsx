@@ -1,7 +1,7 @@
 // src/screens/CounterDetail.tsx
 
 import { useLayoutEffect, useCallback, useState, useRef, useEffect } from 'react';
-import { View, Text, useWindowDimensions, Animated, LayoutChangeEvent, Platform } from 'react-native';
+import { View, useWindowDimensions, Animated, LayoutChangeEvent, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,7 +10,7 @@ import KeyEvent from 'react-native-keyevent';
 
 import { getHeaderRightWithActivateInfoSettings } from '@navigation/HeaderOptions';
 
-import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal, VoiceRecognitionBanner } from '@components/counter';
+import { AnimatedCounterDigits, CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal, VoiceRecognitionBanner } from '@components/counter';
 import Tooltip from '@components/common/Tooltip';
 import {
   ADD_KEY_CODES,
@@ -524,12 +524,12 @@ const CounterDetail = () => {
                 style={{ flex: countSectionFlex }}
                 pointerEvents="none"
               >
-                <Text
-                  className={`${textClass} font-bold text-black`}
-                  style={{ fontSize: countTextFontSizePx, lineHeight: countTextFontSizePx }}
-                >
-                  {counter.count}
-                </Text>
+                <AnimatedCounterDigits
+                  value={counter.count}
+                  fontSize={countTextFontSizePx}
+                  lineHeight={countTextFontSizePx}
+                  textClass={textClass}
+                />
               </View>
               {showCounterActions && (
                 <View
