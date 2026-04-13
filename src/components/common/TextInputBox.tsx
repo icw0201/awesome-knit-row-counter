@@ -27,6 +27,7 @@ type TextInputType = 'number' | 'text' | 'date' | 'longText';
 export interface TextInputBoxRef {
   focus: () => void;
   blur: () => void;
+  getNativeRef: () => RNTextInput | null;
 }
 
 /**
@@ -55,6 +56,7 @@ interface TextInputBoxProps {
   required?: boolean;
   returnKeyType?: TextInputProps['returnKeyType'];
   onSubmitEditing?: TextInputProps['onSubmitEditing'];
+  onFocus?: TextInputProps['onFocus'];
   blurOnSubmit?: boolean;
   editable?: boolean;
   showCounter?: boolean;
@@ -81,6 +83,7 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   required = false,
   returnKeyType = 'done',
   onSubmitEditing,
+  onFocus,
   blurOnSubmit = false,
   editable = true,
   showCounter = type === 'longText' || type === 'text',
@@ -101,6 +104,7 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
     blur: () => {
       inputRef.current?.blur();
     },
+    getNativeRef: () => inputRef.current,
   }));
 
   /**
@@ -217,7 +221,10 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
         placeholderTextColor="#767676"
         value={value}
         onChangeText={handleChangeText}
-        onFocus={() => setIsFocused(true)}
+        onFocus={(event) => {
+          setIsFocused(true);
+          onFocus?.(event);
+        }}
         onBlur={() => setIsFocused(false)}
         maxLength={maxLength}
         returnKeyType={returnKeyType}

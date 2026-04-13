@@ -1,10 +1,10 @@
 // src/components/settings/SettingsCheckBoxes.tsx
-import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text } from 'react-native';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
+import { View, Text, TextInput as RNTextInput } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 
 import CheckBox from '@components/common/CheckBox';
-import TextInputBox from '@components/common/TextInputBox';
+import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
 import { ConfirmModal } from '@components/common/modals';
 import { clearAllProjectData } from '@storage/storage';
 import SettingsAccordion from './SettingsAccordion';
@@ -21,7 +21,9 @@ import {
   setAutoPlayElapsedTimeSetting,
 } from '@storage/settings';
 
-interface SettingsCheckBoxesProps {}
+interface SettingsCheckBoxesProps {
+  onVoiceInputFocus?: (input: RNTextInput | null) => void;
+}
 
 interface SettingsItem {
   label: string;
@@ -91,6 +93,14 @@ const VOICE_COMMAND_ROW_CONFIGS: VoiceCommandRowConfig[] = [
   },
 ];
 
+const VOICE_COMMAND_INPUT_ORDER = VOICE_COMMAND_ROW_CONFIGS.flatMap((config) =>
+  config.placeholders.map((_, index) => ({
+    key: config.key,
+    index,
+    id: `${config.key}-${index}`,
+  }))
+);
+
 const SectionHeader: React.FC<SectionHeaderProps> = ({
   title,
   titleClassName = 'text-darkgray',
@@ -131,7 +141,9 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 /**
  * 설정 화면의 체크박스들을 묶은 컴포넌트
  */
-const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
+const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
+  onVoiceInputFocus,
+}) => {
   // 네비게이션 객체
   const navigation = useNavigation();
 
@@ -154,6 +166,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
     subDecrease: ['', '', ''],
     subIncrease: ['', '', ''],
   });
+  const voiceInputRefs = useRef<Record<string, TextInputBoxRef | null>>({});
 
   useEffect(() => {
     setSound(getSoundSetting());
@@ -286,6 +299,31 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
     });
   }, []);
 
+  /**
+   * 음성 명령어 입력칸의 다음 포커스를 이동한다.
+   */
+  const handleVoiceCommandSubmitEditing = useCallback((
+    key: VoiceCommandGroupKey,
+    index: number
+  ) => {
+    const currentInputIndex = VOICE_COMMAND_INPUT_ORDER.findIndex(
+      (item) => item.key === key && item.index === index
+    );
+
+    if (currentInputIndex < 0) {
+      return;
+    }
+
+    const nextInput = VOICE_COMMAND_INPUT_ORDER[currentInputIndex + 1];
+
+    if (nextInput) {
+      voiceInputRefs.current[nextInput.id]?.focus();
+      return;
+    }
+
+    voiceInputRefs.current[`${key}-${index}`]?.blur();
+  }, []);
+
   const deviceSettings: SettingsItem[] = [
     {
       label: '스크린 항상 켜두기',
@@ -343,6 +381,9 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
           <View className="flex-row">
             <View className="flex-1 pr-2">
               <TextInputBox
+                ref={(ref) => {
+                  voiceInputRefs.current[`${config.key}-0`] = ref;
+                }}
                 label=""
                 value={voiceCommandInputs[config.key][0]}
                 onChangeText={(text) =>
@@ -358,6 +399,16 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
                 autoCorrect={false}
                 textAlign="center"
                 fillWidth={false}
+                returnKeyType="next"
+                onSubmitEditing={() =>
+                  handleVoiceCommandSubmitEditing(config.key, 0)
+                }
+                onFocus={() =>
+                  onVoiceInputFocus?.(
+                    voiceInputRefs.current[`${config.key}-0`]?.getNativeRef() ?? null
+                  )
+                }
+                blurOnSubmit={false}
               />
             </View>
 
@@ -370,6 +421,9 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
                 return (
                   <TextInputBox
                     key={`${config.key}-${index}`}
+                    ref={(ref) => {
+                      voiceInputRefs.current[`${config.key}-${index}`] = ref;
+                    }}
                     label=""
                     value={voiceCommandInputs[config.key][index]}
                     onChangeText={(text) =>
@@ -387,6 +441,18 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
                     autoCorrect={false}
                     textAlign="center"
                     fillWidth={false}
+                    returnKeyType={
+                      config.key === 'subIncrease' && index === 2 ? 'done' : 'next'
+                    }
+                    onSubmitEditing={() =>
+                      handleVoiceCommandSubmitEditing(config.key, index)
+                    }
+                    onFocus={() =>
+                      onVoiceInputFocus?.(
+                        voiceInputRefs.current[`${config.key}-${index}`]?.getNativeRef() ?? null
+                      )
+                    }
+                    blurOnSubmit={config.key === 'subIncrease' && index === 2}
                   />
                 );
               })}
@@ -395,7 +461,12 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
         </View>
       </View>
     );
-  }, [handleVoiceCommandInputChange, voiceCommandInputs]);
+  }, [
+    handleVoiceCommandInputChange,
+    handleVoiceCommandSubmitEditing,
+    onVoiceInputFocus,
+    voiceCommandInputs,
+  ]);
 
   return (
     <>
