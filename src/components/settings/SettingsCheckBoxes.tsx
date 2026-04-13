@@ -61,7 +61,7 @@ interface SectionHeaderProps {
 
 const DEFAULT_VOICE_COMMAND_SECTIONS = [
   {
-    title: '메인 카운터',
+    title: '본 카운터',
     description: '연지(현지, 연기) / 곤지(군지, 건지)',
   },
   {
@@ -73,13 +73,13 @@ const DEFAULT_VOICE_COMMAND_SECTIONS = [
 const VOICE_COMMAND_ROW_CONFIGS: VoiceCommandRowConfig[] = [
   {
     key: 'mainDecrease',
-    sectionTitle: '메인 카운터',
+    sectionTitle: '본 카운터',
     label: '카운트 감소',
     placeholders: ['딸기', '달기', '탈기'],
   },
   {
     key: 'mainIncrease',
-    sectionTitle: '메인 카운터',
+    sectionTitle: '본 카운터',
     label: '카운트 증가',
     placeholders: ['사과', '사와', '서과'],
   },
@@ -522,7 +522,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
             >
               <View className="mb-4 pl-4">
                 <Text className="mb-3 text-base font-medium text-black">
-                  메인 카운터
+                  본 카운터
                 </Text>
                 <View className="mb-3 flex-row items-end pl-2">
                   <View className="w-24 pr-3" />
