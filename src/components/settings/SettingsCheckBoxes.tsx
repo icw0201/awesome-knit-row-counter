@@ -393,15 +393,18 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
     (config) => config.sectionTitle === '보조 카운터'
   );
 
+  // 사용자 설정: 감소/증가 한 행 (`config`당 1행, 입력 3칸 + refs로 다음/완료 포커스)
   const renderVoiceCommandInputRow = useCallback((config: VoiceCommandRowConfig) => {
     return (
       <View key={config.key} className="mb-3 flex-row items-center pl-2">
+        {/* 행 라벨 (감소/증가 등) */}
         <View className="w-24 pr-3">
           <Text className="text-base text-black">{config.label}</Text>
         </View>
 
         <View className="flex-1 pl-3">
           <View className="flex-row">
+            {/* 첫 칸: 명령어 */}
             <View className="flex-1 pr-2">
               <TextInputBox
                 ref={(ref) => {
@@ -430,8 +433,10 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
               />
             </View>
 
+            {/* 명령어 | 유사어 구분 */}
             <View className="mr-2 self-stretch border-l border-lightgray" />
 
+            {/* 나머지 두 칸: 유사어 */}
             <View className="flex-[2] flex-row">
               {config.placeholders.slice(1).map((placeholder, offset) => {
                 const index = offset + 1;
@@ -480,14 +485,18 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
     voiceCommandInputs,
   ]);
 
+  // 설정 화면 본문: 체크박스 섹션들 + 음성 명령어 + 모달
   return (
     <>
       <View className="mb-6">
         <SettingsSection title="기기 설정" items={deviceSettings} />
         <SettingsSection title="카운터 설정" items={counterSettings} />
+
+        {/* 음성인식 명령어: 기본(고정 안내) / 사용자(입력) — 카드별 테두리 */}
         <View className="mb-6">
           <SectionHeader title="음성인식 명령어" />
 
+          {/* 카드 1: 기본 명령어 안내(읽기 전용) */}
           <View className="mb-3 rounded-2xl border border-lightgray bg-transparent py-2">
             <SettingsAccordion
               label="기본 설정"
@@ -514,12 +523,14 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
             </SettingsAccordion>
           </View>
 
+          {/* 카드 2: 사용자 지정 2글자×3 입력 */}
           <View className="rounded-2xl border border-lightgray bg-transparent py-2">
             <SettingsAccordion
               label="사용자 설정"
               checked={selectedVoiceCommandMode === 'custom'}
               onToggle={handleCustomVoiceCommandsToggle}
             >
+              {/* 본 카운터: 상단 컬럼 라벨(명령어/유사어) + 행 입력 */}
               <View className="mb-4 pl-4">
                 <Text className="mb-3 text-base font-medium text-black">
                   본 카운터
@@ -544,6 +555,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                 {mainCounterVoiceCommandRows.map(renderVoiceCommandInputRow)}
               </View>
 
+              {/* 보조 카운터: 행만 (컬럼 라벨은 위와 동일하게 한 번만) */}
               <View className="pl-4">
                 <Text className="mb-3 text-base font-medium text-black">
                   보조 카운터
@@ -553,6 +565,8 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
             </SettingsAccordion>
           </View>
         </View>
+
+        {/* 데이터 초기화 등 */}
         <SettingsSection
           title="데이터 관리"
           items={dangerSettings}

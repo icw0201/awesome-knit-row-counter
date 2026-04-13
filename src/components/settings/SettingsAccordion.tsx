@@ -3,6 +3,16 @@ import { View, Text, TouchableOpacity, Animated, Easing, LayoutChangeEvent } fro
 
 import CircleRadioButton from '@components/common/CircleRadioButton';
 
+/**
+ * 설정 화면에서 쓰는 접이(아코디언) 블록입니다.
+ *
+ * 전체 흐름:
+ * 1) 헤더: 라벨 + 라디오 버튼. 누르면 `onToggle`로 선택이 바뀌고, 그에 맞게 본문을 펼치거나 접습니다.
+ * 2) 높이 측정: 애니메이션에 정확한 `height`가 필요합니다. `contentHeight`가 아직 없을 때는
+ *    화면에 보이지 않는(offscreen) 측정용 뷰에서 `children`을 한 번 그려 `onLayout`으로 높이를 얻습니다.
+ * 3) 애니메이션: 측정이 끝나면 `Animated.Value`로 높이와 투명도를 보간해 접기/펼치기를 처리합니다.
+ *    최초 1회는 깜빡임을 줄이려 애니메이션 없이 `checked`에 맞는 값으로 즉시 세팅합니다.
+ */
 interface SettingsAccordionProps {
   label: string;
   checked: boolean;
@@ -11,7 +21,7 @@ interface SettingsAccordionProps {
 }
 
 /**
- * 설정 화면에서 체크박스와 함께 접고 펼칠 수 있는 아코디언
+ * 설정 화면에서 라디오 버튼과 함께 접고 펼칠 수 있는 아코디언
  */
 const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
   label,
@@ -23,6 +33,7 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
   const animation = useRef(new Animated.Value(0)).current;
   const hasInitializedAnimation = useRef(false);
 
+  // 높이가 준비되기 전/후 + checked 변화에 따라 애니메이션 또는 즉시 값 적용
   useEffect(() => {
     if (contentHeight === null) {
       return;
@@ -50,6 +61,7 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
     }
   }, [contentHeight]);
 
+  // 펼침 진행도(0~1) → 실제 높이·투명도로 매핑
   const animatedContainerStyle = useMemo(() => ({
     height: animation.interpolate({
       inputRange: [0, 1],
@@ -87,6 +99,7 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
         />
       </TouchableOpacity>
 
+      {/* 측정 전: 숨김 레이어로 children 높이만 먼저 얻기 */}
       {contentHeight === null && (
         <View
           className="absolute left-0 right-0 opacity-0"
@@ -99,6 +112,7 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
         </View>
       )}
 
+      {/* 본문: 측정된 높이 기준으로 접기/펼치기 */}
       <Animated.View
         className="overflow-hidden"
         style={animatedContainerStyle}
