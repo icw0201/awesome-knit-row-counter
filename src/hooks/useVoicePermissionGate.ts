@@ -130,7 +130,7 @@ export function useVoicePermissionGate() {
   // 권한은 있어도 ko-KR 온디바이스 모델이 없어서 기능 자체를 켤 수 없을 때 사용한다.
   const showVoiceUnavailableModal = useCallback(() => {
     setVoicePermissionModalTitle('음성 인식 사용 불가');
-    setVoicePermissionModalDescription('이 기기에는 한국어 온디바이스 음성 인식 모델이 설치되어 있지 않아 음성인식 기능을 사용할 수 없습니다.');
+    setVoicePermissionModalDescription('음성 인식을 사용할 수 없습니다. 한국어 온디바이스 음성 인식 모델이 설치되어 있지 않거나, 이 앱이 사용하는 온디바이스 방식을 지원하지 않는 Android 버전·기기일 수 있습니다. Android 13 이상에서만 지원됩니다.');
     setVoicePermissionModalConfirmText('확인');
     setVoicePermissionModalCancelText('');
     setShouldOpenSettingsOnModalConfirm(false);
