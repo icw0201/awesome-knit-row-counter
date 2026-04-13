@@ -1,5 +1,6 @@
 // src/storage/settings.ts
 import { MMKV } from 'react-native-mmkv';
+import { DEFAULT_VOICE_COMMAND_KEYWORDS } from '@constants/voiceCommandKeywords';
 import { SortCriteria, SortOrder } from './types';
 
 // MMKV 스토리지 인스턴스 생성
@@ -64,13 +65,6 @@ const DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS: CustomVoiceCommandInputsSetting = {
   subDecrease: ['', '', ''],
   subIncrease: ['', '', ''],
 };
-
-const DEFAULT_VOICE_COMMAND_KEYWORDS = {
-  add: ['곤지', '군지', '건지', '본지'],
-  subtract: ['연지', '현지', '연기'],
-  subAdd: ['홍실', '홍신', '동실', '통실', '봉실', '뽕실', '통신', '공실'],
-  subSubtract: ['청실', '청신', '창실', '정신', '정실'],
-} as const;
 
 export type VoiceRecognitionPermissionStatus =
   | 'undetermined'
