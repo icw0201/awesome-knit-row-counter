@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { View, Animated, Easing, LayoutChangeEvent } from 'react-native';
+import { View, Text, TouchableOpacity, Animated, Easing, LayoutChangeEvent } from 'react-native';
 
-import CheckBox from '@components/common/CheckBox';
+import CircleRadioButton from '@components/common/CircleRadioButton';
 
 interface SettingsAccordionProps {
   label: string;
@@ -56,11 +56,25 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
 
   return (
     <View className="bg-transparent">
-      <CheckBox
-        label={label}
-        checked={checked}
-        onToggle={handleToggle}
-      />
+      <TouchableOpacity
+        onPress={handleToggle}
+        activeOpacity={0.7}
+        className="flex-row items-center justify-between px-4 py-3"
+        accessible={true}
+        accessibilityRole="radio"
+        accessibilityState={{ checked }}
+        accessibilityLabel={label}
+      >
+        <Text className="shrink flex-1 text-base text-black" numberOfLines={2}>
+          {label}
+        </Text>
+        <CircleRadioButton
+          selected={checked}
+          onPress={handleToggle}
+          selectedBorderClassName="border-red-orange-400"
+          selectedFillClassName="bg-red-orange-400"
+        />
+      </TouchableOpacity>
 
       <Animated.View
         className="overflow-hidden"

@@ -43,6 +43,8 @@ type VoiceCommandGroupKey =
   | 'subDecrease'
   | 'subIncrease';
 
+type VoiceCommandMode = 'default' | 'custom';
+
 interface VoiceCommandRowConfig {
   key: VoiceCommandGroupKey;
   sectionTitle: string;
@@ -156,8 +158,8 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const [showDefaultVoiceCommands, setShowDefaultVoiceCommands] = useState(true);
-  const [showCustomVoiceCommands, setShowCustomVoiceCommands] = useState(false);
+  const [selectedVoiceCommandMode, setSelectedVoiceCommandMode] =
+    useState<VoiceCommandMode>('default');
   const [voiceCommandInputs, setVoiceCommandInputs] = useState<
     Record<VoiceCommandGroupKey, [string, string, string]>
   >({
@@ -270,14 +272,14 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
    * 사용자 지정 음성 명령어 토글 처리
    */
   const handleCustomVoiceCommandsToggle = () => {
-    setShowCustomVoiceCommands((prev) => !prev);
+    setSelectedVoiceCommandMode('custom');
   };
 
   /**
    * 기본 음성 명령어 설정 선택 처리
    */
   const handleDefaultVoiceCommandsToggle = () => {
-    setShowDefaultVoiceCommands((prev) => !prev);
+    setSelectedVoiceCommandMode('default');
   };
 
   /**
@@ -479,7 +481,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
           <View className="mb-3 rounded-2xl border border-lightgray bg-transparent py-2">
             <SettingsAccordion
               label="기본 설정"
-              checked={showDefaultVoiceCommands}
+              checked={selectedVoiceCommandMode === 'default'}
               onToggle={handleDefaultVoiceCommandsToggle}
             >
               {DEFAULT_VOICE_COMMAND_SECTIONS.map((section, index) => (
@@ -505,7 +507,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
           <View className="rounded-2xl border border-lightgray bg-transparent py-2">
             <SettingsAccordion
               label="사용자 설정"
-              checked={showCustomVoiceCommands}
+              checked={selectedVoiceCommandMode === 'custom'}
               onToggle={handleCustomVoiceCommandsToggle}
             >
               <View className="mb-4 pl-4">
