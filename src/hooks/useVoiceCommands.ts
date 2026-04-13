@@ -3,16 +3,9 @@
 import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+import type { EffectiveVoiceCommandSetting } from '@storage/settings';
 
 const LOCALE = 'ko-KR';
-const KEYWORDS_ADD = ['곤지', '군지', '건지', '본지'];
-const KEYWORDS_SUBTRACT = ['연지', '현지', '연기'];
-const KEYWORDS_SUB_ADD = ['홍실', '홍신', '동실', '통실', '봉실', '뽕실', '통신', '공실'];
-const KEYWORDS_SUB_SUBTRACT = ['청실', '청신', '창실', '정신', '정실'];
-const KEYWORD_SET_ADD = new Set(KEYWORDS_ADD);
-const KEYWORD_SET_SUBTRACT = new Set(KEYWORDS_SUBTRACT);
-const KEYWORD_SET_SUB_ADD = new Set(KEYWORDS_SUB_ADD);
-const KEYWORD_SET_SUB_SUBTRACT = new Set(KEYWORDS_SUB_SUBTRACT);
 const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
 // 일반적인 end/error 이후 recognition을 다시 시작할 때 기본 대기 시간.
 const DEFAULT_RESTART_DELAY_MS = 1200;
@@ -31,6 +24,11 @@ const MODEL_NOT_DOWNLOADED_MESSAGE_FRAGMENT =
   'requested language is supported, but not yet downloaded';
 const OFFLINE_MODEL_REQUIRED_MESSAGE =
   '한국어 온디바이스 음성 모델 다운로드가 필요합니다. 시스템 안내를 완료한 뒤 다시 시도해 주세요.';
+
+type VoiceCommandKeywordConfig = Pick<
+  EffectiveVoiceCommandSetting,
+  'addKeywords' | 'subtractKeywords' | 'subAddKeywords' | 'subSubtractKeywords'
+>;
 
 const ERROR_MESSAGES: Record<string, string> = {
   aborted: '음성 인식이 중단되었습니다',
@@ -139,20 +137,28 @@ function getCommonPrefixLength(previousWords: string[], nextWords: string[]): nu
   return index;
 }
 
-function getWordAction(word: string): 'add' | 'subtract' | 'subAdd' | 'subSubtract' | null {
-  if (KEYWORD_SET_ADD.has(word)) {
+function getWordAction(
+  word: string,
+  keywordSets: {
+    add: Set<string>;
+    subtract: Set<string>;
+    subAdd: Set<string>;
+    subSubtract: Set<string>;
+  }
+): 'add' | 'subtract' | 'subAdd' | 'subSubtract' | null {
+  if (keywordSets.add.has(word)) {
     return 'add';
   }
 
-  if (KEYWORD_SET_SUBTRACT.has(word)) {
+  if (keywordSets.subtract.has(word)) {
     return 'subtract';
   }
 
-  if (KEYWORD_SET_SUB_ADD.has(word)) {
+  if (keywordSets.subAdd.has(word)) {
     return 'subAdd';
   }
 
-  if (KEYWORD_SET_SUB_SUBTRACT.has(word)) {
+  if (keywordSets.subSubtract.has(word)) {
     return 'subSubtract';
   }
 
@@ -163,8 +169,16 @@ function getWordAction(word: string): 'add' | 'subtract' | 'subAdd' | 'subSubtra
  * 같은 인덱스에서 STT가 "군지" → "건지"처럼 교정만 해도 접두어가 같다고 보기 위해,
  * 키워드 동작별로 하나의 토큰으로 치환한다. (실제 콜백에는 원문 단어를 그대로 넘긴다.)
  */
-function canonicalizeKeywordForTranscriptDiff(word: string): string {
-  const action = getWordAction(word);
+function canonicalizeKeywordForTranscriptDiff(
+  word: string,
+  keywordSets: {
+    add: Set<string>;
+    subtract: Set<string>;
+    subAdd: Set<string>;
+    subSubtract: Set<string>;
+  }
+): string {
+  const action = getWordAction(word, keywordSets);
   if (action === 'add') {
     return '\0__kw_add__';
   }
@@ -186,6 +200,7 @@ function canonicalizeKeywordForTranscriptDiff(word: string): string {
  */
 export function useVoiceCommands(
   enabled: boolean,
+  keywordConfig: VoiceCommandKeywordConfig,
   onAdd: (commandWord?: string) => void,
   onSubtract: (commandWord?: string) => void,
   onSubAdd?: (commandWord?: string) => void,
@@ -213,6 +228,13 @@ export function useVoiceCommands(
     if (!enabled) {
       return;
     }
+
+    const keywordSets = {
+      add: new Set(keywordConfig.addKeywords),
+      subtract: new Set(keywordConfig.subtractKeywords),
+      subAdd: new Set(keywordConfig.subAddKeywords),
+      subSubtract: new Set(keywordConfig.subSubtractKeywords),
+    };
 
     // recognition session의 로컬 런타임 상태.
     // React state로 두지 않고 effect 내부 변수로 관리해 네이티브 이벤트/타이머에서 즉시 읽는다.
@@ -261,8 +283,12 @@ export function useVoiceCommands(
     // 동작이 같은 키워드면 접두어 길이에 포함해 한 번만 실행되게 한다.
     const runActionsFromTranscript = (text: string) => {
       const nextWords = normalizeTranscriptWords(text);
-      const prevCanonical = lastTranscriptWords.map(canonicalizeKeywordForTranscriptDiff);
-      const nextCanonical = nextWords.map(canonicalizeKeywordForTranscriptDiff);
+      const prevCanonical = lastTranscriptWords.map((word) =>
+        canonicalizeKeywordForTranscriptDiff(word, keywordSets)
+      );
+      const nextCanonical = nextWords.map((word) =>
+        canonicalizeKeywordForTranscriptDiff(word, keywordSets)
+      );
       const commonPrefixLength = getCommonPrefixLength(prevCanonical, nextCanonical);
       let newWords = nextWords.slice(commonPrefixLength);
 
@@ -280,7 +306,7 @@ export function useVoiceCommands(
 
       lastTranscriptWords = nextWords;
       newWords.forEach((word) => {
-        const action = getWordAction(word);
+        const action = getWordAction(word, keywordSets);
         if (action === 'add') {
           if (!shouldSkipDuplicateKeywordAction(action, word)) {
             onAddRef.current(word);
@@ -505,10 +531,10 @@ export function useVoiceCommands(
           requiresOnDeviceRecognition: true,
           androidRecognitionServicePackage: ANDROID_ON_DEVICE_SERVICE,
           contextualStrings: [
-            ...KEYWORDS_ADD,
-            ...KEYWORDS_SUBTRACT,
-            ...KEYWORDS_SUB_ADD,
-            ...KEYWORDS_SUB_SUBTRACT,
+            ...keywordConfig.addKeywords,
+            ...keywordConfig.subtractKeywords,
+            ...keywordConfig.subAddKeywords,
+            ...keywordConfig.subSubtractKeywords,
           ],
           androidIntentOptions: {
             EXTRA_LANGUAGE_MODEL: 'web_search',
@@ -711,5 +737,11 @@ export function useVoiceCommands(
       appStateSubscription.remove();
       ExpoSpeechRecognitionModule.abort();
     };
-  }, [enabled]);
+  }, [
+    enabled,
+    keywordConfig.addKeywords,
+    keywordConfig.subtractKeywords,
+    keywordConfig.subAddKeywords,
+    keywordConfig.subSubtractKeywords,
+  ]);
 }

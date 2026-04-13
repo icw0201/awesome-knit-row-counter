@@ -45,12 +45,32 @@ export interface CustomVoiceCommandInputsSetting {
   subIncrease: [string, string, string];
 }
 
+export interface EffectiveVoiceCommandSetting {
+  mode: VoiceCommandSettingMode;
+  customInputs: CustomVoiceCommandInputsSetting;
+  addKeywords: string[];
+  subtractKeywords: string[];
+  subAddKeywords: string[];
+  subSubtractKeywords: string[];
+  addHint: string;
+  subtractHint: string;
+  subAddHint: string;
+  subSubtractHint: string;
+}
+
 const DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS: CustomVoiceCommandInputsSetting = {
   mainDecrease: ['', '', ''],
   mainIncrease: ['', '', ''],
   subDecrease: ['', '', ''],
   subIncrease: ['', '', ''],
 };
+
+const DEFAULT_VOICE_COMMAND_KEYWORDS = {
+  add: ['곤지', '군지', '건지', '본지'],
+  subtract: ['연지', '현지', '연기'],
+  subAdd: ['홍실', '홍신', '동실', '통실', '봉실', '뽕실', '통신', '공실'],
+  subSubtract: ['청실', '청신', '창실', '정신', '정실'],
+} as const;
 
 export type VoiceRecognitionPermissionStatus =
   | 'undetermined'
@@ -86,6 +106,16 @@ const normalizeCustomVoiceCommandInputs = (
       ? candidate.subIncrease
       : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.subIncrease,
   };
+};
+
+const normalizeVoiceCommandKeywordList = (values: readonly string[]): string[] => {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0)
+    )
+  );
 };
 
 /**
@@ -325,6 +355,49 @@ export const getCustomVoiceCommandInputsSetting =
       return DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS;
     }
   };
+
+/**
+ * 현재 적용 중인 음성 명령어 설정을 가져옵니다.
+ * - 기본 설정 선택 시: 기본 키워드/표시 문구 반환
+ * - 사용자 설정 선택 시: 사용자 입력값 기반 키워드/표시 문구 반환
+ */
+export const getEffectiveVoiceCommandSetting = (): EffectiveVoiceCommandSetting => {
+  const mode = getSelectedVoiceCommandModeSetting();
+  const customInputs = getCustomVoiceCommandInputsSetting();
+
+  if (mode === 'custom') {
+    const addKeywords = normalizeVoiceCommandKeywordList(customInputs.mainIncrease);
+    const subtractKeywords = normalizeVoiceCommandKeywordList(customInputs.mainDecrease);
+    const subAddKeywords = normalizeVoiceCommandKeywordList(customInputs.subIncrease);
+    const subSubtractKeywords = normalizeVoiceCommandKeywordList(customInputs.subDecrease);
+
+    return {
+      mode,
+      customInputs,
+      addKeywords,
+      subtractKeywords,
+      subAddKeywords,
+      subSubtractKeywords,
+      addHint: customInputs.mainIncrease[0] ?? '',
+      subtractHint: customInputs.mainDecrease[0] ?? '',
+      subAddHint: customInputs.subIncrease[0] ?? '',
+      subSubtractHint: customInputs.subDecrease[0] ?? '',
+    };
+  }
+
+  return {
+    mode,
+    customInputs,
+    addKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.add],
+    subtractKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.subtract],
+    subAddKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.subAdd],
+    subSubtractKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.subSubtract],
+    addHint: DEFAULT_VOICE_COMMAND_KEYWORDS.add[0],
+    subtractHint: DEFAULT_VOICE_COMMAND_KEYWORDS.subtract[0],
+    subAddHint: DEFAULT_VOICE_COMMAND_KEYWORDS.subAdd[0],
+    subSubtractHint: DEFAULT_VOICE_COMMAND_KEYWORDS.subSubtract[0],
+  };
+};
 
 /**
  * CounterDetail의 슬라이드 모달 표시 설정을 저장합니다.
