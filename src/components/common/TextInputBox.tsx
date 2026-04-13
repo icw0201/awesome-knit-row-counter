@@ -63,6 +63,7 @@ interface TextInputBoxProps {
   autoCorrect?: boolean;
   textAlign?: TextInputProps['textAlign'];
   fillWidth?: boolean;
+  allowComposingOverflow?: boolean;
 }
 
 /**
@@ -90,6 +91,7 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   autoCorrect = true,
   textAlign,
   fillWidth = true,
+  allowComposingOverflow = false,
 }, ref) => {
   // 입력 필드의 포커스 상태 관리
   const [isFocused, setIsFocused] = useState(false);
@@ -104,6 +106,19 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
       inputRef.current?.blur();
     },
   }));
+
+  const trimTextToMaxLength = React.useCallback(() => {
+    if (
+      type !== 'text'
+      || !allowComposingOverflow
+      || typeof maxLength !== 'number'
+      || value.length <= maxLength
+    ) {
+      return;
+    }
+
+    onChangeText?.(value.slice(0, maxLength));
+  }, [allowComposingOverflow, maxLength, onChangeText, type, value]);
 
   /**
    * 숫자 입력 처리 함수
@@ -143,7 +158,11 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
    */
   const handleTextInput = (text: string) => {
     const limit = maxLength ?? (type === 'longText' ? INPUT_LIMITS.longText : INPUT_LIMITS.text);
-    if (text.length > limit) {
+    const allowedLimit = allowComposingOverflow && type === 'text'
+      ? limit + 1
+      : limit;
+
+    if (text.length > allowedLimit) {
       return;
     }
     onChangeText?.(text);
@@ -223,10 +242,16 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
           setIsFocused(true);
           onFocus?.(event);
         }}
-        onBlur={() => setIsFocused(false)}
-        maxLength={maxLength}
+        onBlur={() => {
+          setIsFocused(false);
+          trimTextToMaxLength();
+        }}
+        maxLength={allowComposingOverflow && type === 'text' ? undefined : maxLength}
         returnKeyType={returnKeyType}
-        onSubmitEditing={onSubmitEditing}
+        onSubmitEditing={(event) => {
+          trimTextToMaxLength();
+          onSubmitEditing?.(event);
+        }}
         blurOnSubmit={blurOnSubmit}
         editable={editable}
         autoCapitalize={autoCapitalize}

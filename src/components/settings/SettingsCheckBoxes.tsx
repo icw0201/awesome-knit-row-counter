@@ -313,7 +313,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
   ) => {
     setVoiceCommandInputs((prev) => {
       const nextValues = [...prev[key]] as [string, string, string];
-      nextValues[index] = text.slice(0, 2);
+      nextValues[index] = Array.from(text).slice(0, 3).join('');
 
       return {
         ...prev,
@@ -422,6 +422,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                 autoCorrect={false}
                 textAlign="center"
                 fillWidth={false}
+                allowComposingOverflow
                 returnKeyType="next"
                 onSubmitEditing={() =>
                   handleVoiceCommandSubmitEditing(config.key, 0)
@@ -459,6 +460,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                     autoCorrect={false}
                     textAlign="center"
                     fillWidth={false}
+                    allowComposingOverflow
                     returnKeyType={
                       config.key === 'subIncrease' && index === 2 ? 'done' : 'next'
                     }
