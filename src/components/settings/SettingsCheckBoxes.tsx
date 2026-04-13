@@ -416,7 +416,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                 type="text"
                 maxLength={2}
                 showCounter={false}
-                inputClassName="h-11 text-base text-center"
+                inputClassName="h-auto min-h-11 py-2 text-base text-center"
                 containerClassName="mb-0 flex-1"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -430,7 +430,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
               />
             </View>
 
-            <View className="mr-2 h-11 border-l border-lightgray" />
+            <View className="mr-2 self-stretch border-l border-lightgray" />
 
             <View className="flex-[2] flex-row">
               {config.placeholders.slice(1).map((placeholder, offset) => {
@@ -451,7 +451,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                     type="text"
                     maxLength={2}
                     showCounter={false}
-                    inputClassName="h-11 text-base text-center"
+                    inputClassName="h-auto min-h-11 py-2 text-base text-center"
                     containerClassName={`mb-0 flex-1 ${
                       offset === 0 ? '' : 'ml-2'
                     }`}
