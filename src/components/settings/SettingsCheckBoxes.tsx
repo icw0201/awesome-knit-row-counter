@@ -19,6 +19,12 @@ import {
   setTooltipEnabledSetting,
   getAutoPlayElapsedTimeSetting,
   setAutoPlayElapsedTimeSetting,
+  getSelectedVoiceCommandModeSetting,
+  setSelectedVoiceCommandModeSetting,
+  getCustomVoiceCommandInputsSetting,
+  setCustomVoiceCommandInputsSetting,
+  type CustomVoiceCommandInputsSetting,
+  type VoiceCommandSettingMode,
 } from '@storage/settings';
 
 interface SettingsCheckBoxesProps {}
@@ -40,8 +46,6 @@ type VoiceCommandGroupKey =
   | 'mainIncrease'
   | 'subDecrease'
   | 'subIncrease';
-
-type VoiceCommandMode = 'default' | 'custom';
 
 interface VoiceCommandRowConfig {
   key: VoiceCommandGroupKey;
@@ -156,15 +160,16 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [selectedVoiceCommandMode, setSelectedVoiceCommandMode] =
-    useState<VoiceCommandMode>('default');
-  const [voiceCommandInputs, setVoiceCommandInputs] = useState<
-    Record<VoiceCommandGroupKey, [string, string, string]>
-  >({
+    useState<VoiceCommandSettingMode>('default');
+  const [voiceCommandInputs, setVoiceCommandInputs] =
+    useState<CustomVoiceCommandInputsSetting>({
     mainDecrease: ['', '', ''],
     mainIncrease: ['', '', ''],
     subDecrease: ['', '', ''],
     subIncrease: ['', '', ''],
   });
+  const [voiceCommandSettingsHydrated, setVoiceCommandSettingsHydrated] =
+    useState(false);
   const voiceInputRefs = useRef<Record<string, TextInputBoxRef | null>>({});
 
   useEffect(() => {
@@ -173,7 +178,26 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
     setScreenAwake(getScreenAwakeSetting());
     setTooltipEnabled(getTooltipEnabledSetting());
     setAutoPlayElapsedTime(getAutoPlayElapsedTimeSetting());
+    setSelectedVoiceCommandMode(getSelectedVoiceCommandModeSetting());
+    setVoiceCommandInputs(getCustomVoiceCommandInputsSetting());
+    setVoiceCommandSettingsHydrated(true);
   }, []);
+
+  useEffect(() => {
+    if (!voiceCommandSettingsHydrated) {
+      return;
+    }
+
+    setSelectedVoiceCommandModeSetting(selectedVoiceCommandMode);
+  }, [selectedVoiceCommandMode, voiceCommandSettingsHydrated]);
+
+  useEffect(() => {
+    if (!voiceCommandSettingsHydrated) {
+      return;
+    }
+
+    setCustomVoiceCommandInputsSetting(voiceCommandInputs);
+  }, [voiceCommandInputs, voiceCommandSettingsHydrated]);
 
   /**
    * 에러 모달 표시
