@@ -1,6 +1,6 @@
 // src/components/settings/SettingsCheckBoxes.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text, TextInput as RNTextInput } from 'react-native';
+import { View, Text } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 
 import CheckBox from '@components/common/CheckBox';
@@ -21,9 +21,7 @@ import {
   setAutoPlayElapsedTimeSetting,
 } from '@storage/settings';
 
-interface SettingsCheckBoxesProps {
-  onVoiceInputFocus?: (input: RNTextInput | null) => void;
-}
+interface SettingsCheckBoxesProps {}
 
 interface SettingsItem {
   label: string;
@@ -144,7 +142,6 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
  * 설정 화면의 체크박스들을 묶은 컴포넌트
  */
 const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
-  onVoiceInputFocus,
 }) => {
   // 네비게이션 객체
   const navigation = useNavigation();
@@ -405,11 +402,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                 onSubmitEditing={() =>
                   handleVoiceCommandSubmitEditing(config.key, 0)
                 }
-                onFocus={() =>
-                  onVoiceInputFocus?.(
-                    voiceInputRefs.current[`${config.key}-0`]?.getNativeRef() ?? null
-                  )
-                }
                 blurOnSubmit={false}
               />
             </View>
@@ -449,11 +441,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                     onSubmitEditing={() =>
                       handleVoiceCommandSubmitEditing(config.key, index)
                     }
-                    onFocus={() =>
-                      onVoiceInputFocus?.(
-                        voiceInputRefs.current[`${config.key}-${index}`]?.getNativeRef() ?? null
-                      )
-                    }
                     blurOnSubmit={config.key === 'subIncrease' && index === 2}
                   />
                 );
@@ -466,7 +453,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
   }, [
     handleVoiceCommandInputChange,
     handleVoiceCommandSubmitEditing,
-    onVoiceInputFocus,
     voiceCommandInputs,
   ]);
 

@@ -27,7 +27,6 @@ type TextInputType = 'number' | 'text' | 'date' | 'longText';
 export interface TextInputBoxRef {
   focus: () => void;
   blur: () => void;
-  getNativeRef: () => RNTextInput | null;
 }
 
 /**
@@ -104,7 +103,6 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
     blur: () => {
       inputRef.current?.blur();
     },
-    getNativeRef: () => inputRef.current,
   }));
 
   /**
