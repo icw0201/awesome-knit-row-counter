@@ -1,9 +1,10 @@
 // src/components/settings/SettingsCheckBoxes.tsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text, TextInput } from 'react-native';
+import { View, Text } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 
 import CheckBox from '@components/common/CheckBox';
+import TextInputBox from '@components/common/TextInputBox';
 import { ConfirmModal } from '@components/common/modals';
 import { clearAllProjectData } from '@storage/storage';
 import SettingsAccordion from './SettingsAccordion';
@@ -341,18 +342,22 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
         <View className="flex-1 pl-3">
           <View className="flex-row">
             <View className="flex-1 pr-2">
-              <TextInput
-                className="h-11 rounded-xl border border-lightgray bg-white px-3 text-center text-base text-black"
+              <TextInputBox
+                label=""
                 value={voiceCommandInputs[config.key][0]}
                 onChangeText={(text) =>
                   handleVoiceCommandInputChange(config.key, 0, text)
                 }
                 placeholder={config.placeholders[0]}
-                placeholderTextColor="#B8B8B8"
+                type="text"
                 maxLength={2}
+                showCounter={false}
+                inputClassName="h-11 text-base text-center"
+                containerClassName="mb-0 flex-1"
                 autoCapitalize="none"
                 autoCorrect={false}
                 textAlign="center"
+                fillWidth={false}
               />
             </View>
 
@@ -363,21 +368,25 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
                 const index = offset + 1;
 
                 return (
-                  <TextInput
+                  <TextInputBox
                     key={`${config.key}-${index}`}
-                    className={`h-11 flex-1 rounded-xl border border-lightgray bg-white px-3 text-center text-base text-black ${
-                      offset === 0 ? '' : 'ml-2'
-                    }`}
+                    label=""
                     value={voiceCommandInputs[config.key][index]}
                     onChangeText={(text) =>
                       handleVoiceCommandInputChange(config.key, index, text)
                     }
                     placeholder={placeholder}
-                    placeholderTextColor="#B8B8B8"
+                    type="text"
                     maxLength={2}
+                    showCounter={false}
+                    inputClassName="h-11 text-base text-center"
+                    containerClassName={`mb-0 flex-1 ${
+                      offset === 0 ? '' : 'ml-2'
+                    }`}
                     autoCapitalize="none"
                     autoCorrect={false}
                     textAlign="center"
+                    fillWidth={false}
                   />
                 );
               })}

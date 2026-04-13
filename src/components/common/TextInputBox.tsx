@@ -51,11 +51,17 @@ interface TextInputBoxProps {
   type: TextInputType;
   maxLength?: number;
   containerClassName?: string;
+  inputClassName?: string;
   required?: boolean;
   returnKeyType?: TextInputProps['returnKeyType'];
   onSubmitEditing?: TextInputProps['onSubmitEditing'];
   blurOnSubmit?: boolean;
   editable?: boolean;
+  showCounter?: boolean;
+  autoCapitalize?: TextInputProps['autoCapitalize'];
+  autoCorrect?: boolean;
+  textAlign?: TextInputProps['textAlign'];
+  fillWidth?: boolean;
 }
 
 /**
@@ -71,11 +77,17 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   type,
   maxLength = type === 'longText' ? INPUT_LIMITS.longText : INPUT_LIMITS.text,
   containerClassName = '',
+  inputClassName = '',
   required = false,
   returnKeyType = 'done',
   onSubmitEditing,
   blurOnSubmit = false,
   editable = true,
+  showCounter = type === 'longText' || type === 'text',
+  autoCapitalize = 'sentences',
+  autoCorrect = true,
+  textAlign,
+  fillWidth = true,
 }, ref) => {
   // 입력 필드의 포커스 상태 관리
   const [isFocused, setIsFocused] = useState(false);
@@ -128,7 +140,7 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
    * @param text - 입력된 텍스트
    */
   const handleTextInput = (text: string) => {
-    const limit = type === 'longText' ? INPUT_LIMITS.longText : INPUT_LIMITS.text;
+    const limit = maxLength ?? (type === 'longText' ? INPUT_LIMITS.longText : INPUT_LIMITS.text);
     if (text.length > limit) {
       return;
     }
@@ -159,11 +171,12 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
     'w-full px-3 border rounded-xl',
     type === 'longText' ? 'text-sm min-h-[54px]' : 'h-[54px]',
     editable ? 'bg-white text-black' : 'bg-lightgray text-darkgray',
-    isFocused ? 'border-red-orange-400' : 'border-lightgray'
+    isFocused ? 'border-red-orange-400' : 'border-lightgray',
+    inputClassName
   );
 
   // 문자 수 카운터 표시 여부
-  const shouldShowCounter = type === 'longText' || type === 'text';
+  const shouldShowCounter = showCounter;
   const currentLength = (value ?? '').length;
   const maxLengthForType = type === 'longText' ? INPUT_LIMITS.longText : maxLength;
 
@@ -176,7 +189,7 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   const shouldShowLabelArea = hasLabel || shouldShowCounter;
 
   return (
-    <View className={clsx('w-full', !hasMbOverride && 'mb-4', !hasLabel && 'self-center', containerClassName)}>
+    <View className={clsx(fillWidth && 'w-full', !hasMbOverride && 'mb-4', !hasLabel && 'self-center', containerClassName)}>
       {/* 라벨과 문자 수 카운터를 표시하는 상단 영역 */}
       {shouldShowLabelArea && (
         <View className="pl-1 mb-1 flex-row justify-between items-center">
@@ -201,15 +214,19 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
         multiline={type === 'longText'}
         textAlignVertical="center"
         placeholder={placeholder}
+        placeholderTextColor="#767676"
         value={value}
         onChangeText={handleChangeText}
         onFocus={() => setIsFocused(true)}
         onBlur={() => setIsFocused(false)}
-        maxLength={type === 'longText' ? maxLength : undefined}
+        maxLength={maxLength}
         returnKeyType={returnKeyType}
         onSubmitEditing={onSubmitEditing}
         blurOnSubmit={blurOnSubmit}
         editable={editable}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        textAlign={textAlign}
       />
     </View>
   );
