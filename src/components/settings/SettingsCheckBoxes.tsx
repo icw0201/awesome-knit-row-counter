@@ -387,7 +387,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
   ];
 
   const mainCounterVoiceCommandRows = VOICE_COMMAND_ROW_CONFIGS.filter(
-    (config) => config.sectionTitle === '메인 카운터'
+    (config) => config.sectionTitle === '본 카운터'
   );
   const subCounterVoiceCommandRows = VOICE_COMMAND_ROW_CONFIGS.filter(
     (config) => config.sectionTitle === '보조 카운터'
