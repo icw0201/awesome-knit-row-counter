@@ -27,7 +27,7 @@ const Settings = () => {
 
           <SettingsLinks />
 
-          <SettingsVersion version="1.4.3" />
+          <SettingsVersion version="1.4.3-internal.1" />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
