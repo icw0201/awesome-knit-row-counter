@@ -1,11 +1,12 @@
 // src/components/settings/SettingsCheckBoxes.tsx
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TextInput } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 
 import CheckBox from '@components/common/CheckBox';
 import { ConfirmModal } from '@components/common/modals';
 import { clearAllProjectData } from '@storage/storage';
+import SettingsAccordion from './SettingsAccordion';
 import {
   setSoundSetting,
   setVibrationSetting,
@@ -33,6 +34,76 @@ interface SettingsSectionProps {
   titleClassName?: string;
 }
 
+type VoiceCommandGroupKey =
+  | 'mainDecrease'
+  | 'mainIncrease'
+  | 'subDecrease'
+  | 'subIncrease';
+
+interface VoiceCommandRowConfig {
+  key: VoiceCommandGroupKey;
+  sectionTitle: string;
+  label: string;
+  placeholders: [string, string, string];
+}
+
+interface SectionHeaderProps {
+  title: string;
+  titleClassName?: string;
+}
+
+const DEFAULT_VOICE_COMMAND_SECTIONS = [
+  {
+    title: '메인 카운터',
+    description: '연지(현지, 연기) / 곤지(군지, 건기)',
+  },
+  {
+    title: '보조 카운터',
+    description: '청실(청신, 창신) / 홍실(홍신, 동실)',
+  },
+] as const;
+
+const VOICE_COMMAND_ROW_CONFIGS: VoiceCommandRowConfig[] = [
+  {
+    key: 'mainDecrease',
+    sectionTitle: '메인 카운터',
+    label: '카운트 감소',
+    placeholders: ['딸기', '달기', '탈기'],
+  },
+  {
+    key: 'mainIncrease',
+    sectionTitle: '메인 카운터',
+    label: '카운트 증가',
+    placeholders: ['사과', '사와', '서과'],
+  },
+  {
+    key: 'subDecrease',
+    sectionTitle: '보조 카운터',
+    label: '카운트 감소',
+    placeholders: ['루크', '무크', '구크'],
+  },
+  {
+    key: 'subIncrease',
+    sectionTitle: '보조 카운터',
+    label: '카운트 증가',
+    placeholders: ['제이', '체이', '데이'],
+  },
+];
+
+const SectionHeader: React.FC<SectionHeaderProps> = ({
+  title,
+  titleClassName = 'text-darkgray',
+}) => {
+  return (
+    <View className="mb-2 flex-row items-center px-4">
+      <Text className={`mr-3 text-sm font-semibold ${titleClassName}`}>
+        {title}
+      </Text>
+      <View className="flex-1 border-b border-lightgray" />
+    </View>
+  );
+};
+
 const SettingsSection: React.FC<SettingsSectionProps> = ({
   title,
   items,
@@ -40,12 +111,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 }) => {
   return (
     <View className="mb-6">
-      <View className="mb-2 flex-row items-center px-4">
-        <Text className={`mr-3 text-sm font-semibold ${titleClassName}`}>
-          {title}
-        </Text>
-        <View className="flex-1 border-b border-lightgray" />
-      </View>
+      <SectionHeader title={title} titleClassName={titleClassName} />
       <View>
         {items.map((item) => (
           <View key={item.label}>
@@ -77,6 +143,16 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [errorModalVisible, setErrorModalVisible] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showDefaultVoiceCommands, setShowDefaultVoiceCommands] = useState(true);
+  const [showCustomVoiceCommands, setShowCustomVoiceCommands] = useState(false);
+  const [voiceCommandInputs, setVoiceCommandInputs] = useState<
+    Record<VoiceCommandGroupKey, [string, string, string]>
+  >({
+    mainDecrease: ['', '', ''],
+    mainIncrease: ['', '', ''],
+    subDecrease: ['', '', ''],
+    subIncrease: ['', '', ''],
+  });
 
   useEffect(() => {
     setSound(getSoundSetting());
@@ -176,6 +252,39 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
     setResetModalVisible(false);
   };
 
+  /**
+   * 사용자 지정 음성 명령어 토글 처리
+   */
+  const handleCustomVoiceCommandsToggle = () => {
+    setShowCustomVoiceCommands((prev) => !prev);
+  };
+
+  /**
+   * 기본 음성 명령어 설정 선택 처리
+   */
+  const handleDefaultVoiceCommandsToggle = () => {
+    setShowDefaultVoiceCommands((prev) => !prev);
+  };
+
+  /**
+   * 사용자 지정 음성 명령어 입력 처리
+   */
+  const handleVoiceCommandInputChange = useCallback((
+    key: VoiceCommandGroupKey,
+    index: number,
+    text: string
+  ) => {
+    setVoiceCommandInputs((prev) => {
+      const nextValues = [...prev[key]] as [string, string, string];
+      nextValues[index] = text.slice(0, 2);
+
+      return {
+        ...prev,
+        [key]: nextValues,
+      };
+    });
+  }, []);
+
   const deviceSettings: SettingsItem[] = [
     {
       label: '스크린 항상 켜두기',
@@ -215,11 +324,141 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = () => {
     },
   ];
 
+  const mainCounterVoiceCommandRows = VOICE_COMMAND_ROW_CONFIGS.filter(
+    (config) => config.sectionTitle === '메인 카운터'
+  );
+  const subCounterVoiceCommandRows = VOICE_COMMAND_ROW_CONFIGS.filter(
+    (config) => config.sectionTitle === '보조 카운터'
+  );
+
+  const renderVoiceCommandInputRow = useCallback((config: VoiceCommandRowConfig) => {
+    return (
+      <View key={config.key} className="mb-3 flex-row items-center pl-2">
+        <View className="w-24 pr-3">
+          <Text className="text-base text-black">{config.label}</Text>
+        </View>
+
+        <View className="flex-1 pl-3">
+          <View className="flex-row">
+            <View className="flex-1 pr-2">
+              <TextInput
+                className="h-11 rounded-xl border border-lightgray bg-white px-3 text-center text-base text-black"
+                value={voiceCommandInputs[config.key][0]}
+                onChangeText={(text) =>
+                  handleVoiceCommandInputChange(config.key, 0, text)
+                }
+                placeholder={config.placeholders[0]}
+                placeholderTextColor="#B8B8B8"
+                maxLength={2}
+                autoCapitalize="none"
+                autoCorrect={false}
+                textAlign="center"
+              />
+            </View>
+
+            <View className="mr-2 h-11 border-l border-lightgray" />
+
+            <View className="flex-[2] flex-row">
+              {config.placeholders.slice(1).map((placeholder, offset) => {
+                const index = offset + 1;
+
+                return (
+                  <TextInput
+                    key={`${config.key}-${index}`}
+                    className={`h-11 flex-1 rounded-xl border border-lightgray bg-white px-3 text-center text-base text-black ${
+                      offset === 0 ? '' : 'ml-2'
+                    }`}
+                    value={voiceCommandInputs[config.key][index]}
+                    onChangeText={(text) =>
+                      handleVoiceCommandInputChange(config.key, index, text)
+                    }
+                    placeholder={placeholder}
+                    placeholderTextColor="#B8B8B8"
+                    maxLength={2}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    textAlign="center"
+                  />
+                );
+              })}
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  }, [handleVoiceCommandInputChange, voiceCommandInputs]);
+
   return (
     <>
       <View className="mb-6">
         <SettingsSection title="기기 설정" items={deviceSettings} />
         <SettingsSection title="카운터 설정" items={counterSettings} />
+        <View className="mb-6">
+          <SectionHeader title="음성인식 명령어" />
+
+          <View className="mb-3 rounded-2xl border border-lightgray bg-transparent py-2">
+            <SettingsAccordion
+              label="기본 설정"
+              checked={showDefaultVoiceCommands}
+              onToggle={handleDefaultVoiceCommandsToggle}
+            >
+              {DEFAULT_VOICE_COMMAND_SECTIONS.map((section, index) => (
+                <View
+                  key={section.title}
+                  className={`pl-4 ${
+                    index === 0 ? 'mb-3' : ''
+                  }`}
+                >
+                  <Text className="text-base font-semibold text-black">
+                    {section.title}
+                  </Text>
+                  <Text className="pl-4 pt-1 text-base leading-6 text-black">
+                    {section.description}
+                  </Text>
+                </View>
+              ))}
+            </SettingsAccordion>
+          </View>
+
+          <View className="rounded-2xl border border-lightgray bg-transparent py-2">
+            <SettingsAccordion
+              label="사용자 설정"
+              checked={showCustomVoiceCommands}
+              onToggle={handleCustomVoiceCommandsToggle}
+            >
+              <View className="mb-4 pl-4">
+                <Text className="mb-3 text-base font-medium text-black">
+                  메인 카운터
+                </Text>
+                <View className="mb-3 flex-row items-end pl-2">
+                  <View className="w-24 pr-3" />
+                  <View className="flex-1 pl-3">
+                    <View className="flex-row">
+                      <View className="flex-1 pr-2">
+                        <Text className="text-center text-xs text-darkgray">
+                          명령어
+                        </Text>
+                      </View>
+                      <View className="flex-[2]">
+                        <Text className="text-center text-xs text-darkgray">
+                          유사어
+                        </Text>
+                      </View>
+                    </View>
+                  </View>
+                </View>
+                {mainCounterVoiceCommandRows.map(renderVoiceCommandInputRow)}
+              </View>
+
+              <View className="pl-4">
+                <Text className="mb-3 text-base font-medium text-black">
+                  보조 카운터
+                </Text>
+                {subCounterVoiceCommandRows.map(renderVoiceCommandInputRow)}
+              </View>
+            </SettingsAccordion>
+          </View>
+        </View>
         <SettingsSection
           title="데이터 관리"
           items={dangerSettings}
