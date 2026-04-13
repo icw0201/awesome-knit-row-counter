@@ -19,10 +19,21 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
   onToggle,
   children,
 }) => {
-  const [contentHeight, setContentHeight] = useState(0);
-  const animation = useRef(new Animated.Value(checked ? 1 : 0)).current;
+  const [contentHeight, setContentHeight] = useState<number | null>(null);
+  const animation = useRef(new Animated.Value(0)).current;
+  const hasInitializedAnimation = useRef(false);
 
   useEffect(() => {
+    if (contentHeight === null) {
+      return;
+    }
+
+    if (!hasInitializedAnimation.current) {
+      animation.setValue(checked ? 1 : 0);
+      hasInitializedAnimation.current = true;
+      return;
+    }
+
     Animated.timing(animation, {
       toValue: checked ? 1 : 0,
       duration: 240,
@@ -42,7 +53,7 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
   const animatedContainerStyle = useMemo(() => ({
     height: animation.interpolate({
       inputRange: [0, 1],
-      outputRange: [0, contentHeight],
+      outputRange: [0, contentHeight ?? 0],
     }),
     opacity: animation.interpolate({
       inputRange: [0, 1],
@@ -75,6 +86,18 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
           selectedFillClassName="bg-red-orange-400"
         />
       </TouchableOpacity>
+
+      {contentHeight === null && (
+        <View
+          className="absolute left-0 right-0 opacity-0"
+          pointerEvents="none"
+          onLayout={handleContentLayout}
+        >
+          <View className="bg-transparent px-4 pt-2">
+            {children}
+          </View>
+        </View>
+      )}
 
       <Animated.View
         className="overflow-hidden"

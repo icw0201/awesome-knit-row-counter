@@ -1,6 +1,13 @@
 // src/components/TextInputBox.tsx
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
-import { View, TextInput as RNTextInput, Text, TextInputProps } from 'react-native';
+import {
+  View,
+  TextInput as RNTextInput,
+  Text,
+  TextInputProps,
+  NativeSyntheticEvent,
+  TextInputSubmitEditingEventData,
+} from 'react-native';
 import clsx from 'clsx';
 
 // 상수 정의
@@ -54,7 +61,10 @@ interface TextInputBoxProps {
   inputClassName?: string;
   required?: boolean;
   returnKeyType?: TextInputProps['returnKeyType'];
-  onSubmitEditing?: TextInputProps['onSubmitEditing'];
+  onSubmitEditing?: (
+    event: NativeSyntheticEvent<TextInputSubmitEditingEventData>,
+    submittedValue: string
+  ) => void;
   onFocus?: TextInputProps['onFocus'];
   blurOnSubmit?: boolean;
   editable?: boolean;
@@ -96,6 +106,21 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   const inputRef = React.useRef<RNTextInput>(null);
   const shouldAllowComposingOverflow = type === 'text' || type === 'longText';
 
+  const getTrimmedValue = React.useCallback(
+    (text: string) => {
+      if (
+        !shouldAllowComposingOverflow ||
+        typeof maxLength !== 'number' ||
+        Array.from(text).length <= maxLength
+      ) {
+        return text;
+      }
+
+      return Array.from(text).slice(0, maxLength).join('');
+    },
+    [maxLength, shouldAllowComposingOverflow]
+  );
+
   // ref를 통해 focus, blur 메서드 노출
   useImperativeHandle(ref, () => ({
     focus: () => {
@@ -107,16 +132,12 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   }));
 
   const trimTextToMaxLength = React.useCallback(() => {
-    if (
-      !shouldAllowComposingOverflow
-      || typeof maxLength !== 'number'
-      || Array.from(value).length <= maxLength
-    ) {
-      return;
-    }
+    const trimmedValue = getTrimmedValue(value);
 
-    onChangeText?.(Array.from(value).slice(0, maxLength).join(''));
-  }, [maxLength, onChangeText, shouldAllowComposingOverflow, value]);
+    if (trimmedValue !== value) {
+      onChangeText?.(trimmedValue);
+    }
+  }, [getTrimmedValue, onChangeText, value]);
 
   /**
    * 숫자 입력 처리 함수
@@ -196,8 +217,10 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
 
   // 문자 수 카운터 표시 여부
   const shouldShowCounter = showCounter;
-  const currentLength = (value ?? '').length;
-  const maxLengthForType = type === 'longText' ? INPUT_LIMITS.longText : maxLength;
+  const currentLength = Array.from(value ?? '').length;
+  const maxLengthForType = type === 'longText'
+    ? (maxLength ?? INPUT_LIMITS.longText)
+    : maxLength;
 
   // NativeWind 환경에서 같은 속성(예: mb-*)이 한 번에 여러 개 섞일 때 override가
   // 기대대로 동작하지 않는 케이스가 있어, 기본값을 조건부로 넣어 충돌 자체를 피한다.
@@ -247,8 +270,13 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
         maxLength={shouldAllowComposingOverflow ? undefined : maxLength}
         returnKeyType={returnKeyType}
         onSubmitEditing={(event) => {
-          trimTextToMaxLength();
-          onSubmitEditing?.(event);
+          const trimmedValue = getTrimmedValue(value);
+
+          if (trimmedValue !== value) {
+            onChangeText?.(trimmedValue);
+          }
+
+          onSubmitEditing?.(event, trimmedValue);
         }}
         blurOnSubmit={blurOnSubmit}
         editable={editable}
