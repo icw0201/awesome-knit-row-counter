@@ -20,6 +20,7 @@ import {
 } from '@constants/hardwareKeyCodes';
 import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, ScreenSize } from '@constants/screenSizeConfig';
 import {
+  getEffectiveVoiceCommandSetting,
   getTooltipEnabledSetting,
   getSubSlideModalsEnabledSetting,
   setSubSlideModalsEnabledSetting,
@@ -144,6 +145,9 @@ const CounterDetail = () => {
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
   const [subSlideModalsEnabled, setSubSlideModalsEnabled] = useState(
     () => getSubSlideModalsEnabledSetting()
+  );
+  const [voiceCommandSetting, setVoiceCommandSetting] = useState(() =>
+    getEffectiveVoiceCommandSetting()
   );
   const [voiceRecognitionError, setVoiceRecognitionError] = useState<string>('');
   const {
@@ -284,6 +288,7 @@ const CounterDetail = () => {
   /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
   useVoiceCommands(
     !!counter && effectiveVoiceCommandsActive,
+    voiceCommandSetting,
     runHighlightedAdd,
     runHighlightedSubtract,
     runHighlightedSubAdd,
@@ -294,11 +299,12 @@ const CounterDetail = () => {
 
   /**
    * 화면 포커스 시 실행되는 효과
-   * 툴팁 설정만 다시 반영한다.
+   * 툴팁/음성 명령어 설정을 다시 반영한다.
    */
   useFocusEffect(
     useCallback(() => {
       setTooltipEnabled(getTooltipEnabledSetting());
+      setVoiceCommandSetting(getEffectiveVoiceCommandSetting());
     }, [])
   );
 
@@ -430,6 +436,8 @@ const CounterDetail = () => {
         onSubtract={runHighlightedSubtract}
         highlightedAction={touchAreaHighlight}
         showVoiceCommandHints={effectiveVoiceCommandsActive}
+        addVoiceHint={voiceCommandSetting.addHint}
+        subtractVoiceHint={voiceCommandSetting.subtractHint}
         disabled={isInputBlocked}
       />
 
@@ -584,6 +592,8 @@ const CounterDetail = () => {
           onAdd={runHighlightedSubAdd}
           onSubtract={runHighlightedSubSubtract}
           showVoiceCommandHints={effectiveVoiceCommandsActive}
+          addVoiceHint={voiceCommandSetting.subAddHint}
+          subtractVoiceHint={voiceCommandSetting.subSubtractHint}
           highlightedAction={subTouchAreaHighlight}
           inputDisabled={isInputBlocked}
           onReset={handleSubReset}

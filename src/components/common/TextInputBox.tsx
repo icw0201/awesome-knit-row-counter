@@ -1,6 +1,13 @@
 // src/components/TextInputBox.tsx
 import React, { useState, forwardRef, useImperativeHandle } from 'react';
-import { View, TextInput as RNTextInput, Text, TextInputProps } from 'react-native';
+import {
+  View,
+  TextInput as RNTextInput,
+  Text,
+  TextInputProps,
+  NativeSyntheticEvent,
+  TextInputSubmitEditingEventData,
+} from 'react-native';
 import clsx from 'clsx';
 
 // 상수 정의
@@ -51,11 +58,21 @@ interface TextInputBoxProps {
   type: TextInputType;
   maxLength?: number;
   containerClassName?: string;
+  inputClassName?: string;
   required?: boolean;
   returnKeyType?: TextInputProps['returnKeyType'];
-  onSubmitEditing?: TextInputProps['onSubmitEditing'];
+  onSubmitEditing?: (
+    event: NativeSyntheticEvent<TextInputSubmitEditingEventData>,
+    submittedValue: string
+  ) => void;
+  onFocus?: TextInputProps['onFocus'];
   blurOnSubmit?: boolean;
   editable?: boolean;
+  showCounter?: boolean;
+  autoCapitalize?: TextInputProps['autoCapitalize'];
+  autoCorrect?: boolean;
+  textAlign?: TextInputProps['textAlign'];
+  fillWidth?: boolean;
 }
 
 /**
@@ -71,15 +88,38 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   type,
   maxLength = type === 'longText' ? INPUT_LIMITS.longText : INPUT_LIMITS.text,
   containerClassName = '',
+  inputClassName = '',
   required = false,
   returnKeyType = 'done',
   onSubmitEditing,
+  onFocus,
   blurOnSubmit = false,
   editable = true,
+  showCounter = type === 'longText' || type === 'text',
+  autoCapitalize = 'sentences',
+  autoCorrect = true,
+  textAlign,
+  fillWidth = true,
 }, ref) => {
   // 입력 필드의 포커스 상태 관리
   const [isFocused, setIsFocused] = useState(false);
   const inputRef = React.useRef<RNTextInput>(null);
+  const shouldAllowComposingOverflow = type === 'text' || type === 'longText';
+
+  const getTrimmedValue = React.useCallback(
+    (text: string) => {
+      if (
+        !shouldAllowComposingOverflow ||
+        typeof maxLength !== 'number' ||
+        Array.from(text).length <= maxLength
+      ) {
+        return text;
+      }
+
+      return Array.from(text).slice(0, maxLength).join('');
+    },
+    [maxLength, shouldAllowComposingOverflow]
+  );
 
   // ref를 통해 focus, blur 메서드 노출
   useImperativeHandle(ref, () => ({
@@ -90,6 +130,14 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
       inputRef.current?.blur();
     },
   }));
+
+  const trimTextToMaxLength = React.useCallback(() => {
+    const trimmedValue = getTrimmedValue(value);
+
+    if (trimmedValue !== value) {
+      onChangeText?.(trimmedValue);
+    }
+  }, [getTrimmedValue, onChangeText, value]);
 
   /**
    * 숫자 입력 처리 함수
@@ -128,8 +176,12 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
    * @param text - 입력된 텍스트
    */
   const handleTextInput = (text: string) => {
-    const limit = type === 'longText' ? INPUT_LIMITS.longText : INPUT_LIMITS.text;
-    if (text.length > limit) {
+    const limit = maxLength ?? (type === 'longText' ? INPUT_LIMITS.longText : INPUT_LIMITS.text);
+    const allowedLimit = shouldAllowComposingOverflow
+      ? limit + 1
+      : limit;
+
+    if (Array.from(text).length > allowedLimit) {
       return;
     }
     onChangeText?.(text);
@@ -159,13 +211,16 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
     'w-full px-3 border rounded-xl',
     type === 'longText' ? 'text-sm min-h-[54px]' : 'h-[54px]',
     editable ? 'bg-white text-black' : 'bg-lightgray text-darkgray',
-    isFocused ? 'border-red-orange-400' : 'border-lightgray'
+    isFocused ? 'border-red-orange-400' : 'border-lightgray',
+    inputClassName
   );
 
   // 문자 수 카운터 표시 여부
-  const shouldShowCounter = type === 'longText' || type === 'text';
-  const currentLength = (value ?? '').length;
-  const maxLengthForType = type === 'longText' ? INPUT_LIMITS.longText : maxLength;
+  const shouldShowCounter = showCounter;
+  const currentLength = Array.from(value ?? '').length;
+  const maxLengthForType = type === 'longText'
+    ? (maxLength ?? INPUT_LIMITS.longText)
+    : maxLength;
 
   // NativeWind 환경에서 같은 속성(예: mb-*)이 한 번에 여러 개 섞일 때 override가
   // 기대대로 동작하지 않는 케이스가 있어, 기본값을 조건부로 넣어 충돌 자체를 피한다.
@@ -176,7 +231,7 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   const shouldShowLabelArea = hasLabel || shouldShowCounter;
 
   return (
-    <View className={clsx('w-full', !hasMbOverride && 'mb-4', !hasLabel && 'self-center', containerClassName)}>
+    <View className={clsx(fillWidth && 'w-full', !hasMbOverride && 'mb-4', !hasLabel && 'self-center', containerClassName)}>
       {/* 라벨과 문자 수 카운터를 표시하는 상단 영역 */}
       {shouldShowLabelArea && (
         <View className="pl-1 mb-1 flex-row justify-between items-center">
@@ -201,15 +256,33 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
         multiline={type === 'longText'}
         textAlignVertical="center"
         placeholder={placeholder}
+        placeholderTextColor="#767676"
         value={value}
         onChangeText={handleChangeText}
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-        maxLength={type === 'longText' ? maxLength : undefined}
+        onFocus={(event) => {
+          setIsFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={() => {
+          setIsFocused(false);
+          trimTextToMaxLength();
+        }}
+        maxLength={shouldAllowComposingOverflow ? undefined : maxLength}
         returnKeyType={returnKeyType}
-        onSubmitEditing={onSubmitEditing}
+        onSubmitEditing={(event) => {
+          const trimmedValue = getTrimmedValue(value);
+
+          if (trimmedValue !== value) {
+            onChangeText?.(trimmedValue);
+          }
+
+          onSubmitEditing?.(event, trimmedValue);
+        }}
         blurOnSubmit={blurOnSubmit}
         editable={editable}
+        autoCapitalize={autoCapitalize}
+        autoCorrect={autoCorrect}
+        textAlign={textAlign}
       />
     </View>
   );

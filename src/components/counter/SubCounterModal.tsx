@@ -16,6 +16,8 @@ interface SubCounterModalProps {
   onAdd?: () => void;
   onSubtract?: () => void;
   showVoiceCommandHints?: boolean;
+  addVoiceHint?: string;
+  subtractVoiceHint?: string;
   highlightedAction?: 'add' | 'subtract' | null;
   inputDisabled?: boolean;
   handleWidth?: number;
@@ -40,6 +42,8 @@ export const SubCounterModal: React.FC<SubCounterModalProps> = ({
   onAdd,
   onSubtract,
   showVoiceCommandHints = false,
+  addVoiceHint = '홍실',
+  subtractVoiceHint = '청실',
   highlightedAction = null,
   inputDisabled = false,
   handleWidth = 30,
@@ -73,6 +77,8 @@ export const SubCounterModal: React.FC<SubCounterModalProps> = ({
         onAdd={onAdd}
         onSubtract={onSubtract}
         showVoiceCommandHints={showVoiceCommandHints}
+        addVoiceHint={addVoiceHint}
+        subtractVoiceHint={subtractVoiceHint}
         highlightedAction={highlightedAction}
         disabled={inputDisabled}
       />

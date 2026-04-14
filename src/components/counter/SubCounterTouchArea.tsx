@@ -8,6 +8,8 @@ interface SubCounterTouchAreaProps {
   onAdd?: () => void;
   onSubtract?: () => void;
   showVoiceCommandHints?: boolean;
+  addVoiceHint?: string;
+  subtractVoiceHint?: string;
   highlightedAction?: 'add' | 'subtract' | null;
   disabled?: boolean;
 }
@@ -24,6 +26,8 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
   onAdd,
   onSubtract,
   showVoiceCommandHints = false,
+  addVoiceHint = '홍실',
+  subtractVoiceHint = '청실',
   highlightedAction = null,
   disabled = false,
 }) => {
@@ -61,7 +65,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
           {showVoiceCommandHints && (
             <View className="absolute top-8 flex-row items-center">
               <Speech size={12} color={voiceHintIconColor} strokeWidth={2} />
-              <Text className="ml-1 text-xs text-darkgray">청실</Text>
+              <Text className="ml-1 text-xs text-darkgray">{subtractVoiceHint}</Text>
             </View>
           )}
         </View>
@@ -89,7 +93,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
           {showVoiceCommandHints && (
             <View className="absolute top-8 flex-row items-center">
               <Speech size={12} color={voiceHintIconColor} strokeWidth={2} />
-              <Text className="ml-1 text-xs text-darkgray">홍실</Text>
+              <Text className="ml-1 text-xs text-darkgray">{addVoiceHint}</Text>
             </View>
           )}
         </View>
