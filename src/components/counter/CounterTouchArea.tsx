@@ -8,6 +8,8 @@ interface CounterTouchAreaProps {
   onSubtract: () => void;
   highlightedAction?: 'add' | 'subtract' | null;
   showVoiceCommandHints?: boolean;
+  addVoiceHint?: string;
+  subtractVoiceHint?: string;
   disabled?: boolean;
 }
 
@@ -20,6 +22,8 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
   onSubtract,
   highlightedAction = null,
   showVoiceCommandHints = false,
+  addVoiceHint = '곤지',
+  subtractVoiceHint = '연지',
   disabled = false,
 }) => {
   const isSubtractHighlighted = highlightedAction === 'subtract';
@@ -49,7 +53,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
           {showVoiceCommandHints && (
             <View className="absolute top-[68px] flex-row items-center">
               <Speech size={16} color={voiceHintIconColor} strokeWidth={2} />
-              <Text className="ml-1 text-sm text-darkgray">연지</Text>
+              <Text className="ml-1 text-sm text-darkgray">{subtractVoiceHint}</Text>
             </View>
           )}
         </View>
@@ -75,7 +79,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
           {showVoiceCommandHints && (
             <View className="absolute top-[68px] flex-row items-center">
               <Speech size={16} color={voiceHintIconColor} strokeWidth={2} />
-              <Text className="ml-1 text-sm text-darkgray">곤지</Text>
+              <Text className="ml-1 text-sm text-darkgray">{addVoiceHint}</Text>
             </View>
           )}
         </View>
