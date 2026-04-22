@@ -1,7 +1,7 @@
 // src/components/counter/CounterDirection.tsx
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Image, Pressable, Text } from 'react-native';
-import Animated, { FadeIn, Keyframe, LinearTransition } from 'react-native-reanimated';
+import Animated, { Keyframe, LinearTransition } from 'react-native-reanimated';
 import { Way, RepeatRule } from '@storage/types';
 import { directionImages } from '@assets/images';
 import EmphasisBubbleIcon from '@assets/images/way/emphasis_bubble.svg';
@@ -33,6 +33,9 @@ const TEXT_CONTAINER_WIDTH_RATIO = 0.6; // 텍스트 컨테이너의 너비 비�
 // 규칙 순회 간격
 const RULE_ROTATION_INTERVAL_MS = 2000; // 규칙 순회 간격 (밀리초)
 const DIRECTION_VERTICAL_OFFSET_RATIO = 0.18; // 방향 컴포넌트 세로 오프셋 (이미지 높이 비율)
+const DISAPPEARING_BUBBLE_ANIMATION_DURATION_MS = 260; // 사라지는 말풍선 애니메이션 길이
+const FLOATING_THIRD_BUBBLE_ANIMATION_DURATION_MS = 460; // 마지막 말풍선 떠오름 애니메이션 길이
+const STACK_LAYOUT_TRANSITION_DURATION_MS = 280; // 중간 말풍선 위치 전환 애니메이션 길이
 
 const BUBBLE_BASE_LEFT_RATIO = 0.05 + 0.5 - BUBBLE_SIZE_SCALE / 2;
 const TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO =
@@ -87,10 +90,15 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     }))
   );
 
-  // 여러 규칙이 있을 때 순회를 위한 상태
-  const [currentRuleIndex, setCurrentRuleIndex] = useState(0);
+  /**
+   * 여러 규칙이 있을 때 순회를 위한 상태 (단조증가 카운터)
+   * - `% rulesLength`로 나눈 값이 실제 표시 인덱스이지만,
+   *   내부적으로는 절대 리셋되지 않는 단조증가 값으로 관리한다.
+   * - 이렇게 해야 말풍선 key에 섞는 "도착 시점"이 순환/리셋으로 인해
+   *   충돌(같은 규칙의 서로 다른 인스턴스가 동일 key를 갖는 문제)하지 않는다.
+   */
+  const [rotationCount, setRotationCount] = useState(0);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const previousVisibleRuleKeysRef = useRef<string[]>([]);
   const hasMountedStackRef = useRef(false);
 
   /**
@@ -99,7 +107,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
    * - 같은 단이라도 규칙 편집으로 인해 적용 규칙 목록이 달라졌을 때
    */
   useEffect(() => {
-    setCurrentRuleIndex(0);
+    setRotationCount(0);
   }, [currentCount, appliedRulesKey]);
 
   /**
@@ -113,9 +121,8 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     }
 
     if (appliedRules.length > 1) {
-      const rulesLength = appliedRules.length;
       intervalRef.current = setInterval(() => {
-        setCurrentRuleIndex((prevIndex) => (prevIndex + 1) % rulesLength);
+        setRotationCount((prevCount) => prevCount + 1);
       }, RULE_ROTATION_INTERVAL_MS);
     }
 
@@ -127,31 +134,36 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     };
   }, [appliedRulesKey, appliedRules.length]);
 
-  // 현재 규칙부터 뒤쪽 규칙까지 최대 3개를 스택으로 표시
+  /**
+   * 현재 규칙부터 뒤쪽 규칙까지 최대 3개를 스택으로 표시
+   * - stackIndex 0 = 맨 앞(현재 표시 중인 말풍선)
+   * - stackIndex visibleCount-1 = 스택의 꼬리(가장 뒤, 가장 위쪽)
+   * - arrivalTime = 해당 말풍선이 처음 꼬리에 도착했던 시점의 rotationCount (단조증가)
+   *   - 같은 규칙이 순환 중 반복적으로 등장할 때, 서로 다른 "인스턴스"로 구분하기 위한 키 요소
+   *   - 2~3개 규칙에서도 퇴장/진입이 실제 mount/unmount로 일어나게 해서 애니메이션이 자연스럽게 적용됨
+   */
   const visibleRules = useMemo(() => {
     if (appliedRules.length === 0) {
       return [];
     }
 
-    const visibleCount = Math.min(MAX_VISIBLE_RULE_BUBBLES, appliedRules.length);
-    return Array.from({ length: visibleCount }, (_, stackIndex) => ({
-      stackIndex,
-      rule: appliedRules[(currentRuleIndex + stackIndex) % appliedRules.length],
-    }));
-  }, [appliedRules, currentRuleIndex]);
+    const rulesLength = appliedRules.length;
+    const visibleCount = Math.min(MAX_VISIBLE_RULE_BUBBLES, rulesLength);
+    return Array.from({ length: visibleCount }, (_, stackIndex) => {
+      const rule = appliedRules[(rotationCount + stackIndex) % rulesLength];
+      const arrivalTime = rotationCount - (visibleCount - 1 - stackIndex);
+      return {
+        stackIndex,
+        rule,
+        bubbleKey: `${buildRuleKey(rule)}@${arrivalTime}`,
+      };
+    });
+  }, [appliedRules, rotationCount]);
 
   const currentRule = visibleRules[0]?.rule;
-  const visibleRuleKeys = visibleRules.map(({ rule }) => buildRuleKey(rule));
-  const movedToBackRuleKey =
-    previousVisibleRuleKeysRef.current.length === visibleRuleKeys.length &&
-    previousVisibleRuleKeysRef.current[0] === visibleRuleKeys[visibleRuleKeys.length - 1] &&
-    previousVisibleRuleKeysRef.current.slice(1).every((key, index) => key === visibleRuleKeys[index])
-      ? visibleRuleKeys[visibleRuleKeys.length - 1]
-      : null;
-
-  useEffect(() => {
-    previousVisibleRuleKeysRef.current = visibleRuleKeys;
-  }, [visibleRuleKeys]);
+  // 사용자에게 보여줄 1-based 인덱스는 순환값 사용
+  const displayRuleIndex =
+    appliedRules.length > 0 ? (rotationCount % appliedRules.length) + 1 : 0;
 
   useEffect(() => {
     hasMountedStackRef.current = true;
@@ -164,6 +176,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     }
     return calculateInitialFontSize(currentRule.message.length, imageWidth, imageHeight);
   }, [currentRule?.message, imageHeight, imageWidth]);
+
   const disappearingBubbleExitAnimation = useMemo(
     () =>
       new Keyframe({
@@ -175,7 +188,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
           opacity: 0,
           transform: [{ translateY: imageHeight * 0.22 }, { scale: 1.18 }],
         },
-      }).duration(260),
+      }).duration(DISAPPEARING_BUBBLE_ANIMATION_DURATION_MS),
     [imageHeight]
   );
   const disappearingBubbleGhostExitAnimation = useMemo(
@@ -189,7 +202,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
           opacity: 0,
           transform: [{ translateY: imageHeight * 0.1 }, { scale: 1.28 }],
         },
-      }).duration(260),
+      }).duration(DISAPPEARING_BUBBLE_ANIMATION_DURATION_MS),
     [imageHeight]
   );
   const floatingThirdBubbleEnterAnimation = useMemo(
@@ -207,7 +220,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
           opacity: 1,
           transform: [{ translateY: 0 }, { scale: 1 }],
         },
-      }).duration(460),
+      }).duration(FLOATING_THIRD_BUBBLE_ANIMATION_DURATION_MS),
     [imageHeight]
   );
 
@@ -232,6 +245,11 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
       imageSource = directionImages.way_plain;
     }
   }
+
+  const bubbleBaseWidth = imageWidth * BUBBLE_SIZE_SCALE;
+  const bubbleBaseHeight = imageHeight * BUBBLE_SIZE_SCALE;
+  const bubbleBaseLeft = imageWidth * BUBBLE_BASE_LEFT_RATIO;
+  const bubbleBaseTop = imageHeight * -0.8;
 
   return (
     <View style={{ height: imageHeight }}>
@@ -259,7 +277,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                   pointerEvents="none"
                 >
                   <Text className="text-sm text-darkgray text-center font-bold">
-                    {currentRuleIndex + 1}/{appliedRules.length}
+                    {displayRuleIndex}/{appliedRules.length}
                   </Text>
                 </View>
               )}
@@ -267,46 +285,28 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
               {visibleRules
                 .slice()
                 .reverse()
-                .map(({ stackIndex, rule }) => {
-                  const ruleKey = buildRuleKey(rule);
-                  const bubbleBaseWidth = imageWidth * BUBBLE_SIZE_SCALE;
-                  const bubbleBaseHeight = imageHeight * BUBBLE_SIZE_SCALE;
-                  const bubbleBaseLeft = imageWidth * BUBBLE_BASE_LEFT_RATIO;
-                  const bubbleBaseTop = imageHeight * -0.8;
+                .map(({ stackIndex, rule, bubbleKey }) => {
                   const scale = 1 - STACK_SCALE_STEP * stackIndex;
                   const bubbleTop = bubbleBaseTop - imageHeight * STACK_VERTICAL_GAP_RATIO * stackIndex;
                   const bubbleLeft = bubbleBaseLeft;
                   const isCurrentBubble = stackIndex === 0;
-                  const shouldSkipLayoutAnimation =
-                    movedToBackRuleKey === ruleKey && stackIndex === visibleRules.length - 1;
-                  const shouldAnimateEnterExit = hasMountedStackRef.current && !preferReducedMotion;
-                  const shouldUseDisappearingExitAnimation =
-                    shouldAnimateEnterExit && movedToBackRuleKey !== ruleKey;
-                  const shouldUseFloatingThirdBubbleEnterAnimation =
-                    shouldAnimateEnterExit && stackIndex === MAX_VISIBLE_RULE_BUBBLES - 1;
+                  const shouldAnimate = hasMountedStackRef.current && !preferReducedMotion;
+                  // 꼬리(가장 뒤)에서 새로 들어오는 말풍선은 떠오름 애니메이션
+                  // - 2개 규칙에서는 꼬리가 stackIndex 1이므로 이 조건에 걸리지 않아 그냥 등장
+                  // - 3개 이상에서는 꼬리가 stackIndex 2이므로 떠오름 애니메이션 적용
+                  const shouldUseFloatingEnter =
+                    shouldAnimate && stackIndex === MAX_VISIBLE_RULE_BUBBLES - 1;
 
                   return (
                     <Animated.View
-                      key={ruleKey}
+                      key={bubbleKey}
                       layout={
-                        preferReducedMotion || shouldSkipLayoutAnimation
+                        preferReducedMotion
                           ? undefined
-                          : LinearTransition.duration(280)
+                          : LinearTransition.duration(STACK_LAYOUT_TRANSITION_DURATION_MS)
                       }
-                      entering={
-                        shouldUseFloatingThirdBubbleEnterAnimation
-                          ? floatingThirdBubbleEnterAnimation
-                          : shouldAnimateEnterExit
-                          ? FadeIn.duration(180).withInitialValues({
-                              opacity: 0,
-                            })
-                          : undefined
-                      }
-                      exiting={
-                        shouldUseDisappearingExitAnimation
-                          ? disappearingBubbleExitAnimation
-                          : undefined
-                      }
+                      entering={shouldUseFloatingEnter ? floatingThirdBubbleEnterAnimation : undefined}
+                      exiting={shouldAnimate ? disappearingBubbleExitAnimation : undefined}
                       pointerEvents="none"
                       style={{
                         position: 'absolute',
@@ -317,13 +317,10 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                         zIndex: 1,
                       }}
                     >
+                      {/* 퇴장 시에만 잠깐 보이는 블러 잔상 레이어 (평상시 opacity 0) */}
                       <Animated.View
                         pointerEvents="none"
-                        exiting={
-                          shouldUseDisappearingExitAnimation
-                            ? disappearingBubbleGhostExitAnimation
-                            : undefined
-                        }
+                        exiting={shouldAnimate ? disappearingBubbleGhostExitAnimation : undefined}
                         style={{
                           position: 'absolute',
                           top: 0,
@@ -339,7 +336,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
 
                           return (
                             <View
-                              key={`${ruleKey}-ghost-${layerIndex}`}
+                              key={`${bubbleKey}-ghost-${layerIndex}`}
                               pointerEvents="none"
                               style={{
                                 position: 'absolute',
