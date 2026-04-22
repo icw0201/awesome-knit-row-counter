@@ -25,10 +25,15 @@ const BUBBLE_SIZE_SCALE = 1.15; // 버블 이미지 크기 배율
 const MAX_VISIBLE_RULE_BUBBLES = 3; // 현재 포함 최대 3개의 말풍선만 노출
 const STACK_VERTICAL_GAP_RATIO = 0.14; // 말풍선 스택 간 세로 간격
 const STACK_SCALE_STEP = 0.12; // 뒤쪽 말풍선 축소 비율
+const BUBBLE_STACK_TOP_RATIO = -0.8; // 스택 맨 앞(stackIndex=0) 말풍선의 세로 위치 (이미지 높이 비율)
 
 // 텍스트 컨테이너 위치 상수
 const TEXT_CONTAINER_LEFT_RATIO = 0.2; // 텍스트 컨테이너의 좌측 오프셋 비율 (이미지 너비 대비)
 const TEXT_CONTAINER_WIDTH_RATIO = 0.6; // 텍스트 컨테이너의 너비 비율 (이미지 너비 대비)
+const DEFAULT_TEXT_FONT_SIZE_RATIO = 0.3; // 메시지가 없을 때 사용할 기본 폰트 크기 (이미지 높이 비율)
+
+// 다중 규칙 라벨 위치 (말풍선 스택 위쪽에 분리 표시)
+const MULTI_RULE_LABEL_BASE_TOP_RATIO = -1.3;
 
 // 규칙 순회 간격
 const RULE_ROTATION_INTERVAL_MS = 2000; // 규칙 순회 간격 (밀리초)
@@ -42,6 +47,26 @@ const TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO =
   (TEXT_CONTAINER_LEFT_RATIO - BUBBLE_BASE_LEFT_RATIO) / BUBBLE_SIZE_SCALE;
 const TEXT_CONTAINER_IN_BUBBLE_WIDTH_RATIO = TEXT_CONTAINER_WIDTH_RATIO / BUBBLE_SIZE_SCALE;
 
+/**
+ * 퇴장 시 재생되는 블러 잔상 레이어 구성
+ * - 본체가 블러로 사라질 때 살짝 뒤로 번지는 잔상 효과를 내기 위해
+ *   크기·투명도·세로 오프셋을 조금씩 다르게 한 복제 레이어를 겹쳐서 렌더링한다.
+ */
+const DISAPPEARING_GHOST_LAYERS: ReadonlyArray<{
+  opacity: number;
+  scale: number;
+  verticalOffsetRatio: number;
+}> = [
+  { opacity: 0.16, scale: 1.05, verticalOffsetRatio: 0 },
+  { opacity: 0.1, scale: 1.12, verticalOffsetRatio: 0.015 },
+  { opacity: 0.06, scale: 1.19, verticalOffsetRatio: 0.03 },
+];
+
+/**
+ * 규칙 고유 key 생성 함수
+ * - 동일 규칙인지 판별할 때 사용
+ * - 스택 내 렌더링 key는 여기에 "도착 시점"을 덧붙여 중복을 방지한다 (visibleRules 참고)
+ */
 const buildRuleKey = (rule: RepeatRule) =>
   [
     rule.ruleNumber,
@@ -51,6 +76,26 @@ const buildRuleKey = (rule: RepeatRule) =>
     rule.message,
     rule.color,
   ].join(':');
+
+/**
+ * 현재 단의 규칙 적용 여부와 방향 토글 가능 여부에 따라 마스코트 방향 이미지를 선택한다.
+ */
+const resolveDirectionImage = (
+  isRuleAppliedToCurrentCount: boolean,
+  wayIsChange: boolean,
+  way: Way,
+) => {
+  if (isRuleAppliedToCurrentCount) {
+    if (!wayIsChange) {
+      return directionImages.emphasis_plain;
+    }
+    return way === 'front' ? directionImages.emphasis_front : directionImages.emphasis_back;
+  }
+  if (!wayIsChange) {
+    return directionImages.way_plain;
+  }
+  return way === 'front' ? directionImages.way_front : directionImages.way_back;
+};
 
 /**
  * 카운터 방향 표시 컴포넌트
@@ -172,7 +217,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   // 텍스트 길이에 따라 폰트 크기를 미리 계산
   const textFontSize = useMemo(() => {
     if (!currentRule?.message) {
-      return imageHeight * 0.3;
+      return imageHeight * DEFAULT_TEXT_FONT_SIZE_RATIO;
     }
     return calculateInitialFontSize(currentRule.message.length, imageWidth, imageHeight);
   }, [currentRule?.message, imageHeight, imageWidth]);
@@ -228,28 +273,13 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     return null;
   }
 
-  // 이미지 선택 로직
-  let imageSource;
-  if (isRuleAppliedToCurrentCount) {
-    // 규칙이 적용되는 단: emphasis 이미지 사용
-    if (wayIsChange) {
-      imageSource = way === 'front' ? directionImages.emphasis_front : directionImages.emphasis_back;
-    } else {
-      imageSource = directionImages.emphasis_plain;
-    }
-  } else {
-    // 규칙이 적용되지 않는 단: 기존 이미지 사용
-    if (wayIsChange) {
-      imageSource = way === 'front' ? directionImages.way_front : directionImages.way_back;
-    } else {
-      imageSource = directionImages.way_plain;
-    }
-  }
+  // 현재 단의 규칙 적용 여부와 방향 토글 가능 여부에 따라 마스코트 이미지 선택
+  const imageSource = resolveDirectionImage(isRuleAppliedToCurrentCount, wayIsChange, way);
 
   const bubbleBaseWidth = imageWidth * BUBBLE_SIZE_SCALE;
   const bubbleBaseHeight = imageHeight * BUBBLE_SIZE_SCALE;
   const bubbleBaseLeft = imageWidth * BUBBLE_BASE_LEFT_RATIO;
-  const bubbleBaseTop = imageHeight * -0.8;
+  const bubbleBaseTop = imageHeight * BUBBLE_STACK_TOP_RATIO;
 
   return (
     <View style={{ height: imageHeight }}>
@@ -271,7 +301,8 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                   style={{
                     top:
                       imageHeight *
-                      (-1.3 - STACK_VERTICAL_GAP_RATIO * Math.max(0, visibleRules.length - 2)),
+                      (MULTI_RULE_LABEL_BASE_TOP_RATIO -
+                        STACK_VERTICAL_GAP_RATIO * Math.max(0, visibleRules.length - 2)),
                     zIndex: 1,
                   }}
                   pointerEvents="none"
@@ -288,12 +319,13 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                 .map(({ stackIndex, rule, bubbleKey }) => {
                   const scale = 1 - STACK_SCALE_STEP * stackIndex;
                   const bubbleTop = bubbleBaseTop - imageHeight * STACK_VERTICAL_GAP_RATIO * stackIndex;
-                  const bubbleLeft = bubbleBaseLeft;
                   const isCurrentBubble = stackIndex === 0;
                   const shouldAnimate = hasMountedStackRef.current && !preferReducedMotion;
-                  // 꼬리(가장 뒤)에서 새로 들어오는 말풍선은 떠오름 애니메이션
-                  // - 2개 규칙에서는 꼬리가 stackIndex 1이므로 이 조건에 걸리지 않아 그냥 등장
-                  // - 3개 이상에서는 꼬리가 stackIndex 2이므로 떠오름 애니메이션 적용
+                  /**
+                   * 꼬리(가장 뒤)에서 새로 들어오는 말풍선은 떠오름 애니메이션을 적용
+                   * - 2개 규칙: 꼬리가 stackIndex 1이므로 이 조건에 걸리지 않아 그냥 등장
+                   * - 3개 이상: 꼬리가 stackIndex 2이므로 떠오름 애니메이션 적용
+                   */
                   const shouldUseFloatingEnter =
                     shouldAnimate && stackIndex === MAX_VISIBLE_RULE_BUBBLES - 1;
 
@@ -313,7 +345,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                         width: bubbleBaseWidth,
                         height: bubbleBaseHeight,
                         top: bubbleTop,
-                        left: bubbleLeft,
+                        left: bubbleBaseLeft,
                         zIndex: 1,
                       }}
                     >
@@ -330,33 +362,29 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                           opacity: 0,
                         }}
                       >
-                        {[0.16, 0.1, 0.06].map((layerOpacity, layerIndex) => {
-                          const ghostScale = 1.05 + layerIndex * 0.07;
-                          const ghostOffsetY = imageHeight * 0.015 * layerIndex;
-
-                          return (
-                            <View
-                              key={`${bubbleKey}-ghost-${layerIndex}`}
-                              pointerEvents="none"
-                              style={{
-                                position: 'absolute',
-                                top: ghostOffsetY,
-                                left: 0,
-                                width: bubbleBaseWidth,
-                                height: bubbleBaseHeight,
-                                opacity: layerOpacity,
-                                transform: [{ scale: ghostScale }],
-                              }}
-                            >
-                              <EmphasisBubbleIcon
-                                width={bubbleBaseWidth}
-                                height={bubbleBaseHeight}
-                                color={rule.color}
-                              />
-                            </View>
-                          );
-                        })}
+                        {DISAPPEARING_GHOST_LAYERS.map((layer, layerIndex) => (
+                          <View
+                            key={`${bubbleKey}-ghost-${layerIndex}`}
+                            pointerEvents="none"
+                            style={{
+                              position: 'absolute',
+                              top: imageHeight * layer.verticalOffsetRatio,
+                              left: 0,
+                              width: bubbleBaseWidth,
+                              height: bubbleBaseHeight,
+                              opacity: layer.opacity,
+                              transform: [{ scale: layer.scale }],
+                            }}
+                          >
+                            <EmphasisBubbleIcon
+                              width={bubbleBaseWidth}
+                              height={bubbleBaseHeight}
+                              color={rule.color}
+                            />
+                          </View>
+                        ))}
                       </Animated.View>
+                      {/* 본체 말풍선 아이콘 (스택 깊이에 따라 scale 적용) */}
                       <View
                         style={{
                           width: bubbleBaseWidth,
@@ -370,6 +398,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                           color={rule.color}
                         />
                       </View>
+                      {/* 맨 앞 말풍선에만 규칙 메시지 텍스트 표시 */}
                       {isCurrentBubble && (
                         <View
                           style={{
@@ -382,7 +411,6 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                             alignItems: 'center',
                           }}
                         >
-                          {/* 규칙 메시지 텍스트 */}
                           <Text
                             className="font-bold text-center"
                             style={{
