@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   SettingsBackup,
   SettingsCheckBoxes,
+  SettingsDataManagement,
   SettingsLinks,
   SettingsVersion,
 } from '@components/settings';
@@ -31,6 +32,8 @@ const Settings = () => {
           <SettingsCheckBoxes />
 
           <SettingsBackup />
+
+          <SettingsDataManagement />
 
           <SettingsLinks />
 

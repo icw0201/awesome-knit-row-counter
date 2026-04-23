@@ -1,6 +1,6 @@
 // src/components/settings/SettingsLinks.tsx
 import React from 'react';
-import { View, Linking } from 'react-native';
+import { View, Text, Linking } from 'react-native';
 import InAppReview from 'react-native-in-app-review';
 import { PLAY_STORE_URL, RELEASE_NOTES_URL } from '@constants/storeUrls';
 import IconBox from './IconBox';
@@ -62,6 +62,9 @@ const SettingsLinks: React.FC<SettingsLinksProps> = () => {
 
   return (
     <View className="mb-8">
+      <Text className="mb-3 px-1 text-sm font-semibold text-darkgray">
+        앱 정보
+      </Text>
       <IconBox
         title="별점 남기기"
         iconName="star"
