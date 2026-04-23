@@ -3,7 +3,12 @@ import React from 'react';
 import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SettingsCheckBoxes, SettingsLinks, SettingsVersion } from '@components/settings';
+import {
+  SettingsBackup,
+  SettingsCheckBoxes,
+  SettingsLinks,
+  SettingsVersion,
+} from '@components/settings';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
 
 /**
@@ -24,6 +29,8 @@ const Settings = () => {
           keyboardShouldPersistTaps="handled"
         >
           <SettingsCheckBoxes />
+
+          <SettingsBackup />
 
           <SettingsLinks />
 

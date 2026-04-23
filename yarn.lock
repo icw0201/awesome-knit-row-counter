@@ -4176,6 +4176,9 @@ __metadata:
     clsx: ^2.1.1
     eslint: ^8.19.0
     expo: ~53.0.0
+    expo-document-picker: ~13.1.6
+    expo-file-system: ~18.1.11
+    expo-sharing: ~13.1.5
     expo-speech-recognition: ^3.1.1
     jest: ^29.6.3
     lucide-react-native: ^0.543.0
@@ -6649,6 +6652,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"expo-document-picker@npm:~13.1.6":
+  version: 13.1.6
+  resolution: "expo-document-picker@npm:13.1.6"
+  peerDependencies:
+    expo: "*"
+  checksum: 6c53a8ce9f9aa5f37815c8a748d49e6c985d4c099dc9b245f426a367f22cc953647c9cfd8375b882dcc428863fcb73bc9c374cb420305856e91bf413b6823417
+  languageName: node
+  linkType: hard
+
 "expo-file-system@npm:~18.1.11":
   version: 18.1.11
   resolution: "expo-file-system@npm:18.1.11"
@@ -6704,6 +6716,15 @@ __metadata:
   dependencies:
     invariant: ^2.2.4
   checksum: 7a405f20f0bc056c7409be6d00bf9ad5203cb461301b1ecf0a03380138965ea4fa8e1e2456035a2ea3cb6adb44eac3b40cb2e3a5328a4b91054911982029ad15
+  languageName: node
+  linkType: hard
+
+"expo-sharing@npm:~13.1.5":
+  version: 13.1.5
+  resolution: "expo-sharing@npm:13.1.5"
+  peerDependencies:
+    expo: "*"
+  checksum: e1d23401762c2174b4483e4306771da7132c54f4be5880895452bd7e403d82a30311e601a9fe2b3eb361d611b1b2de1b98ba9908b86fe8912164044c7dc12f9d
   languageName: node
   linkType: hard
 
