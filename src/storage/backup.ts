@@ -125,6 +125,181 @@ const isThreeStringTuple = (value: unknown): value is [string, string, string] =
     && value.every((item) => typeof item === 'string');
 };
 
+const isOptionalString = (value: unknown): value is string | undefined => {
+  return value === undefined || typeof value === 'string';
+};
+
+const isOptionalFiniteNumber = (value: unknown): value is number | undefined => {
+  return value === undefined || (typeof value === 'number' && Number.isFinite(value));
+};
+
+const isOptionalBoolean = (value: unknown): value is boolean | undefined => {
+  return value === undefined || typeof value === 'boolean';
+};
+
+const isWay = (value: unknown): value is 'front' | 'back' => {
+  return value === 'front' || value === 'back';
+};
+
+const isOptionalWay = (value: unknown): value is 'front' | 'back' | undefined => {
+  return value === undefined || isWay(value);
+};
+
+const isNullableWay = (value: unknown): value is 'front' | 'back' | null => {
+  return value === null || isWay(value);
+};
+
+const isEditLogType = (value: unknown): boolean => {
+  return value === 'count_increase'
+    || value === 'count_decrease'
+    || value === 'count_reset'
+    || value === 'count_edit'
+    || value === 'sub_count_increase'
+    || value === 'sub_count_decrease'
+    || value === 'sub_count_reset'
+    || value === 'sub_count_edit'
+    || value === 'sub_rule_activate'
+    || value === 'sub_rule_deactivate'
+    || value === 'way_change_front'
+    || value === 'way_change_back';
+};
+
+const isInfo = (value: unknown): boolean => {
+  if (value === undefined) {
+    return true;
+  }
+
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return isOptionalString(value.startDate)
+    && isOptionalString(value.endDate)
+    && isOptionalString(value.gauge)
+    && isOptionalString(value.yarn)
+    && isOptionalString(value.needle)
+    && isOptionalString(value.notes);
+};
+
+const isRepeatRule = (value: unknown, dataVersion: number): boolean => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const hasBaseShape = typeof value.message === 'string'
+    && typeof value.endNumber === 'number'
+    && Number.isFinite(value.endNumber)
+    && typeof value.ruleNumber === 'number'
+    && Number.isFinite(value.ruleNumber)
+    && typeof value.color === 'string'
+    && (value.repeatCount === undefined || (typeof value.repeatCount === 'number' && Number.isFinite(value.repeatCount)));
+
+  if (!hasBaseShape) {
+    return false;
+  }
+
+  if (dataVersion >= 5) {
+    const isValidEndMode = value.endMode === 'endNumber'
+      || value.endMode === 'repeatCount'
+      || value.endMode === null;
+
+    return (typeof value.startNumber === 'number' && Number.isFinite(value.startNumber) || value.startNumber === null)
+      && isValidEndMode;
+  }
+
+  return value.startNumber === undefined
+    || value.startNumber === null
+    || (typeof value.startNumber === 'number' && Number.isFinite(value.startNumber));
+};
+
+const isSectionRecord = (value: unknown, dataVersion: number): boolean => {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const hasBaseShape = typeof value.time === 'string'
+    && typeof value.editedCount === 'number'
+    && Number.isFinite(value.editedCount)
+    && isEditLogType(value.editContent)
+    && isOptionalFiniteNumber(value.editedMainCount)
+    && isOptionalString(value.voiceCommand)
+    && isOptionalFiniteNumber(value.previousCount)
+    && isOptionalFiniteNumber(value.previousSubCount)
+    && isOptionalBoolean(value.previousSubRuleIsActive)
+    && (value.previousWay === undefined || isNullableWay(value.previousWay));
+
+  if (!hasBaseShape) {
+    return false;
+  }
+
+  if (dataVersion >= 5) {
+    return typeof value.date === 'string';
+  }
+
+  return value.date === undefined || typeof value.date === 'string';
+};
+
+const isProjectItem = (value: Record<string, unknown>): boolean => {
+  return isStringArray(value.counterIds)
+    && isInfo(value.info)
+    && isOptionalFiniteNumber(value.updatedAt);
+};
+
+const isCounterItem = (value: Record<string, unknown>, dataVersion: number): boolean => {
+  if (
+    typeof value.count !== 'number'
+    || !Number.isFinite(value.count)
+    || !isInfo(value.info)
+    || !(value.parentProjectId === undefined || value.parentProjectId === null || typeof value.parentProjectId === 'string')
+    || !isOptionalWay(value.way)
+    || !isOptionalFiniteNumber(value.updatedAt)
+  ) {
+    return false;
+  }
+
+  if (dataVersion >= 2) {
+    if (typeof value.mascotIsActive !== 'boolean' || typeof value.wayIsChange !== 'boolean') {
+      return false;
+    }
+  }
+
+  if (dataVersion >= 3) {
+    if (
+      typeof value.targetCount !== 'number'
+      || !Number.isFinite(value.targetCount)
+      || typeof value.elapsedTime !== 'number'
+      || !Number.isFinite(value.elapsedTime)
+      || typeof value.timerIsActive !== 'boolean'
+      || typeof value.timerIsPlaying !== 'boolean'
+      || typeof value.subCount !== 'number'
+      || !Number.isFinite(value.subCount)
+      || typeof value.subRule !== 'number'
+      || !Number.isFinite(value.subRule)
+      || typeof value.subRuleIsActive !== 'boolean'
+      || typeof value.subModalIsOpen !== 'boolean'
+      || !Array.isArray(value.repeatRules)
+      || !Array.isArray(value.sectionRecords)
+      || typeof value.sectionModalIsOpen !== 'boolean'
+    ) {
+      return false;
+    }
+  }
+
+  if (dataVersion >= 4 && Array.isArray(value.repeatRules)) {
+    if (!value.repeatRules.every((rule) => isRepeatRule(rule, dataVersion))) {
+      return false;
+    }
+  }
+
+  if (dataVersion >= 3 && Array.isArray(value.sectionRecords)) {
+    if (!value.sectionRecords.every((record) => isSectionRecord(record, dataVersion))) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
 const isSortCriteria = (value: unknown): value is SortCriteria => {
   return value === 'name'
     || value === 'created'
@@ -161,7 +336,7 @@ const isCustomVoiceCommandInputsSetting = (
     && isThreeStringTuple(value.subIncrease);
 };
 
-const isItemArray = (value: unknown): value is Item[] => {
+const isItemArray = (value: unknown, dataVersion: number): value is Item[] => {
   if (!Array.isArray(value)) {
     return false;
   }
@@ -172,11 +347,11 @@ const isItemArray = (value: unknown): value is Item[] => {
     }
 
     if (item.type === 'project') {
-      return isStringArray(item.counterIds);
+      return isProjectItem(item);
     }
 
     if (item.type === 'counter') {
-      return typeof item.count === 'number';
+      return isCounterItem(item, dataVersion);
     }
 
     return false;
@@ -260,12 +435,15 @@ const assertValidBackupUpdatePrompt = (value: unknown): BackupUpdatePromptPayloa
   };
 };
 
-const assertValidBackupPayload = (value: unknown): BackupPayload => {
+const assertValidBackupPayload = (value: unknown, dataVersion: number): BackupPayload => {
   if (!isRecord(value)) {
     throw new Error('백업 데이터 형식이 올바르지 않습니다.');
   }
 
-  if (!isItemArray(value.knitItems)) {
+  // knitItems는 현재 타입 전체를 무조건 강제하지 않고,
+  // 백업 문서의 dataVersion 기준으로 필요한 필드만 검증한다.
+  // 이후 restore 단계에서 ensureDataMigration()이 구버전 필드를 보정한다.
+  if (!isItemArray(value.knitItems, dataVersion)) {
     throw new Error('카운터 데이터 형식이 올바르지 않습니다.');
   }
 
@@ -386,7 +564,7 @@ export const parseBackupDocument = (json: string): BackupDocument => {
     appId: APP_ID,
     exportedAt: parsed.exportedAt,
     dataVersion: parsed.dataVersion,
-    payload: assertValidBackupPayload(parsed.payload),
+    payload: assertValidBackupPayload(parsed.payload, parsed.dataVersion),
   };
 };
 
@@ -399,6 +577,12 @@ const setOptionalStringValue = (key: string, value: Nullable<string>) => {
   storage.delete(key);
 };
 
+/**
+ * 선택적 숫자 값을 저장합니다.
+ * 이 헬퍼를 사용하는 값은 현재 0을 "저장된 값 없음"으로 취급하므로,
+ * 0 이하이거나 유한수가 아니면 키를 제거합니다.
+ * 예: dismissedOnestoreAt 는 양수 타임스탬프일 때만 유효합니다.
+ */
 const setOptionalNumberValue = (key: string, value: Nullable<number>) => {
   if (typeof value === 'number' && Number.isFinite(value) && value > 0) {
     storage.set(key, value);
