@@ -116,7 +116,6 @@ const CounterDetail = () => {
     handleClose,
     handleTargetCountOpen,
     handleTargetCountConfirm,
-    toggleMascotIsActive,
     toggleWay,
     toggleTimerIsActive,
     toggleTimerIsPlaying,
@@ -391,7 +390,6 @@ const CounterDetail = () => {
         getHeaderRightWithActivateInfoSettings(
           navigation,
           mascotIsActive,
-          toggleMascotIsActive,
           counter.timerIsActive,
           toggleTimerIsActive,
           isVoiceCommandsEnabled,
@@ -409,7 +407,6 @@ const CounterDetail = () => {
     mascotIsActive,
     screenSize,
     subSlideModalsEnabled,
-    toggleMascotIsActive,
     toggleSubSlideModalsEnabled,
     toggleTimerIsActive,
     toggleVoiceCommands,
@@ -458,15 +455,6 @@ const CounterDetail = () => {
           screenSize={screenSize}
           onPress={handleTargetCountOpen}
         />
-
-        {/* 헤더 활성 아이콘 안내 툴팁 (헤더 대신 화면 위층에 표시) */}
-        {screenSize !== ScreenSize.COMPACT && tooltipEnabled && (
-          <Tooltip
-            text="길게 눌러 어쩌미 알림 단 설정하기"
-            containerClassName="absolute right-3 top-2 z-50"
-            targetAnchorX={resolvedWidth - 106}
-          />
-        )}
 
         <View
           className="absolute left-0 right-0 bottom-0 w-full items-center justify-start"
