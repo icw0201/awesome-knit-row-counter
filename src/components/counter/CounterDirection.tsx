@@ -18,6 +18,7 @@ interface CounterDirectionProps {
   imageWidth: number;
   imageHeight: number;
   onToggleWay: () => void;
+  onLongPress?: () => void;
 }
 
 // 버블 이미지 크기 상수
@@ -111,6 +112,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   imageWidth,
   imageHeight,
   onToggleWay,
+  onLongPress,
 }) => {
   const preferReducedMotion = usePreferReducedMotion();
   /**
@@ -285,6 +287,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     <View style={{ height: imageHeight }}>
       <Pressable
         onPress={wayIsChange ? onToggleWay : undefined}
+        onLongPress={onLongPress}
         style={{ transform: [{ translateY: imageHeight * DIRECTION_VERTICAL_OFFSET_RATIO }] }}
         focusable={false}
         accessible={false}

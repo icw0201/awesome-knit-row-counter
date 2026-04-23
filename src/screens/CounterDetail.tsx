@@ -496,6 +496,7 @@ const CounterDetail = () => {
                     imageWidth={imageWidth}
                     imageHeight={imageHeight}
                     onToggleWay={toggleWay}
+                    onLongPress={() => navigation.navigate('WaySetting', { counterId: counter.id })}
                   />
                 </View>
               )}
