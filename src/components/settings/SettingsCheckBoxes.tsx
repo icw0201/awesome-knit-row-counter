@@ -1,12 +1,9 @@
 // src/components/settings/SettingsCheckBoxes.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text } from 'react-native';
-import { CommonActions, useNavigation } from '@react-navigation/native';
 
 import CheckBox from '@components/common/CheckBox';
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
-import { ConfirmModal } from '@components/common/modals';
-import { clearAllProjectData } from '@storage/storage';
 import SettingsAccordion from './SettingsAccordion';
 import {
   setSoundSetting,
@@ -147,18 +144,12 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
  */
 const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
 }) => {
-  // 네비게이션 객체
-  const navigation = useNavigation();
-
   // 설정 상태 관리
   const [sound, setSound] = useState(true);
   const [vibration, setVibration] = useState(true);
   const [screenAwake, setScreenAwake] = useState(true);
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
   const [autoPlayElapsedTime, setAutoPlayElapsedTime] = useState(true);
-  const [resetModalVisible, setResetModalVisible] = useState(false);
-  const [errorModalVisible, setErrorModalVisible] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
   const [selectedVoiceCommandMode, setSelectedVoiceCommandMode] =
     useState<VoiceCommandSettingMode>('default');
   const [voiceCommandInputs, setVoiceCommandInputs] =
@@ -198,14 +189,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
 
     setCustomVoiceCommandInputsSetting(voiceCommandInputs);
   }, [voiceCommandInputs, voiceCommandSettingsHydrated]);
-
-  /**
-   * 에러 모달 표시
-   */
-  const showErrorModal = useCallback((message: string) => {
-    setErrorMessage(message);
-    setErrorModalVisible(true);
-  }, []);
 
   /**
    * 소리 설정 토글 처리
@@ -250,43 +233,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
     const newValue = !autoPlayElapsedTime;
     setAutoPlayElapsedTime(newValue);
     setAutoPlayElapsedTimeSetting(newValue);
-  };
-
-  /**
-   * 초기화 확인 모달 열기
-   */
-  const handleResetToggle = () => {
-    setResetModalVisible(true);
-  };
-
-  /**
-   * 초기화 실행 및 앱 재시작
-   */
-  const handleResetConfirm = () => {
-    try {
-      // 모든 프로젝트 데이터 삭제
-      clearAllProjectData();
-
-      // 상태 초기화
-      setResetModalVisible(false);
-
-      // 앱을 Main 화면으로 재시작
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: 'Main' }],
-        })
-      );
-    } catch (error) {
-      showErrorModal('초기화 중 오류가 발생했습니다.');
-    }
-  };
-
-  /**
-   * 초기화 모달 닫기 및 상태 초기화
-   */
-  const handleResetModalClose = () => {
-    setResetModalVisible(false);
   };
 
   /**
@@ -375,14 +321,6 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
       label: '타이머 자동 재생',
       checked: autoPlayElapsedTime,
       onToggle: handleAutoPlayElapsedTimeToggle,
-    },
-  ];
-
-  const dangerSettings: SettingsItem[] = [
-    {
-      label: '초기화하기',
-      checked: false,
-      onToggle: handleResetToggle,
     },
   ];
 
@@ -566,35 +504,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
           </View>
         </View>
 
-        {/* 데이터 초기화 등 */}
-        <SettingsSection
-          title="데이터 관리"
-          items={dangerSettings}
-          titleClassName="text-red-orange-500"
-        />
       </View>
-
-      {/* 초기화 확인 모달 */}
-      <ConfirmModal
-        visible={resetModalVisible}
-        onClose={handleResetModalClose}
-        title="초기화"
-        description="정말 프로젝트 정보를 모두 삭제하시겠습니까?"
-        onConfirm={handleResetConfirm}
-        confirmText="삭제"
-        cancelText="취소"
-      />
-
-      {/* 에러 알림 모달 */}
-      <ConfirmModal
-        visible={errorModalVisible}
-        onClose={() => setErrorModalVisible(false)}
-        title="오류"
-        description={errorMessage}
-        onConfirm={() => setErrorModalVisible(false)}
-        confirmText="확인"
-        cancelText=""
-      />
     </>
   );
 };

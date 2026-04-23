@@ -1,18 +1,18 @@
-// src/components/settings/SettingsLinks.tsx
+// src/components/settings/SettingsAppInfo.tsx
 import React from 'react';
-import { View, Linking } from 'react-native';
+import { View, Text, Linking } from 'react-native';
 import InAppReview from 'react-native-in-app-review';
 import { PLAY_STORE_URL, RELEASE_NOTES_URL } from '@constants/storeUrls';
 import IconBox from './IconBox';
 
-interface SettingsLinksProps {}
+interface SettingsAppInfoProps {}
 
 /**
  * 설정 화면의 외부 링크 버튼들을 묶은 컴포넌트
- * - 기본: 플레이스토어 기준 (인앱 리뷰 시도 → 실패 시 스토어 링크)
+ * - 기본: 플레이스토어 기준 (인앱 리뷰 시도 -> 실패 시 스토어 링크)
  * - 원스토어 AAB 빌드 시: handleReviewPress를 아래 주석 블록 코드로 교체 후 빌드
  */
-const SettingsLinks: React.FC<SettingsLinksProps> = () => {
+const SettingsAppInfo: React.FC<SettingsAppInfoProps> = () => {
   const openExternalLink = (url: string) => {
     Linking.openURL(url).catch(() => {});
   };
@@ -62,6 +62,9 @@ const SettingsLinks: React.FC<SettingsLinksProps> = () => {
 
   return (
     <View className="mb-8">
+      <Text className="mb-3 px-1 text-sm font-semibold text-darkgray">
+        앱 정보
+      </Text>
       <IconBox
         title="별점 남기기"
         iconName="star"
@@ -86,4 +89,4 @@ const SettingsLinks: React.FC<SettingsLinksProps> = () => {
   );
 };
 
-export default SettingsLinks;
+export default SettingsAppInfo;

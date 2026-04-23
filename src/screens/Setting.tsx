@@ -3,7 +3,13 @@ import React from 'react';
 import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { SettingsCheckBoxes, SettingsLinks, SettingsVersion } from '@components/settings';
+import {
+  SettingsAppInfo,
+  SettingsBackup,
+  SettingsCheckBoxes,
+  SettingsDataManagement,
+  SettingsVersion,
+} from '@components/settings';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
 
 /**
@@ -25,7 +31,11 @@ const Settings = () => {
         >
           <SettingsCheckBoxes />
 
-          <SettingsLinks />
+          <SettingsBackup />
+
+          <SettingsDataManagement />
+
+          <SettingsAppInfo />
 
           <SettingsVersion version="1.4.3-internal.1" />
         </ScrollView>
