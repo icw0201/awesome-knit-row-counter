@@ -5,6 +5,7 @@ import type { Item, SortCriteria, SortOrder } from './types';
 import { getStoredItems } from './storage';
 import {
   getAutoPlayElapsedTimeSetting,
+  getSelectedColorThemeSetting,
   getCustomVoiceCommandInputsSetting,
   getMoveCompletedToBottomSetting,
   getScreenAwakeSetting,
@@ -19,6 +20,7 @@ import {
   getVoiceCommandsEnabledSetting,
   getVoiceRecognitionPermissionStatusSetting,
   setAutoPlayElapsedTimeSetting,
+  setSelectedColorThemeSetting,
   setCustomVoiceCommandInputsSetting,
   setMoveCompletedToBottomSetting,
   setScreenAwakeSetting,
@@ -33,6 +35,8 @@ import {
   setVibrationSetting,
   setVoiceCommandsEnabledSetting,
   setVoiceRecognitionPermissionStatusSetting,
+  isColorThemeSetting,
+  type ColorThemeSetting,
   type CustomVoiceCommandInputsSetting,
   type VoiceCommandSettingMode,
   type VoiceRecognitionPermissionStatus,
@@ -74,6 +78,7 @@ export interface BackupSettingsPayload {
   sound: boolean;
   vibration: boolean;
   screenAwake: boolean;
+  selectedColorTheme: ColorThemeSetting;
   sortCriteria: SortCriteria;
   sortOrder: SortOrder;
   moveCompletedToBottom: boolean;
@@ -697,6 +702,9 @@ const assertValidBackupSettings = (value: unknown): BackupSettingsPayload => {
     sound: value.sound,
     vibration: value.vibration,
     screenAwake: value.screenAwake,
+    selectedColorTheme: isColorThemeSetting(value.selectedColorTheme)
+      ? value.selectedColorTheme
+      : 'redOrange',
     sortCriteria: value.sortCriteria,
     sortOrder: value.sortOrder,
     moveCompletedToBottom: value.moveCompletedToBottom,
@@ -816,6 +824,7 @@ export const createBackupDocument = (): BackupDocument => {
         sound: getSoundSetting(),
         vibration: getVibrationSetting(),
         screenAwake: getScreenAwakeSetting(),
+        selectedColorTheme: getSelectedColorThemeSetting(),
         sortCriteria: getSortCriteriaSetting(),
         sortOrder: getSortOrderSetting(),
         moveCompletedToBottom: getMoveCompletedToBottomSetting(),
@@ -921,6 +930,7 @@ export const restoreBackupDocument = (document: BackupDocument) => {
   setSoundSetting(document.payload.settings.sound);
   setVibrationSetting(document.payload.settings.vibration);
   setScreenAwakeSetting(document.payload.settings.screenAwake);
+  setSelectedColorThemeSetting(document.payload.settings.selectedColorTheme);
   setSortCriteriaSetting(document.payload.settings.sortCriteria);
   setSortOrderSetting(document.payload.settings.sortOrder);
   setMoveCompletedToBottomSetting(document.payload.settings.moveCompletedToBottom);

@@ -138,7 +138,7 @@ const renderRulePreview = (
       <View className="mt-2 flex-row items-center">
         <Text className="text-base font-extrabold text-black mr-2">적용 단 :</Text>
         <View className="flex-1">
-          <Text className={`text-sm ${appTheme.tw.text.primary['500']}`}>{ruleError}</Text>
+          <Text className={`text-sm ${appTheme.tw.text.emphasisRed}`}>{ruleError}</Text>
         </View>
       </View>
     );

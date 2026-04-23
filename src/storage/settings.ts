@@ -18,6 +18,7 @@ const KEY_TOOLTIP_ENABLED = 'settings.tooltipEnabled';
 const KEY_SHOW_ELAPSED_TIME_IN_LIST = 'settings.showElapsedTimeInList';
 const KEY_VOICE_COMMANDS_ENABLED = 'settings.voiceCommandsEnabled';
 const KEY_SELECTED_VOICE_COMMAND_MODE = 'settings.selectedVoiceCommandMode';
+const KEY_SELECTED_COLOR_THEME = 'settings.selectedColorTheme';
 const KEY_CUSTOM_VOICE_COMMAND_INPUTS = 'settings.customVoiceCommandInputs';
 const KEY_SUB_SLIDE_MODALS_ENABLED = 'settings.subSlideModalsEnabled';
 const KEY_VOICE_RECOGNITION_PERMISSION_STATUS =
@@ -35,9 +36,11 @@ const DEFAULT_TOOLTIP_ENABLED = true;
 const DEFAULT_SHOW_ELAPSED_TIME_IN_LIST = false;
 const DEFAULT_VOICE_COMMANDS_ENABLED = false;
 const DEFAULT_SELECTED_VOICE_COMMAND_MODE: VoiceCommandSettingMode = 'default';
+const DEFAULT_SELECTED_COLOR_THEME: ColorThemeSetting = 'redOrange';
 const DEFAULT_SUB_SLIDE_MODALS_ENABLED = true;
 
 export type VoiceCommandSettingMode = 'default' | 'custom';
+export type ColorThemeSetting = 'redOrange' | 'skyBlue' | 'leafGreen';
 
 export interface CustomVoiceCommandInputsSetting {
   mainDecrease: [string, string, string];
@@ -71,6 +74,12 @@ export type VoiceRecognitionPermissionStatus =
   | 'undetermined'
   | 'granted'
   | 'denied';
+
+export const isColorThemeSetting = (
+  value: unknown
+): value is ColorThemeSetting => {
+  return value === 'redOrange' || value === 'skyBlue' || value === 'leafGreen';
+};
 
 const isThreeStringTuple = (value: unknown): value is [string, string, string] => {
   return Array.isArray(value)
@@ -345,6 +354,46 @@ export const getSelectedVoiceCommandModeSetting = (): VoiceCommandSettingMode =>
   return value === 'custom' || value === 'default'
     ? value
     : DEFAULT_SELECTED_VOICE_COMMAND_MODE;
+};
+
+/**
+ * 선택된 색상 테마를 저장합니다.
+ * @param value 선택된 색상 테마
+ */
+export const setSelectedColorThemeSetting = (
+  value: ColorThemeSetting
+) => {
+  storage.set(KEY_SELECTED_COLOR_THEME, value);
+};
+
+/**
+ * 선택된 색상 테마를 가져옵니다.
+ * @returns 선택된 색상 테마 (기본값: 'redOrange')
+ */
+export const getSelectedColorThemeSetting = (): ColorThemeSetting => {
+  const value = storage.getString(KEY_SELECTED_COLOR_THEME);
+
+  return isColorThemeSetting(value)
+    ? value
+    : DEFAULT_SELECTED_COLOR_THEME;
+};
+
+/**
+ * 색상 테마 설정 변경을 구독합니다.
+ * @returns unsubscribe 함수
+ */
+export const subscribeSelectedColorThemeSettingChange = (
+  callback: () => void
+) => {
+  const listener = storage.addOnValueChangedListener((changedKey) => {
+    if (changedKey === KEY_SELECTED_COLOR_THEME) {
+      callback();
+    }
+  });
+
+  return () => {
+    listener.remove();
+  };
 };
 
 /**

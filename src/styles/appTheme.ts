@@ -1,4 +1,13 @@
-import { EMPHASIS_RED, RED_ORANGE_PALETTE } from '@constants/colors';
+import {
+  EMPHASIS_RED,
+  LEAF_GREEN_PALETTE,
+  RED_ORANGE_PALETTE,
+  SKY_BLUE_PALETTE,
+} from '@constants/colors';
+import {
+  getSelectedColorThemeSetting,
+  type ColorThemeSetting,
+} from '@storage/settings';
 
 type ThemePaletteShade =
   | '50'
@@ -13,16 +22,24 @@ type ThemePaletteShade =
   | '900'
   | '950';
 
-type ThemePalette = Record<ThemePaletteShade, string>;
+export type ThemePalette = Record<ThemePaletteShade, string>;
+
+type ThemeClassPalette = Record<ThemePaletteShade, string>;
+
+export interface AppColorThemeOption {
+  value: ColorThemeSetting;
+  label: string;
+  representativeColor: string;
+}
 
 export interface AppTheme {
-  id: 'default';
+  id: ColorThemeSetting;
   tw: {
     bg: {
       white: string;
       lightgray: string;
       transparent: string;
-      primary: ThemePalette;
+      primary: ThemeClassPalette;
     };
     text: {
       white: string;
@@ -30,12 +47,12 @@ export interface AppTheme {
       darkgray: string;
       mediumgray: string;
       emphasisRed: string;
-      primary: ThemePalette;
+      primary: ThemeClassPalette;
     };
     border: {
       white: string;
       lightgray: string;
-      primary: ThemePalette;
+      primary: ThemeClassPalette;
     };
   };
   colors: {
@@ -54,28 +71,35 @@ export interface AppTheme {
   };
 }
 
-const primaryPalette = RED_ORANGE_PALETTE as ThemePalette;
+const createClassPalette = (
+  utilityPrefix: 'bg' | 'text' | 'border',
+  paletteName: 'red-orange' | 'sky-blue' | 'leaf-green'
+): ThemeClassPalette => ({
+  '50': `${utilityPrefix}-${paletteName}-50`,
+  '100': `${utilityPrefix}-${paletteName}-100`,
+  '200': `${utilityPrefix}-${paletteName}-200`,
+  '300': `${utilityPrefix}-${paletteName}-300`,
+  '400': `${utilityPrefix}-${paletteName}-400`,
+  '500': `${utilityPrefix}-${paletteName}-500`,
+  '600': `${utilityPrefix}-${paletteName}-600`,
+  '700': `${utilityPrefix}-${paletteName}-700`,
+  '800': `${utilityPrefix}-${paletteName}-800`,
+  '900': `${utilityPrefix}-${paletteName}-900`,
+  '950': `${utilityPrefix}-${paletteName}-950`,
+});
 
-export const defaultTheme: AppTheme = {
-  id: 'default',
+const createTheme = (
+  id: ColorThemeSetting,
+  paletteName: 'red-orange' | 'sky-blue' | 'leaf-green',
+  primaryPalette: ThemePalette
+): AppTheme => ({
+  id,
   tw: {
     bg: {
       white: 'bg-white',
       lightgray: 'bg-lightgray',
       transparent: 'bg-transparent',
-      primary: {
-        '50': 'bg-red-orange-50',
-        '100': 'bg-red-orange-100',
-        '200': 'bg-red-orange-200',
-        '300': 'bg-red-orange-300',
-        '400': 'bg-red-orange-400',
-        '500': 'bg-red-orange-500',
-        '600': 'bg-red-orange-600',
-        '700': 'bg-red-orange-700',
-        '800': 'bg-red-orange-800',
-        '900': 'bg-red-orange-900',
-        '950': 'bg-red-orange-950',
-      },
+      primary: createClassPalette('bg', paletteName),
     },
     text: {
       white: 'text-white',
@@ -83,36 +107,12 @@ export const defaultTheme: AppTheme = {
       darkgray: 'text-darkgray',
       mediumgray: 'text-mediumgray',
       emphasisRed: 'text-emphasis-red',
-      primary: {
-        '50': 'text-red-orange-50',
-        '100': 'text-red-orange-100',
-        '200': 'text-red-orange-200',
-        '300': 'text-red-orange-300',
-        '400': 'text-red-orange-400',
-        '500': 'text-red-orange-500',
-        '600': 'text-red-orange-600',
-        '700': 'text-red-orange-700',
-        '800': 'text-red-orange-800',
-        '900': 'text-red-orange-900',
-        '950': 'text-red-orange-950',
-      },
+      primary: createClassPalette('text', paletteName),
     },
     border: {
       white: 'border-white',
       lightgray: 'border-lightgray',
-      primary: {
-        '50': 'border-red-orange-50',
-        '100': 'border-red-orange-100',
-        '200': 'border-red-orange-200',
-        '300': 'border-red-orange-300',
-        '400': 'border-red-orange-400',
-        '500': 'border-red-orange-500',
-        '600': 'border-red-orange-600',
-        '700': 'border-red-orange-700',
-        '800': 'border-red-orange-800',
-        '900': 'border-red-orange-900',
-        '950': 'border-red-orange-950',
-      },
+      primary: createClassPalette('border', paletteName),
     },
   },
   colors: {
@@ -129,7 +129,47 @@ export const defaultTheme: AppTheme = {
       '100': '#F3F4F6',
     },
   },
+});
+
+const themePalettes: Record<ColorThemeSetting, ThemePalette> = {
+  redOrange: RED_ORANGE_PALETTE as ThemePalette,
+  skyBlue: SKY_BLUE_PALETTE as ThemePalette,
+  leafGreen: LEAF_GREEN_PALETTE as ThemePalette,
+};
+
+const appThemes: Record<ColorThemeSetting, AppTheme> = {
+  redOrange: createTheme('redOrange', 'red-orange', themePalettes.redOrange),
+  skyBlue: createTheme('skyBlue', 'sky-blue', themePalettes.skyBlue),
+  leafGreen: createTheme('leafGreen', 'leaf-green', themePalettes.leafGreen),
+};
+
+export const APP_COLOR_THEME_OPTIONS: AppColorThemeOption[] = [
+  {
+    value: 'redOrange',
+    label: '레드 오렌지',
+    representativeColor: themePalettes.redOrange['400'],
+  },
+  {
+    value: 'skyBlue',
+    label: '스카이 블루',
+    representativeColor: themePalettes.skyBlue['400'],
+  },
+  {
+    value: 'leafGreen',
+    label: '리프 그린',
+    representativeColor: themePalettes.leafGreen['400'],
+  },
+];
+
+export const getAppTheme = (
+  selectedTheme: ColorThemeSetting = getSelectedColorThemeSetting()
+): AppTheme => {
+  return appThemes[selectedTheme] ?? appThemes.redOrange;
 };
 
 // 이후 selectedTheme 저장/구독을 붙일 때 이 단일 export를 교체하는 방식으로 확장한다.
-export const appTheme = defaultTheme;
+export const appTheme: AppTheme = new Proxy({} as AppTheme, {
+  get(_target, property) {
+    return getAppTheme()[property as keyof AppTheme];
+  },
+});

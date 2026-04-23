@@ -9,7 +9,7 @@ export type ColorStyle = {
   iconColor: string;
 };
 
-export const colorStyles: Record<ColorStyleKey, ColorStyle> = {
+const getColorStyles = (): Record<ColorStyleKey, ColorStyle> => ({
   default: {//흰색 배경에 회색 테두리
     containerClassName: `${appTheme.tw.bg.white} border ${appTheme.tw.border.lightgray}`,
     textClassName: appTheme.tw.text.black,
@@ -40,4 +40,13 @@ export const colorStyles: Record<ColorStyleKey, ColorStyle> = {
     subtextClassName: appTheme.tw.text.primary['700'],
     iconColor: appTheme.colors.primary['950'],
   },
-};
+});
+
+export const colorStyles: Record<ColorStyleKey, ColorStyle> = new Proxy(
+  {} as Record<ColorStyleKey, ColorStyle>,
+  {
+    get(_target, property) {
+      return getColorStyles()[property as ColorStyleKey];
+    },
+  }
+);
