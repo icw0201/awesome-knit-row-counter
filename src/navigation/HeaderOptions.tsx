@@ -79,7 +79,6 @@ export const getHeaderRightWithInfoEditAndSettings = (
 export const getHeaderRightWithActivateInfoSettings = (
   navigation: NativeStackNavigationProp<RootStackParamList>,
   mascotIsActive: boolean,
-  onActivatePress: () => void,
   timerIsActive: boolean,
   onTimerPress: () => void,
   voiceCommandsEnabled: boolean,
@@ -142,8 +141,7 @@ export const getHeaderRightWithActivateInfoSettings = (
       <View style={{ marginRight: 13 }}>
         <ActivateToggle
           mascotIsActive={mascotIsActive}
-          onToggle={onActivatePress}
-          onLongPress={() => navigation.navigate('WaySetting', { counterId })}
+          onToggle={() => navigation.navigate('WaySetting', { counterId })}
         />
       </View>
 
