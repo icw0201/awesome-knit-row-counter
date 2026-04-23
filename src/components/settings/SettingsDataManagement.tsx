@@ -59,7 +59,7 @@ const SettingsDataManagement: React.FC<SettingsDataManagementProps> = () => {
   return (
     <>
       <View className="mb-8">
-        <Text className={`mb-3 px-1 text-sm font-semibold ${appTheme.tw.text.primary['500']}`}>
+        <Text className={`mb-3 px-1 text-sm font-semibold ${appTheme.tw.text.emphasisRed}`}>
           데이터 관리
         </Text>
         <IconBox

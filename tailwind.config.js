@@ -1,5 +1,5 @@
 const path = require('path');
-const { RED_ORANGE_PALETTE } = require(path.join(__dirname, 'src/constants/colors'));
+const { RED_ORANGE_PALETTE, EMPHASIS_RED } = require(path.join(__dirname, 'src/constants/colors'));
 
 /** @type {import('tailwindcss').Config} */
 module.exports = {
@@ -11,6 +11,7 @@ module.exports = {
       extend: {
         colors: {
           'red-orange': RED_ORANGE_PALETTE,
+          'emphasis-red': EMPHASIS_RED,
           black: '#111111',
           darkgray: '#767676',
           mediumgray: '#B8B8B8',

@@ -17,6 +17,9 @@ const RED_ORANGE_PALETTE = {
   '950': '#490806',
 };
 
+/** 테마와 무관하게 경고/강조 의미를 유지하는 고정 red */
+const EMPHASIS_RED = '#dc2626';
+
 /** 규칙 카드와 ColorPicker 스와치 전용 색상 */
 const RULE_SWATCH_COLORS = [
   '#EF5777',
@@ -33,5 +36,6 @@ const RULE_SWATCH_COLORS = [
 
 module.exports = {
   RED_ORANGE_PALETTE,
+  EMPHASIS_RED,
   RULE_SWATCH_COLORS,
 };

@@ -1,4 +1,4 @@
-import { RED_ORANGE_PALETTE } from '@constants/colors';
+import { EMPHASIS_RED, RED_ORANGE_PALETTE } from '@constants/colors';
 
 type ThemePaletteShade =
   | '50'
@@ -29,6 +29,7 @@ export interface AppTheme {
       black: string;
       darkgray: string;
       mediumgray: string;
+      emphasisRed: string;
       primary: ThemePalette;
     };
     border: {
@@ -42,6 +43,7 @@ export interface AppTheme {
     black: string;
     darkgray: string;
     mediumgray: string;
+    emphasisRed: string;
     lightgray: string;
     transparent: string;
     shadow: string;
@@ -80,6 +82,7 @@ export const defaultTheme: AppTheme = {
       black: 'text-black',
       darkgray: 'text-darkgray',
       mediumgray: 'text-mediumgray',
+      emphasisRed: 'text-emphasis-red',
       primary: {
         '50': 'text-red-orange-50',
         '100': 'text-red-orange-100',
@@ -117,6 +120,7 @@ export const defaultTheme: AppTheme = {
     black: '#111111',
     darkgray: '#767676',
     mediumgray: '#B8B8B8',
+    emphasisRed: EMPHASIS_RED,
     lightgray: '#DBDBDB',
     transparent: 'transparent',
     shadow: '#000000',
