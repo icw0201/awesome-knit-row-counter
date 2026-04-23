@@ -65,6 +65,7 @@ const DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS: CustomVoiceCommandInputsSetting = {
   subDecrease: ['', '', ''],
   subIncrease: ['', '', ''],
 };
+const STORED_CUSTOM_VOICE_COMMAND_MAX_LENGTH = 2;
 
 export type VoiceRecognitionPermissionStatus =
   | 'undetermined'
@@ -75,6 +76,31 @@ const isThreeStringTuple = (value: unknown): value is [string, string, string] =
   return Array.isArray(value)
     && value.length === 3
     && value.every((item) => typeof item === 'string');
+};
+
+const sanitizeStoredVoiceCommandInput = (value: string): string => {
+  return Array.from(value).slice(0, STORED_CUSTOM_VOICE_COMMAND_MAX_LENGTH).join('');
+};
+
+const sanitizeStoredVoiceCommandTuple = (
+  value: [string, string, string]
+): [string, string, string] => {
+  return [
+    sanitizeStoredVoiceCommandInput(value[0]),
+    sanitizeStoredVoiceCommandInput(value[1]),
+    sanitizeStoredVoiceCommandInput(value[2]),
+  ];
+};
+
+const sanitizeStoredCustomVoiceCommandInputs = (
+  value: CustomVoiceCommandInputsSetting
+): CustomVoiceCommandInputsSetting => {
+  return {
+    mainDecrease: sanitizeStoredVoiceCommandTuple(value.mainDecrease),
+    mainIncrease: sanitizeStoredVoiceCommandTuple(value.mainIncrease),
+    subDecrease: sanitizeStoredVoiceCommandTuple(value.subDecrease),
+    subIncrease: sanitizeStoredVoiceCommandTuple(value.subIncrease),
+  };
 };
 
 const normalizeCustomVoiceCommandInputs = (
@@ -88,16 +114,16 @@ const normalizeCustomVoiceCommandInputs = (
 
   return {
     mainDecrease: isThreeStringTuple(candidate.mainDecrease)
-      ? candidate.mainDecrease
+      ? sanitizeStoredVoiceCommandTuple(candidate.mainDecrease)
       : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.mainDecrease,
     mainIncrease: isThreeStringTuple(candidate.mainIncrease)
-      ? candidate.mainIncrease
+      ? sanitizeStoredVoiceCommandTuple(candidate.mainIncrease)
       : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.mainIncrease,
     subDecrease: isThreeStringTuple(candidate.subDecrease)
-      ? candidate.subDecrease
+      ? sanitizeStoredVoiceCommandTuple(candidate.subDecrease)
       : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.subDecrease,
     subIncrease: isThreeStringTuple(candidate.subIncrease)
-      ? candidate.subIncrease
+      ? sanitizeStoredVoiceCommandTuple(candidate.subIncrease)
       : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.subIncrease,
   };
 };
@@ -328,7 +354,10 @@ export const getSelectedVoiceCommandModeSetting = (): VoiceCommandSettingMode =>
 export const setCustomVoiceCommandInputsSetting = (
   value: CustomVoiceCommandInputsSetting
 ) => {
-  storage.set(KEY_CUSTOM_VOICE_COMMAND_INPUTS, JSON.stringify(value));
+  storage.set(
+    KEY_CUSTOM_VOICE_COMMAND_INPUTS,
+    JSON.stringify(sanitizeStoredCustomVoiceCommandInputs(value))
+  );
 };
 
 /**

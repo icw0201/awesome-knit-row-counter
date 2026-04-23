@@ -49,6 +49,11 @@ import {
 
 const APP_ID = 'awesome-knit-row-counter';
 const BACKUP_FORMAT_VERSION = 1;
+const MAX_COUNTER_VALUE = 9999;
+const MAX_ELAPSED_TIME_SECONDS = 35999999;
+const MAX_TITLE_LENGTH = 15;
+const MAX_LONG_TEXT_LENGTH = 500;
+const MAX_CUSTOM_VOICE_COMMAND_LENGTH = 2;
 
 const STORAGE_KEY = 'knit_items';
 const DATA_VERSION_KEY = 'data_version';
@@ -125,12 +130,130 @@ const isThreeStringTuple = (value: unknown): value is [string, string, string] =
     && value.every((item) => typeof item === 'string');
 };
 
-const isOptionalString = (value: unknown): value is string | undefined => {
-  return value === undefined || typeof value === 'string';
+const getCharacterLength = (value: string): number => {
+  return Array.from(value).length;
 };
 
-const isOptionalFiniteNumber = (value: unknown): value is number | undefined => {
-  return value === undefined || (typeof value === 'number' && Number.isFinite(value));
+const isTrimmedString = (value: string): boolean => {
+  return value.trim() === value;
+};
+
+const isTrimmedNonEmptyStringWithinLength = (
+  value: unknown,
+  maxLength: number
+): value is string => {
+  return typeof value === 'string'
+    && isTrimmedString(value)
+    && value.length > 0
+    && getCharacterLength(value) <= maxLength;
+};
+
+const isOptionalTrimmedStringWithinLength = (
+  value: unknown,
+  maxLength: number
+): value is string | undefined => {
+  return value === undefined
+    || (
+      typeof value === 'string'
+      && isTrimmedString(value)
+      && getCharacterLength(value) <= maxLength
+    );
+};
+
+const isNonNegativeInteger = (value: unknown): value is number => {
+  return typeof value === 'number' && Number.isInteger(value) && value >= 0;
+};
+
+const isOptionalNonNegativeInteger = (value: unknown): value is number | undefined => {
+  return value === undefined || isNonNegativeInteger(value);
+};
+
+const isCounterValue = (value: unknown): value is number => {
+  return isNonNegativeInteger(value) && value <= MAX_COUNTER_VALUE;
+};
+
+const isOptionalCounterValue = (value: unknown): value is number | undefined => {
+  return value === undefined || isCounterValue(value);
+};
+
+const isElapsedTimeSeconds = (value: unknown): value is number => {
+  return isNonNegativeInteger(value) && value <= MAX_ELAPSED_TIME_SECONDS;
+};
+
+const parseStoredDateParts = (value: string): [number, number, number] | null => {
+  const compactMatch = value.match(/^(\d{4})(\d{2})(\d{2})$/);
+  if (compactMatch) {
+    return [
+      Number(compactMatch[1]),
+      Number(compactMatch[2]),
+      Number(compactMatch[3]),
+    ];
+  }
+
+  const dottedMatch = value.match(/^(\d{4})\.(\d{2})\.(\d{2})$/);
+  if (dottedMatch) {
+    return [
+      Number(dottedMatch[1]),
+      Number(dottedMatch[2]),
+      Number(dottedMatch[3]),
+    ];
+  }
+
+  return null;
+};
+
+const isValidStoredDateString = (value: unknown): value is string => {
+  if (typeof value !== 'string') {
+    return false;
+  }
+
+  const parts = parseStoredDateParts(value);
+  if (!parts) {
+    return false;
+  }
+
+  const [year, month, day] = parts;
+
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return false;
+  }
+
+  const date = new Date(year, month - 1, day);
+  return date.getFullYear() === year
+    && date.getMonth() === month - 1
+    && date.getDate() === day;
+};
+
+const isCompactDateString = (value: unknown): value is string => {
+  return typeof value === 'string'
+    && /^\d{8}$/.test(value)
+    && isValidStoredDateString(value);
+};
+
+const isInfoDateInputString = (value: unknown): value is string => {
+  return typeof value === 'string'
+    && isTrimmedString(value)
+    && (
+      /^\d{1,4}$/.test(value)
+      || /^\d{4}\.\d{1,2}$/.test(value)
+      || /^\d{4}\.\d{2}\.\d{1,2}$/.test(value)
+      || /^\d{8}$/.test(value)
+    );
+};
+
+const isOptionalInfoDateInputString = (value: unknown): value is string | undefined => {
+  return value === undefined
+    || value === ''
+    || isInfoDateInputString(value);
+};
+
+const isTimeString = (value: unknown): value is string => {
+  return typeof value === 'string'
+    && /^(?:[01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(value);
+};
+
+const isOptionalString = (value: unknown): value is string | undefined => {
+  return value === undefined || typeof value === 'string';
 };
 
 const isOptionalBoolean = (value: unknown): value is boolean | undefined => {
@@ -164,6 +287,10 @@ const isEditLogType = (value: unknown): boolean => {
     || value === 'way_change_back';
 };
 
+const isHexColor = (value: unknown): value is string => {
+  return typeof value === 'string' && /^#[0-9A-Fa-f]{6}$/.test(value);
+};
+
 const isInfo = (value: unknown): boolean => {
   if (value === undefined) {
     return true;
@@ -173,12 +300,12 @@ const isInfo = (value: unknown): boolean => {
     return false;
   }
 
-  return isOptionalString(value.startDate)
-    && isOptionalString(value.endDate)
-    && isOptionalString(value.gauge)
-    && isOptionalString(value.yarn)
-    && isOptionalString(value.needle)
-    && isOptionalString(value.notes);
+  return isOptionalInfoDateInputString(value.startDate)
+    && isOptionalInfoDateInputString(value.endDate)
+    && isOptionalTrimmedStringWithinLength(value.gauge, MAX_LONG_TEXT_LENGTH)
+    && isOptionalTrimmedStringWithinLength(value.yarn, MAX_LONG_TEXT_LENGTH)
+    && isOptionalTrimmedStringWithinLength(value.needle, MAX_LONG_TEXT_LENGTH)
+    && isOptionalTrimmedStringWithinLength(value.notes, MAX_LONG_TEXT_LENGTH);
 };
 
 const isRepeatRule = (value: unknown, dataVersion: number): boolean => {
@@ -186,30 +313,57 @@ const isRepeatRule = (value: unknown, dataVersion: number): boolean => {
     return false;
   }
 
-  const hasBaseShape = typeof value.message === 'string'
-    && typeof value.endNumber === 'number'
-    && Number.isFinite(value.endNumber)
-    && typeof value.ruleNumber === 'number'
-    && Number.isFinite(value.ruleNumber)
-    && typeof value.color === 'string'
-    && (value.repeatCount === undefined || (typeof value.repeatCount === 'number' && Number.isFinite(value.repeatCount)));
+  const hasBaseShape = isTrimmedNonEmptyStringWithinLength(value.message, MAX_TITLE_LENGTH)
+    && isNonNegativeInteger(value.endNumber)
+    && isNonNegativeInteger(value.ruleNumber)
+    && isHexColor(value.color)
+    && isOptionalNonNegativeInteger(value.repeatCount);
 
   if (!hasBaseShape) {
     return false;
   }
 
-  if (dataVersion >= 5) {
-    const isValidEndMode = value.endMode === 'endNumber'
-      || value.endMode === 'repeatCount'
-      || value.endMode === null;
+  const ruleNumber = value.ruleNumber as number;
+  const repeatCount = value.repeatCount as number | undefined;
+  const startNumber = value.startNumber as number | null | undefined;
+  const endNumber = value.endNumber as number;
+  const endMode = value.endMode;
 
-    return (typeof value.startNumber === 'number' && Number.isFinite(value.startNumber) || value.startNumber === null)
-      && isValidEndMode;
+  if (dataVersion >= 5) {
+    const isValidEndMode = endMode === 'endNumber'
+      || endMode === 'repeatCount'
+      || endMode === null;
+
+    if (!(isNonNegativeInteger(startNumber) || startNumber === null) || !isValidEndMode) {
+      return false;
+    }
+  } else if (
+    !(
+      startNumber === undefined
+      || startNumber === null
+      || isNonNegativeInteger(startNumber)
+    )
+  ) {
+    return false;
   }
 
-  return value.startNumber === undefined
-    || value.startNumber === null
-    || (typeof value.startNumber === 'number' && Number.isFinite(value.startNumber));
+  if (ruleNumber <= 0) {
+    return false;
+  }
+
+  if (endMode === 'repeatCount' && (repeatCount === undefined || repeatCount <= 0)) {
+    return false;
+  }
+
+  if (endMode === null && startNumber == null) {
+    return false;
+  }
+
+  if (endMode === 'endNumber' && startNumber !== null && startNumber !== undefined) {
+    return startNumber <= endNumber;
+  }
+
+  return true;
 };
 
 const isSectionRecord = (value: unknown, dataVersion: number): boolean => {
@@ -217,14 +371,13 @@ const isSectionRecord = (value: unknown, dataVersion: number): boolean => {
     return false;
   }
 
-  const hasBaseShape = typeof value.time === 'string'
-    && typeof value.editedCount === 'number'
-    && Number.isFinite(value.editedCount)
+  const hasBaseShape = isTimeString(value.time)
+    && isCounterValue(value.editedCount)
     && isEditLogType(value.editContent)
-    && isOptionalFiniteNumber(value.editedMainCount)
+    && isOptionalCounterValue(value.editedMainCount)
     && isOptionalString(value.voiceCommand)
-    && isOptionalFiniteNumber(value.previousCount)
-    && isOptionalFiniteNumber(value.previousSubCount)
+    && isOptionalCounterValue(value.previousCount)
+    && isOptionalCounterValue(value.previousSubCount)
     && isOptionalBoolean(value.previousSubRuleIsActive)
     && (value.previousWay === undefined || isNullableWay(value.previousWay));
 
@@ -232,27 +385,38 @@ const isSectionRecord = (value: unknown, dataVersion: number): boolean => {
     return false;
   }
 
-  if (dataVersion >= 5) {
-    return typeof value.date === 'string';
+  const requiresEditedMainCount = value.editContent === 'count_increase'
+    || value.editContent === 'count_decrease'
+    || value.editContent === 'count_edit'
+    || value.editContent === 'sub_count_increase'
+    || value.editContent === 'sub_count_decrease'
+    || value.editContent === 'sub_count_edit'
+    || value.editContent === 'sub_rule_deactivate';
+
+  if (requiresEditedMainCount && value.editedMainCount === undefined) {
+    return false;
   }
 
-  return value.date === undefined || typeof value.date === 'string';
+  if (dataVersion >= 5) {
+    return isCompactDateString(value.date);
+  }
+
+  return value.date === undefined || isCompactDateString(value.date);
 };
 
 const isProjectItem = (value: Record<string, unknown>): boolean => {
   return isStringArray(value.counterIds)
     && isInfo(value.info)
-    && isOptionalFiniteNumber(value.updatedAt);
+    && isOptionalNonNegativeInteger(value.updatedAt);
 };
 
 const isCounterItem = (value: Record<string, unknown>, dataVersion: number): boolean => {
   if (
-    typeof value.count !== 'number'
-    || !Number.isFinite(value.count)
+    !isCounterValue(value.count)
     || !isInfo(value.info)
     || !(value.parentProjectId === undefined || value.parentProjectId === null || typeof value.parentProjectId === 'string')
     || !isOptionalWay(value.way)
-    || !isOptionalFiniteNumber(value.updatedAt)
+    || !isOptionalNonNegativeInteger(value.updatedAt)
   ) {
     return false;
   }
@@ -265,16 +429,12 @@ const isCounterItem = (value: Record<string, unknown>, dataVersion: number): boo
 
   if (dataVersion >= 3) {
     if (
-      typeof value.targetCount !== 'number'
-      || !Number.isFinite(value.targetCount)
-      || typeof value.elapsedTime !== 'number'
-      || !Number.isFinite(value.elapsedTime)
+      !isNonNegativeInteger(value.targetCount)
+      || !isElapsedTimeSeconds(value.elapsedTime)
       || typeof value.timerIsActive !== 'boolean'
       || typeof value.timerIsPlaying !== 'boolean'
-      || typeof value.subCount !== 'number'
-      || !Number.isFinite(value.subCount)
-      || typeof value.subRule !== 'number'
-      || !Number.isFinite(value.subRule)
+      || !isCounterValue(value.subCount)
+      || !isNonNegativeInteger(value.subRule)
       || typeof value.subRuleIsActive !== 'boolean'
       || typeof value.subModalIsOpen !== 'boolean'
       || !Array.isArray(value.repeatRules)
@@ -298,6 +458,121 @@ const isCounterItem = (value: Record<string, unknown>, dataVersion: number): boo
   }
 
   return true;
+};
+
+const isValidVoiceCommandValue = (value: string): boolean => {
+  return getCharacterLength(value) <= MAX_CUSTOM_VOICE_COMMAND_LENGTH;
+};
+
+const isValidCustomVoiceCommandInputs = (value: CustomVoiceCommandInputsSetting): boolean => {
+  return [
+    ...value.mainDecrease,
+    ...value.mainIncrease,
+    ...value.subDecrease,
+    ...value.subIncrease,
+  ].every((input) => isValidVoiceCommandValue(input));
+};
+
+const hasUniqueIds = (items: Item[]): boolean => {
+  const ids = new Set<string>();
+
+  for (const item of items) {
+    if (ids.has(item.id)) {
+      return false;
+    }
+
+    ids.add(item.id);
+  }
+
+  return true;
+};
+
+const hasValidTitleConstraints = (items: Item[]): boolean => {
+  return items.every((item) => isTrimmedNonEmptyStringWithinLength(item.title, MAX_TITLE_LENGTH));
+};
+
+const hasValidTitleUniqueness = (items: Item[]): boolean => {
+  const projectTitles = new Set<string>();
+  const topLevelCounterTitles = new Set<string>();
+  const projectCounterTitles = new Map<string, Set<string>>();
+
+  for (const item of items) {
+    if (item.type === 'project') {
+      if (projectTitles.has(item.title)) {
+        return false;
+      }
+
+      projectTitles.add(item.title);
+      continue;
+    }
+
+    if (item.parentProjectId == null) {
+      if (topLevelCounterTitles.has(item.title)) {
+        return false;
+      }
+
+      topLevelCounterTitles.add(item.title);
+      continue;
+    }
+
+    const existingTitles = projectCounterTitles.get(item.parentProjectId) ?? new Set<string>();
+    if (existingTitles.has(item.title)) {
+      return false;
+    }
+
+    existingTitles.add(item.title);
+    projectCounterTitles.set(item.parentProjectId, existingTitles);
+  }
+
+  return true;
+};
+
+const hasValidProjectCounterReferences = (items: Item[]): boolean => {
+  const projects = items.filter((item): item is Extract<Item, { type: 'project' }> => item.type === 'project');
+  const counters = items.filter((item): item is Extract<Item, { type: 'counter' }> => item.type === 'counter');
+  const projectMap = new Map(projects.map((project) => [project.id, project]));
+  const counterMap = new Map(counters.map((counter) => [counter.id, counter]));
+
+  for (const project of projects) {
+    const counterIdSet = new Set<string>();
+
+    for (const counterId of project.counterIds) {
+      if (counterIdSet.has(counterId)) {
+        return false;
+      }
+
+      counterIdSet.add(counterId);
+
+      const counter = counterMap.get(counterId);
+      if (!counter || counter.parentProjectId !== project.id) {
+        return false;
+      }
+    }
+  }
+
+  for (const counter of counters) {
+    if (counter.parentProjectId == null) {
+      continue;
+    }
+
+    const parentProject = projectMap.get(counter.parentProjectId);
+    if (!parentProject) {
+      return false;
+    }
+
+    if (!parentProject.counterIds.includes(counter.id)) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const hasValidItemSemantics = (items: Item[]): boolean => {
+  return hasUniqueIds(items)
+    && hasValidTitleConstraints(items)
+    && hasValidTitleUniqueness(items)
+    && hasValidProjectCounterReferences(items);
 };
 
 const isSortCriteria = (value: unknown): value is SortCriteria => {
@@ -333,7 +608,13 @@ const isCustomVoiceCommandInputsSetting = (
   return isThreeStringTuple(value.mainDecrease)
     && isThreeStringTuple(value.mainIncrease)
     && isThreeStringTuple(value.subDecrease)
-    && isThreeStringTuple(value.subIncrease);
+    && isThreeStringTuple(value.subIncrease)
+    && isValidCustomVoiceCommandInputs({
+      mainDecrease: value.mainDecrease,
+      mainIncrease: value.mainIncrease,
+      subDecrease: value.subDecrease,
+      subIncrease: value.subIncrease,
+    });
 };
 
 const isItemArray = (value: unknown, dataVersion: number): value is Item[] => {
@@ -341,7 +622,7 @@ const isItemArray = (value: unknown, dataVersion: number): value is Item[] => {
     return false;
   }
 
-  return value.every((item) => {
+  const allItemsAreValid = value.every((item) => {
     if (!isRecord(item) || typeof item.id !== 'string' || typeof item.title !== 'string') {
       return false;
     }
@@ -356,6 +637,8 @@ const isItemArray = (value: unknown, dataVersion: number): value is Item[] => {
 
     return false;
   });
+
+  return allItemsAreValid && hasValidItemSemantics(value);
 };
 
 const assertValidBackupSettings = (value: unknown): BackupSettingsPayload => {
@@ -414,15 +697,15 @@ const assertValidBackupUpdatePrompt = (value: unknown): BackupUpdatePromptPayloa
   if (
     !(
       dismissedStoreVersion === null
-      || typeof dismissedStoreVersion === 'string'
+      || isTrimmedNonEmptyStringWithinLength(dismissedStoreVersion, MAX_LONG_TEXT_LENGTH)
     )
     || !(
       dismissedOnestoreAt === null
-      || typeof dismissedOnestoreAt === 'number'
+      || (isNonNegativeInteger(dismissedOnestoreAt) && dismissedOnestoreAt > 0)
     )
     || !(
       dismissedOnestoreAppVersion === null
-      || typeof dismissedOnestoreAppVersion === 'string'
+      || isTrimmedNonEmptyStringWithinLength(dismissedOnestoreAppVersion, MAX_LONG_TEXT_LENGTH)
     )
   ) {
     throw new Error('업데이트 알림 데이터 형식이 올바르지 않습니다.');
