@@ -4,10 +4,10 @@ import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
+  SettingsAppInfo,
   SettingsBackup,
   SettingsCheckBoxes,
   SettingsDataManagement,
-  SettingsLinks,
   SettingsVersion,
 } from '@components/settings';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
@@ -35,7 +35,7 @@ const Settings = () => {
 
           <SettingsDataManagement />
 
-          <SettingsLinks />
+          <SettingsAppInfo />
 
           <SettingsVersion version="1.4.3-internal.1" />
         </ScrollView>
