@@ -54,6 +54,8 @@ const MAX_ELAPSED_TIME_SECONDS = 35999999;
 const MAX_TITLE_LENGTH = 15;
 const MAX_LONG_TEXT_LENGTH = 500;
 const MAX_CUSTOM_VOICE_COMMAND_LENGTH = 2;
+const MAX_SECTION_RECORDS = 30;
+const EMPTY_SECTION_RECORD_DATE = '00000000';
 
 const STORAGE_KEY = 'knit_items';
 const DATA_VERSION_KEY = 'data_version';
@@ -122,6 +124,10 @@ const isBoolean = (value: unknown): value is boolean => {
 
 const isStringArray = (value: unknown): value is string[] => {
   return Array.isArray(value) && value.every((item) => typeof item === 'string');
+};
+
+const isGeneratedItemId = (value: unknown): value is string => {
+  return typeof value === 'string' && /^(proj|counter)_\d+$/.test(value);
 };
 
 const isThreeStringTuple = (value: unknown): value is [string, string, string] => {
@@ -228,6 +234,10 @@ const isCompactDateString = (value: unknown): value is string => {
   return typeof value === 'string'
     && /^\d{8}$/.test(value)
     && isValidStoredDateString(value);
+};
+
+const isSectionRecordDateString = (value: unknown): value is string => {
+  return value === EMPTY_SECTION_RECORD_DATE || isCompactDateString(value);
 };
 
 const isInfoDateInputString = (value: unknown): value is string => {
@@ -398,10 +408,10 @@ const isSectionRecord = (value: unknown, dataVersion: number): boolean => {
   }
 
   if (dataVersion >= 5) {
-    return isCompactDateString(value.date);
+    return isSectionRecordDateString(value.date);
   }
 
-  return value.date === undefined || isCompactDateString(value.date);
+  return value.date === undefined || isSectionRecordDateString(value.date);
 };
 
 const isProjectItem = (value: Record<string, unknown>): boolean => {
@@ -430,6 +440,7 @@ const isCounterItem = (value: Record<string, unknown>, dataVersion: number): boo
   if (dataVersion >= 3) {
     if (
       !isNonNegativeInteger(value.targetCount)
+      || !isCounterValue(value.targetCount)
       || !isElapsedTimeSeconds(value.elapsedTime)
       || typeof value.timerIsActive !== 'boolean'
       || typeof value.timerIsPlaying !== 'boolean'
@@ -439,6 +450,7 @@ const isCounterItem = (value: Record<string, unknown>, dataVersion: number): boo
       || typeof value.subModalIsOpen !== 'boolean'
       || !Array.isArray(value.repeatRules)
       || !Array.isArray(value.sectionRecords)
+      || value.sectionRecords.length > MAX_SECTION_RECORDS
       || typeof value.sectionModalIsOpen !== 'boolean'
     ) {
       return false;
@@ -491,42 +503,6 @@ const hasValidTitleConstraints = (items: Item[]): boolean => {
   return items.every((item) => isTrimmedNonEmptyStringWithinLength(item.title, MAX_TITLE_LENGTH));
 };
 
-const hasValidTitleUniqueness = (items: Item[]): boolean => {
-  const projectTitles = new Set<string>();
-  const topLevelCounterTitles = new Set<string>();
-  const projectCounterTitles = new Map<string, Set<string>>();
-
-  for (const item of items) {
-    if (item.type === 'project') {
-      if (projectTitles.has(item.title)) {
-        return false;
-      }
-
-      projectTitles.add(item.title);
-      continue;
-    }
-
-    if (item.parentProjectId == null) {
-      if (topLevelCounterTitles.has(item.title)) {
-        return false;
-      }
-
-      topLevelCounterTitles.add(item.title);
-      continue;
-    }
-
-    const existingTitles = projectCounterTitles.get(item.parentProjectId) ?? new Set<string>();
-    if (existingTitles.has(item.title)) {
-      return false;
-    }
-
-    existingTitles.add(item.title);
-    projectCounterTitles.set(item.parentProjectId, existingTitles);
-  }
-
-  return true;
-};
-
 const hasValidProjectCounterReferences = (items: Item[]): boolean => {
   const projects = items.filter((item): item is Extract<Item, { type: 'project' }> => item.type === 'project');
   const counters = items.filter((item): item is Extract<Item, { type: 'counter' }> => item.type === 'counter');
@@ -571,7 +547,6 @@ const hasValidProjectCounterReferences = (items: Item[]): boolean => {
 const hasValidItemSemantics = (items: Item[]): boolean => {
   return hasUniqueIds(items)
     && hasValidTitleConstraints(items)
-    && hasValidTitleUniqueness(items)
     && hasValidProjectCounterReferences(items);
 };
 
@@ -623,7 +598,7 @@ const isItemArray = (value: unknown, dataVersion: number): value is Item[] => {
   }
 
   const allItemsAreValid = value.every((item) => {
-    if (!isRecord(item) || typeof item.id !== 'string' || typeof item.title !== 'string') {
+    if (!isRecord(item) || !isGeneratedItemId(item.id) || typeof item.title !== 'string') {
       return false;
     }
 
