@@ -5,6 +5,7 @@ import { RootStackParamList } from './AppNavigator';
 
 import { View, TouchableOpacity, Text } from 'react-native';
 import ActivateToggle from '@components/common/ActivateToggle';
+import { appTheme } from '@styles/appTheme';
 
 export const getDefaultHeaderLeft = (
   navigation: any
@@ -12,7 +13,7 @@ export const getDefaultHeaderLeft = (
   headerLeft: () => (
     <View className="mr-2 items-center">
       <TouchableOpacity onPress={() => navigation.goBack()}>
-        <ChevronLeft size={28} color="black" />
+        <ChevronLeft size={28} color={appTheme.colors.black} />
       </TouchableOpacity>
     </View>
   ),
@@ -24,7 +25,7 @@ export const getDefaultHeaderRight = (
 ) => ({
   headerRight: () => (
     <TouchableOpacity onPress={() => navigation.navigate('Setting')}>
-      <Settings size={24} color="black" />
+      <Settings size={24} color={appTheme.colors.black} />
     </TouchableOpacity>
   ),
 });
@@ -38,13 +39,13 @@ export const getHeaderRightWithEditAndSettings = (
   return (
     <View className="flex-row">
       <TouchableOpacity onPress={onSortPress} style={{ marginRight: 12 }}>
-        <ArrowDownUp size={24} color="black" />
+        <ArrowDownUp size={24} color={appTheme.colors.black} />
       </TouchableOpacity>
       <TouchableOpacity onPress={onEditPress} style={{ marginRight: 12 }}>
-        <SquarePen size={24} color="black" />
+        <SquarePen size={24} color={appTheme.colors.black} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Setting')}>
-        <Settings size={24} color="black" />
+        <Settings size={24} color={appTheme.colors.black} />
       </TouchableOpacity>
     </View>
   );
@@ -60,16 +61,16 @@ export const getHeaderRightWithInfoEditAndSettings = (
   return (
     <View className="flex-row">
       <TouchableOpacity onPress={onInfoPress} style={{ marginRight: 13 }}>
-        <Info size={26} color="black" />
+        <Info size={26} color={appTheme.colors.black} />
       </TouchableOpacity>
       <TouchableOpacity onPress={onSortPress} style={{ marginRight: 12 }}>
-        <ArrowDownUp size={24} color="black" />
+        <ArrowDownUp size={24} color={appTheme.colors.black} />
       </TouchableOpacity>
       <TouchableOpacity onPress={onEditPress} style={{ marginRight: 12 }}>
-        <SquarePen size={24} color="black" />
+        <SquarePen size={24} color={appTheme.colors.black} />
       </TouchableOpacity>
       <TouchableOpacity onPress={() => navigation.navigate('Setting')}>
-        <Settings size={24} color="black" />
+        <Settings size={24} color={appTheme.colors.black} />
       </TouchableOpacity>
     </View>
   );
@@ -99,7 +100,10 @@ export const getHeaderRightWithActivateInfoSettings = (
         accessibilityLabel="음성 인식 단수 증감"
         accessibilityHint="탭하여 음성 인식 단수 증감 기능을 켜거나 끕니다"
       >
-        <Mic size={24} color={voiceCommandsEnabled ? 'black' : '#B8B8B8'} />
+        <Mic
+          size={24}
+          color={voiceCommandsEnabled ? appTheme.colors.black : appTheme.colors.mediumgray}
+        />
       </TouchableOpacity>
       <TouchableOpacity
         onPress={onSubSlideModalsPress}
@@ -113,7 +117,11 @@ export const getHeaderRightWithActivateInfoSettings = (
         <Text
           allowFontScaling={false}
           className="text-base font-bold"
-          style={{ color: subSlideModalsEnabled ? 'black' : '#B8B8B8' }}
+          style={{
+            color: subSlideModalsEnabled
+              ? appTheme.colors.black
+              : appTheme.colors.mediumgray,
+          }}
         >
           sub
         </Text>
@@ -134,7 +142,10 @@ export const getHeaderRightWithActivateInfoSettings = (
         accessibilityHint="탭하여 타이머 기능을 켜거나 끕니다"
         accessibilityState={{ selected: timerIsActive }}
       >
-        <Timer size={24} color={timerIsActive ? 'black' : '#B8B8B8'} />
+        <Timer
+          size={24}
+          color={timerIsActive ? appTheme.colors.black : appTheme.colors.mediumgray}
+        />
       </TouchableOpacity>
 
       {/* 활성 아이콘 */}
@@ -147,12 +158,12 @@ export const getHeaderRightWithActivateInfoSettings = (
 
       {/* Info 버튼 */}
       <TouchableOpacity onPress={onInfoPress} style={{ marginRight: 12 }}>
-        <Info size={26} color="black" />
+        <Info size={26} color={appTheme.colors.black} />
       </TouchableOpacity>
 
       {/* 설정 */}
       <TouchableOpacity onPress={() => navigation.navigate('Setting')} style={{ marginRight: 4 }}>
-        <Settings size={24} color="black" />
+        <Settings size={24} color={appTheme.colors.black} />
       </TouchableOpacity>
     </View>
   );

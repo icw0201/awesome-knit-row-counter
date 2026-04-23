@@ -8,6 +8,7 @@ import CircleIcon from '@components/common/CircleIcon';
 import RecordListModal from './RecordListModal';
 import Tooltip from '@components/common/Tooltip';
 import { Mic } from 'lucide-react-native';
+import { appTheme } from '@styles/appTheme';
 
 /**
  * SlideModal과 같은 부모 아래 형제로 둠. 패널(열린 상태, 왼쪽 정렬) 박스 밖·상단 Y에 툴팁을 붙임.
@@ -123,7 +124,11 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
                   {recentRecords.map((record, index) => {
                     // 첫 번째: black, 두 번째: darkgray, 세 번째: mediumgray
                     const textColorClass = index === 0 ? 'text-black' : index === 1 ? 'text-darkgray' : 'text-mediumgray';
-                    const micColor = index === 0 ? '#111111' : index === 1 ? '#767676' : '#B8B8B8';
+                    const micColor = index === 0
+                      ? appTheme.colors.black
+                      : index === 1
+                        ? appTheme.colors.darkgray
+                        : appTheme.colors.mediumgray;
                     return (
                       <View key={index} className="w-full">
                         <View className="max-w-full flex-row items-center self-start">

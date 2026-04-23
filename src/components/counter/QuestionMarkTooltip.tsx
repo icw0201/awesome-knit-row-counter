@@ -3,6 +3,7 @@ import { Animated, LayoutChangeEvent, Modal, Pressable, StyleSheet, useWindowDim
 import { View, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { CircleQuestionMark } from 'lucide-react-native';
+import { appTheme } from '@styles/appTheme';
 
 interface QuestionMarkTooltipProps {
   tooltipText: string;
@@ -15,7 +16,7 @@ interface QuestionMarkTooltipProps {
  */
 const QuestionMarkTooltip: React.FC<QuestionMarkTooltipProps> = ({ tooltipText }) => {
   const iconSize = 24;
-  const iconColor = '#767676';
+  const iconColor = appTheme.colors.darkgray;
   const { height: screenHeight, width: screenWidth } = useWindowDimensions();
   const [showTooltip, setShowTooltip] = useState(false);
   const iconRef = useRef<View | null>(null);
@@ -160,7 +161,7 @@ const QuestionMarkTooltip: React.FC<QuestionMarkTooltipProps> = ({ tooltipText }
                       transform: [{ translateX: -(arrowLeftPx != null ? ARROW_HALF_WIDTH : 6) }, { rotate: '180deg' }],
                     }}
                   >
-                    <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill="rgba(0,0,0,1)" />
+                    <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill={appTheme.colors.black} />
                   </Svg>
                   <View
                     ref={(ref) => { bodyRef.current = ref; }}

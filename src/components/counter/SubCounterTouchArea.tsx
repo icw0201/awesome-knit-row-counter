@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { Minus, Plus, Speech } from 'lucide-react-native';
+import { appTheme } from '@styles/appTheme';
 
 interface SubCounterTouchAreaProps {
   handleWidth?: number;
@@ -31,9 +32,15 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
   highlightedAction = null,
   disabled = false,
 }) => {
-  const voiceHintIconColor = '#767676';
+  const voiceHintIconColor = appTheme.colors.darkgray;
   const isSubtractHighlighted = highlightedAction === 'subtract';
   const isAddHighlighted = highlightedAction === 'add';
+  const subtractBackgroundColor = isSubtractHighlighted
+    ? appTheme.colors.gray['100']
+    : appTheme.colors.transparent;
+  const addBackgroundColor = isAddHighlighted
+    ? appTheme.colors.gray['100']
+    : appTheme.colors.transparent;
 
   return (
     <View
@@ -44,7 +51,8 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
     >
       {/* 왼쪽 영역 (감소) - 투명 배경 */}
       <View
-        className={`flex-1 items-start justify-center ${isSubtractHighlighted ? 'bg-gray-100' : 'bg-transparent'}`}
+        className="flex-1 items-start justify-center"
+        style={{ backgroundColor: subtractBackgroundColor }}
         focusable={false}
         accessible={false}
         // 이 터치 레이어를 포커스/접근성 대상에서 제외해
@@ -59,7 +67,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
         >
           <Minus
             size={24}
-            color="#fc3e39"
+            color={appTheme.colors.primary['500']}
             strokeWidth={2}
           />
           {showVoiceCommandHints && (
@@ -73,7 +81,8 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
 
       {/* 오른쪽 영역 (증가) - 투명 배경 */}
       <View
-        className={`flex-1 items-end justify-center ${isAddHighlighted ? 'bg-gray-100' : 'bg-transparent'}`}
+        className="flex-1 items-end justify-center"
+        style={{ backgroundColor: addBackgroundColor }}
         focusable={false}
         accessible={false}
         // 오른쪽 영역도 같은 이유로 포커스/접근성 대상에서 제외한다.
@@ -87,7 +96,7 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
         >
           <Plus
             size={24}
-            color="#fc3e39"
+            color={appTheme.colors.primary['500']}
             strokeWidth={2}
           />
           {showVoiceCommandHints && (

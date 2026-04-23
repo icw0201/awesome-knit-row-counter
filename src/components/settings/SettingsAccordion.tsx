@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { View, Text, TouchableOpacity, Animated, Easing, LayoutChangeEvent } from 'react-native';
 
 import CircleRadioButton from '@components/common/CircleRadioButton';
+import { appTheme } from '@styles/appTheme';
 
 /**
  * 설정 화면에서 쓰는 접이(아코디언) 블록입니다.
@@ -88,14 +89,14 @@ const SettingsAccordion: React.FC<SettingsAccordionProps> = ({
         accessibilityState={{ checked }}
         accessibilityLabel={label}
       >
-        <Text className="shrink flex-1 text-base text-black" numberOfLines={2}>
+        <Text className={`shrink flex-1 text-base ${appTheme.tw.text.black}`} numberOfLines={2}>
           {label}
         </Text>
         <CircleRadioButton
           selected={checked}
           onPress={handleToggle}
-          selectedBorderClassName="border-red-orange-400"
-          selectedFillClassName="bg-red-orange-400"
+          selectedBorderClassName={appTheme.tw.border.primary['400']}
+          selectedFillClassName={appTheme.tw.bg.primary['400']}
         />
       </TouchableOpacity>
 

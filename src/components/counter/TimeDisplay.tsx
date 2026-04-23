@@ -3,6 +3,7 @@ import { Text, View, LayoutChangeEvent, Pressable } from 'react-native';
 import { ScreenSize, getTimeDisplayTextClass } from '@constants/screenSizeConfig';
 import { formatElapsedTime } from '@utils/timeUtils';
 import TimerBackgroundIcon from '@assets/images/timer_background.svg';
+import { appTheme } from '@styles/appTheme';
 
 interface TimeDisplayProps {
   screenSize: ScreenSize;
@@ -58,11 +59,15 @@ const TimeDisplay: React.FC<TimeDisplayProps> = ({ screenSize, timerIsPlaying, e
   const paddingClass = screenSize === ScreenSize.SMALL ? 'px-3 py-1.5' : 'px-4 py-2';
 
   // 배경색 결정: timerIsPlaying이 false면 light gray, true면 red-orange-300
-  const backgroundColor = timerIsPlaying ? '#ffa09e' : '#DBDBDB';
+  const backgroundColor = timerIsPlaying
+    ? appTheme.colors.primary['300']
+    : appTheme.colors.lightgray;
 
   // 시간 포맷팅
   const { hours, minutes, seconds } = formatElapsedTime(elapsedTime);
-  const colonStyle = timerIsPlaying && !showColon ? { color: 'transparent' } : undefined;
+  const colonStyle = timerIsPlaying && !showColon
+    ? { color: appTheme.colors.transparent }
+    : undefined;
 
   const handlePress = () => {
     if (longPressHandledRef.current) {

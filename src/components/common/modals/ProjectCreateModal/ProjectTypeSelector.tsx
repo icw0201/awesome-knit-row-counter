@@ -3,6 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { Check } from 'lucide-react-native';
 import clsx from 'clsx';
 import { colorStyles } from '@styles/colorStyles';
+import { appTheme } from '@styles/appTheme';
 
 type ProjectTypeOption = {
   value: 'project' | 'counter';
@@ -53,15 +54,15 @@ const ProjectTypeRadioButton: React.FC<ProjectTypeRadioButtonProps> = ({
       className={clsx(
         'w-6 h-6 rounded-full items-center justify-center mb-1',
         selected
-          ? colorStyles.vivid.container
-          : 'bg-red-orange-100 border border-red-orange-100'
+          ? colorStyles.vivid.containerClassName
+          : `${appTheme.tw.bg.primary['100']} border ${appTheme.tw.border.primary['100']}`
       )}
     >
       {selected && (
-        <Check size={14} color="white" />
+        <Check size={14} color={appTheme.colors.white} />
       )}
     </View>
-    <Text className="text-sm text-black">{label}</Text>
+    <Text className={`text-sm ${appTheme.tw.text.black}`}>{label}</Text>
   </TouchableOpacity>
 );
 
@@ -80,7 +81,7 @@ const ProjectTypeSelector: React.FC<ProjectTypeSelectorProps> = ({
 
   return (
     <View className="items-center">
-      <View 
+      <View
         className="flex-row items-center justify-center"
         accessibilityRole="radiogroup"
       >

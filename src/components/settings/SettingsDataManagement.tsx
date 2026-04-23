@@ -4,6 +4,7 @@ import { CommonActions, useNavigation } from '@react-navigation/native';
 import { ConfirmModal } from '@components/common/modals';
 import { clearAllProjectData } from '@storage/storage';
 import IconBox from './IconBox';
+import { appTheme } from '@styles/appTheme';
 
 interface SettingsDataManagementProps {}
 
@@ -58,7 +59,7 @@ const SettingsDataManagement: React.FC<SettingsDataManagementProps> = () => {
   return (
     <>
       <View className="mb-8">
-        <Text className="mb-3 px-1 text-sm font-semibold text-red-orange-500">
+        <Text className={`mb-3 px-1 text-sm font-semibold ${appTheme.tw.text.primary['500']}`}>
           데이터 관리
         </Text>
         <IconBox

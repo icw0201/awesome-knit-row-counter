@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ItemRow, FloatingListActionButton, ItemModals, SortDropdown } from '@components/list';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
+import { appTheme } from '@styles/appTheme';
 import { useProjectDetail } from '@hooks/useProjectDetail';
 
 const ProjectDetail = () => {
@@ -40,7 +41,7 @@ const ProjectDetail = () => {
   } = useProjectDetail();
 
   return (
-    <SafeAreaView style={screenStyles.flex1} className={isEditMode ? 'bg-red-orange-400' : undefined} edges={safeAreaEdges}>
+    <SafeAreaView style={screenStyles.flex1} className={isEditMode ? appTheme.tw.bg.primary['400'] : undefined} edges={safeAreaEdges}>
       {/* 카운터 목록 스크롤뷰 */}
       <ScrollView contentContainerStyle={screenStyles.scrollViewContent}>
         {items.map((item) => (

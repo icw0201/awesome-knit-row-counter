@@ -17,9 +17,6 @@ const RED_ORANGE_PALETTE = {
   '950': '#490806',
 };
 
-/** red-orange 팔레트 기반 배열 (50 ~ 950 순서) */
-const RED_ORANGE_SWATCHES = Object.values(RED_ORANGE_PALETTE);
-
 /** 규칙 카드와 ColorPicker 스와치 전용 색상 */
 const RULE_SWATCH_COLORS = [
   '#EF5777',
@@ -36,6 +33,5 @@ const RULE_SWATCH_COLORS = [
 
 module.exports = {
   RED_ORANGE_PALETTE,
-  RED_ORANGE_SWATCHES,
   RULE_SWATCH_COLORS,
 };
