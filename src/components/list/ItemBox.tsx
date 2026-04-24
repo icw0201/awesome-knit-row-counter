@@ -2,9 +2,9 @@
 import React from 'react';
 import { Text, TouchableOpacity, View, Image } from 'react-native';
 import clsx from 'clsx';
+import { completeImage } from '@assets/images';
 import { colorStyles } from '@styles/colorStyles';
 import { appTheme } from '@styles/appTheme';
-import { completeImages } from '@assets/images';
 
 interface ItemBoxProps {
   title: string;
@@ -83,9 +83,14 @@ const ItemBox: React.FC<ItemBoxProps> = ({
             <View className="relative items-end justify-center">
               {isCompleted && (
                 <Image
-                  source={isEditMode ? completeImages.reverse : completeImages.normal}
+                  source={completeImage}
                   className="absolute h-20 w-20 right-10 top-1/2 -mt-11"
                   resizeMode="cover"
+                  style={{
+                    tintColor: isEditMode
+                      ? appTheme.colors.primary['400']
+                      : appTheme.colors.primary['100'],
+                  }}
                 />
               )}
               <View className="items-end justify-center h-10">
