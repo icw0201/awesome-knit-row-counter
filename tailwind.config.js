@@ -3,7 +3,7 @@ const {
   RED_ORANGE_PALETTE,
   SAPPHIRE_PALETTE,
   AQUAMARINE_PALETTE,
-  VIRIDIAN_GREEN_PALETTE,
+  OLIVE_PALETTE,
   GRAY_PALETTE,
   ELECTRIC_VIOLET_PALETTE,
   EMPHASIS_RED,
@@ -27,7 +27,7 @@ module.exports = {
     'border-white',
     'border-lightgray',
     {
-      pattern: /(bg|text|border)-(red-orange|sapphire|aquamarine|electric-violet|viridian-green|gray)-(50|100|200|300|400|500|600|700|800|900|950)/,
+      pattern: /(bg|text|border)-(red-orange|sapphire|aquamarine|electric-violet|olive|gray)-(50|100|200|300|400|500|600|700|800|900|950)/,
     },
   ],
   theme: {
@@ -37,7 +37,7 @@ module.exports = {
         sapphire: SAPPHIRE_PALETTE,
         aquamarine: AQUAMARINE_PALETTE,
         'electric-violet': ELECTRIC_VIOLET_PALETTE,
-        'viridian-green': VIRIDIAN_GREEN_PALETTE,
+        olive: OLIVE_PALETTE,
         gray: GRAY_PALETTE,
         'emphasis-red': EMPHASIS_RED,
         black: '#111111',

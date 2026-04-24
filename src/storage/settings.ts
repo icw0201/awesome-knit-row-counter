@@ -44,7 +44,7 @@ export type ColorThemeSetting =
   | 'redOrange'
   | 'sapphire'
   | 'aquamarine'
-  | 'viridianGreen'
+  | 'olive'
   | 'gray'
   | 'electricViolet';
 
@@ -87,7 +87,7 @@ export const isColorThemeSetting = (
   return value === 'redOrange'
     || value === 'sapphire'
     || value === 'aquamarine'
-    || value === 'viridianGreen'
+    || value === 'olive'
     || value === 'gray'
     || value === 'electricViolet';
 };
@@ -95,22 +95,6 @@ export const isColorThemeSetting = (
 export const normalizeColorThemeSetting = (
   value: unknown
 ): ColorThemeSetting | null => {
-  if (value === 'skyBlue') {
-    return 'sapphire';
-  }
-
-  if (value === 'leafGreen') {
-    return 'aquamarine';
-  }
-
-  if (value === 'rose') {
-    return 'viridianGreen';
-  }
-
-  if (value === 'rustyNail') {
-    return 'gray';
-  }
-
   return isColorThemeSetting(value) ? value : null;
 };
 

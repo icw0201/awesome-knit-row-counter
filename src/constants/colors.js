@@ -47,34 +47,34 @@ const AQUAMARINE_PALETTE = {
   '950': '#003529',
 };
 
-/** viridian-green 팔레트 */
-const VIRIDIAN_GREEN_PALETTE = {
-  '50': '#f5f8f7',
-  '100': '#dee9e4',
-  '200': '#bdd2c9',
-  '300': '#94b4a8',
-  '400': '#6d9487',
-  '500': '#5d887a',
-  '600': '#416057',
-  '700': '#364f48',
-  '800': '#2f403b',
-  '900': '#2a3733',
-  '950': '#141f1c',
+/** olive 팔레트 */
+const OLIVE_PALETTE = {
+  '50': '#f5f8ed',
+  '100': '#e9f0d7',
+  '200': '#d5e3b3',
+  '300': '#bad086',
+  '400': '#98b755',
+  '500': '#81a042',
+  '600': '#647f31',
+  '700': '#4d6229',
+  '800': '#3f4f25',
+  '900': '#374423',
+  '950': '#1b240f',
 };
 
 /** gray 팔레트 */
 const GRAY_PALETTE = {
-  '50': '#f9fafb',
-  '100': '#f3f4f6',
-  '200': '#e5e7eb',
-  '300': '#d1d5dc',
-  '400': '#99a1af',
-  '500': '#6a7282',
-  '600': '#4a5565',
-  '700': '#364153',
-  '800': '#1e2939',
-  '900': '#101828',
-  '950': '#030712',
+  '50': '#f0f2f4',
+  '100': '#e7eaee',
+  '200': '#d6dae0',
+  '300': '#bbc2cb',
+  '400': '#848d9d',
+  '500': '#586173',
+  '600': '#3d4858',
+  '700': '#2b3546',
+  '800': '#151f2e',
+  '900': '#0a1120',
+  '950': '#01040c',
 };
 
 /** electric-violet 팔레트 */
@@ -113,7 +113,7 @@ module.exports = {
   RED_ORANGE_PALETTE,
   SAPPHIRE_PALETTE,
   AQUAMARINE_PALETTE,
-  VIRIDIAN_GREEN_PALETTE,
+  OLIVE_PALETTE,
   GRAY_PALETTE,
   ELECTRIC_VIOLET_PALETTE,
   EMPHASIS_RED,
