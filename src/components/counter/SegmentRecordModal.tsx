@@ -123,7 +123,11 @@ export const SegmentRecordModal: React.FC<SegmentRecordModalProps> = ({
                 <View className="w-full items-start">
                   {recentRecords.map((record, index) => {
                     // 첫 번째: black, 두 번째: darkgray, 세 번째: mediumgray
-                    const textColorClass = index === 0 ? 'text-black' : index === 1 ? 'text-darkgray' : 'text-mediumgray';
+                    const textColorClass = index === 0
+                      ? appTheme.tw.text.black
+                      : index === 1
+                        ? appTheme.tw.text.darkgray
+                        : appTheme.tw.text.mediumgray;
                     const micColor = index === 0
                       ? appTheme.colors.black
                       : index === 1

@@ -73,7 +73,7 @@ const ItemBox: React.FC<ItemBoxProps> = ({
         <View className="flex-row items-center justify-between">
           <View className="flex flex-col">
             {subtitle && (
-              <Text className={clsx('text-xs', isEditMode ? appTheme.tw.text.darkgray : (isCompleted ? 'text-white' : subtextClassName))}>
+              <Text className={clsx('text-xs', isEditMode ? appTheme.tw.text.darkgray : (isCompleted ? appTheme.tw.text.white : subtextClassName))}>
                 {subtitle}
               </Text>
             )}
