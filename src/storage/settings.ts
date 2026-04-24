@@ -44,8 +44,8 @@ export type ColorThemeSetting =
   | 'redOrange'
   | 'sapphire'
   | 'aquamarine'
-  | 'rose'
-  | 'rustyNail'
+  | 'viridianGreen'
+  | 'gray'
   | 'electricViolet';
 
 export interface CustomVoiceCommandInputsSetting {
@@ -87,8 +87,8 @@ export const isColorThemeSetting = (
   return value === 'redOrange'
     || value === 'sapphire'
     || value === 'aquamarine'
-    || value === 'rose'
-    || value === 'rustyNail'
+    || value === 'viridianGreen'
+    || value === 'gray'
     || value === 'electricViolet';
 };
 
@@ -101,6 +101,14 @@ export const normalizeColorThemeSetting = (
 
   if (value === 'leafGreen') {
     return 'aquamarine';
+  }
+
+  if (value === 'rose') {
+    return 'viridianGreen';
+  }
+
+  if (value === 'rustyNail') {
+    return 'gray';
   }
 
   return isColorThemeSetting(value) ? value : null;

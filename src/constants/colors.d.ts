@@ -7,11 +7,11 @@ export const SAPPHIRE_PALETTE: Record<string, string>;
 /** aquamarine 팔레트 (tailwind theme용) */
 export const AQUAMARINE_PALETTE: Record<string, string>;
 
-/** rose 팔레트 (tailwind theme용) */
-export const ROSE_PALETTE: Record<string, string>;
+/** viridian-green 팔레트 (tailwind theme용) */
+export const VIRIDIAN_GREEN_PALETTE: Record<string, string>;
 
-/** rusty-nail 팔레트 (tailwind theme용) */
-export const RUSTY_NAIL_PALETTE: Record<string, string>;
+/** gray 팔레트 (tailwind theme용) */
+export const GRAY_PALETTE: Record<string, string>;
 
 /** electric-violet 팔레트 (tailwind theme용) */
 export const ELECTRIC_VIOLET_PALETTE: Record<string, string>;

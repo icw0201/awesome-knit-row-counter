@@ -47,34 +47,34 @@ const AQUAMARINE_PALETTE = {
   '950': '#003529',
 };
 
-/** rose 팔레트 */
-const ROSE_PALETTE = {
-  '50': '#fff0f9',
-  '100': '#ffe3f5',
-  '200': '#ffc6ea',
-  '300': '#ff98d6',
-  '400': '#ff58b9',
-  '500': '#ff279e',
-  '600': '#ff0683',
-  '700': '#df006a',
-  '800': '#b80055',
-  '900': '#980347',
-  '950': '#5f002b',
+/** viridian-green 팔레트 */
+const VIRIDIAN_GREEN_PALETTE = {
+  '50': '#f5f8f7',
+  '100': '#dee9e4',
+  '200': '#bdd2c9',
+  '300': '#94b4a8',
+  '400': '#6d9487',
+  '500': '#5d887a',
+  '600': '#416057',
+  '700': '#364f48',
+  '800': '#2f403b',
+  '900': '#2a3733',
+  '950': '#141f1c',
 };
 
-/** rusty-nail 팔레트 */
-const RUSTY_NAIL_PALETTE = {
-  '50': '#fffee7',
-  '100': '#fffcc1',
-  '200': '#fff586',
-  '300': '#ffe841',
-  '400': '#ffd70e',
-  '500': '#f1bf01',
-  '600': '#d09400',
-  '700': '#a66902',
-  '800': '#844f0a',
-  '900': '#74420f',
-  '950': '#442204',
+/** gray 팔레트 */
+const GRAY_PALETTE = {
+  '50': '#f9fafb',
+  '100': '#f3f4f6',
+  '200': '#e5e7eb',
+  '300': '#d1d5dc',
+  '400': '#99a1af',
+  '500': '#6a7282',
+  '600': '#4a5565',
+  '700': '#364153',
+  '800': '#1e2939',
+  '900': '#101828',
+  '950': '#030712',
 };
 
 /** electric-violet 팔레트 */
@@ -113,8 +113,8 @@ module.exports = {
   RED_ORANGE_PALETTE,
   SAPPHIRE_PALETTE,
   AQUAMARINE_PALETTE,
-  ROSE_PALETTE,
-  RUSTY_NAIL_PALETTE,
+  VIRIDIAN_GREEN_PALETTE,
+  GRAY_PALETTE,
   ELECTRIC_VIOLET_PALETTE,
   EMPHASIS_RED,
   RULE_SWATCH_COLORS,

@@ -31,7 +31,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
   const isAddHighlighted = highlightedAction === 'add';
   const voiceHintIconColor = appTheme.colors.darkgray;
   const subtractBackgroundColor = isSubtractHighlighted
-    ? appTheme.colors.gray['100']
+    ? appTheme.colors.neutral['100']
     : appTheme.colors.white;
   const addBackgroundColor = isAddHighlighted
     ? appTheme.colors.primary['200']

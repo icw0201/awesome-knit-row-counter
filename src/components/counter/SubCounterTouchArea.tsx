@@ -36,10 +36,10 @@ const SubCounterTouchArea: React.FC<SubCounterTouchAreaProps> = ({
   const isSubtractHighlighted = highlightedAction === 'subtract';
   const isAddHighlighted = highlightedAction === 'add';
   const subtractBackgroundColor = isSubtractHighlighted
-    ? appTheme.colors.gray['100']
+    ? appTheme.colors.neutral['100']
     : appTheme.colors.transparent;
   const addBackgroundColor = isAddHighlighted
-    ? appTheme.colors.gray['100']
+    ? appTheme.colors.neutral['100']
     : appTheme.colors.transparent;
 
   return (
