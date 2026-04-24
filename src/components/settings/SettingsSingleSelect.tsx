@@ -51,9 +51,13 @@ const SettingsSingleSelect = <T extends string>({
                 style={{ backgroundColor: option.representativeColor }}
               >
                 {selected ? (
-                  <View className="items-center px-2">
+                  <View className="w-full items-center justify-center px-2">
                     <Check size={18} color={appTheme.colors.white} strokeWidth={3} />
-                    <Text className="mt-2 text-center text-sm font-semibold text-white">
+                    <Text
+                      className="mt-2 w-full text-center text-sm font-semibold text-white"
+                      numberOfLines={2}
+                      ellipsizeMode="tail"
+                    >
                       {option.label}
                     </Text>
                   </View>
