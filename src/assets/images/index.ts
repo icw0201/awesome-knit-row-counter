@@ -12,7 +12,4 @@ export const directionImages = {
   emphasis_plain: require('./way/emphasis_plain.png'),
 };
 
-export const completeImages = {
-  normal: require('./complete/complete_nomal.png'),
-  reverse: require('./complete/complete_reverse.png'),
-};
+export const completeImage = require('./complete/complete_nomal.png');
