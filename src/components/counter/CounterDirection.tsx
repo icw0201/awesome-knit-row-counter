@@ -6,6 +6,7 @@ import { Way, RepeatRule } from '@storage/types';
 import { directionImages } from '@assets/images';
 import EmphasisBubbleIcon from '@assets/images/way/emphasis_bubble.svg';
 import { usePreferReducedMotion } from '@hooks/usePreferReducedMotion';
+import { appTheme } from '@styles/appTheme';
 import { isRuleApplied, isDarkColor } from '@utils/ruleUtils';
 import { calculateInitialFontSize } from '@utils/textUtils';
 
@@ -418,7 +419,9 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                             className="font-bold text-center"
                             style={{
                               fontSize: textFontSize,
-                              color: isDarkColor(rule.color) ? '#ffffff' : '#000000',
+                              color: isDarkColor(rule.color)
+                                ? appTheme.colors.white
+                                : appTheme.colors.black,
                             }}
                             allowFontScaling={false}
                           >

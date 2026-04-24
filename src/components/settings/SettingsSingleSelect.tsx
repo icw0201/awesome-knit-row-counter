@@ -52,7 +52,7 @@ const SettingsSingleSelect = <T extends string>({
               >
                 {selected ? (
                   <View className="items-center px-2">
-                    <Check size={18} color="#ffffff" strokeWidth={3} />
+                    <Check size={18} color={appTheme.colors.white} strokeWidth={3} />
                     <Text className="mt-2 text-center text-sm font-semibold text-white">
                       {option.label}
                     </Text>
