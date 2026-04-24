@@ -1,11 +1,20 @@
 /** red-orange 팔레트 (tailwind theme용) */
 export const RED_ORANGE_PALETTE: Record<string, string>;
 
-/** sky-blue 팔레트 (tailwind theme용) */
-export const SKY_BLUE_PALETTE: Record<string, string>;
+/** sapphire 팔레트 (tailwind theme용) */
+export const SAPPHIRE_PALETTE: Record<string, string>;
 
-/** leaf-green 팔레트 (tailwind theme용) */
-export const LEAF_GREEN_PALETTE: Record<string, string>;
+/** aquamarine 팔레트 (tailwind theme용) */
+export const AQUAMARINE_PALETTE: Record<string, string>;
+
+/** rose 팔레트 (tailwind theme용) */
+export const ROSE_PALETTE: Record<string, string>;
+
+/** rusty-nail 팔레트 (tailwind theme용) */
+export const RUSTY_NAIL_PALETTE: Record<string, string>;
+
+/** electric-violet 팔레트 (tailwind theme용) */
+export const ELECTRIC_VIOLET_PALETTE: Record<string, string>;
 
 /** 테마와 무관하게 경고/강조 의미를 유지하는 고정 red */
 export const EMPHASIS_RED: string;

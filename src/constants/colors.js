@@ -17,34 +17,79 @@ const RED_ORANGE_PALETTE = {
   '950': '#490806',
 };
 
-/** sky-blue 팔레트 */
-const SKY_BLUE_PALETTE = {
-  '50': '#f0f9ff',
-  '100': '#e0f2fe',
-  '200': '#bae6fd',
-  '300': '#7dd3fc',
-  '400': '#38bdf8',
-  '500': '#0ea5e9',
-  '600': '#0284c7',
-  '700': '#0369a1',
-  '800': '#075985',
-  '900': '#0c4a6e',
-  '950': '#082f49',
+/** sapphire 팔레트 */
+const SAPPHIRE_PALETTE = {
+  '50': '#f3f6fb',
+  '100': '#e3eaf6',
+  '200': '#cedaef',
+  '300': '#acc2e4',
+  '400': '#85a2d5',
+  '500': '#6885c9',
+  '600': '#546cbc',
+  '700': '#4859a7',
+  '800': '#414c8c',
+  '900': '#384270',
+  '950': '#262b45',
 };
 
-/** leaf-green 팔레트 */
-const LEAF_GREEN_PALETTE = {
-  '50': '#ecfdf5',
-  '100': '#d1fae5',
-  '200': '#a7f3d0',
-  '300': '#6ee7b7',
-  '400': '#34d399',
-  '500': '#10b981',
-  '600': '#059669',
-  '700': '#047857',
-  '800': '#065f46',
-  '900': '#064e3b',
-  '950': '#022c22',
+/** aquamarine 팔레트 */
+const AQUAMARINE_PALETTE = {
+  '50': '#e8fff5',
+  '100': '#c8ffe4',
+  '200': '#97ffd1',
+  '300': '#54ffbf',
+  '400': '#2ef6b1',
+  '500': '#00dd98',
+  '600': '#00b580',
+  '700': '#00916b',
+  '800': '#007254',
+  '900': '#005d46',
+  '950': '#003529',
+};
+
+/** rose 팔레트 */
+const ROSE_PALETTE = {
+  '50': '#fff0f9',
+  '100': '#ffe3f5',
+  '200': '#ffc6ea',
+  '300': '#ff98d6',
+  '400': '#ff58b9',
+  '500': '#ff279e',
+  '600': '#ff0683',
+  '700': '#df006a',
+  '800': '#b80055',
+  '900': '#980347',
+  '950': '#5f002b',
+};
+
+/** rusty-nail 팔레트 */
+const RUSTY_NAIL_PALETTE = {
+  '50': '#fffee7',
+  '100': '#fffcc1',
+  '200': '#fff586',
+  '300': '#ffe841',
+  '400': '#ffd70e',
+  '500': '#f1bf01',
+  '600': '#d09400',
+  '700': '#a66902',
+  '800': '#844f0a',
+  '900': '#74420f',
+  '950': '#442204',
+};
+
+/** electric-violet 팔레트 */
+const ELECTRIC_VIOLET_PALETTE = {
+  '50': '#faf5ff',
+  '100': '#f2e9fe',
+  '200': '#e8d6fe',
+  '300': '#d6b6fc',
+  '400': '#bd87f9',
+  '500': '#a459f3',
+  '600': '#8c34e5',
+  '700': '#7926ca',
+  '800': '#6724a5',
+  '900': '#551f84',
+  '950': '#380962',
 };
 
 /** 테마와 무관하게 경고/강조 의미를 유지하는 고정 red */
@@ -66,8 +111,11 @@ const RULE_SWATCH_COLORS = [
 
 module.exports = {
   RED_ORANGE_PALETTE,
-  SKY_BLUE_PALETTE,
-  LEAF_GREEN_PALETTE,
+  SAPPHIRE_PALETTE,
+  AQUAMARINE_PALETTE,
+  ROSE_PALETTE,
+  RUSTY_NAIL_PALETTE,
+  ELECTRIC_VIOLET_PALETTE,
   EMPHASIS_RED,
   RULE_SWATCH_COLORS,
 };

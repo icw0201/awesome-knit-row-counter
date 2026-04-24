@@ -1,8 +1,11 @@
 import {
+  AQUAMARINE_PALETTE,
+  ELECTRIC_VIOLET_PALETTE,
   EMPHASIS_RED,
-  LEAF_GREEN_PALETTE,
   RED_ORANGE_PALETTE,
-  SKY_BLUE_PALETTE,
+  ROSE_PALETTE,
+  RUSTY_NAIL_PALETTE,
+  SAPPHIRE_PALETTE,
 } from '@constants/colors';
 import {
   getSelectedColorThemeSetting,
@@ -73,7 +76,7 @@ export interface AppTheme {
 
 const createClassPalette = (
   utilityPrefix: 'bg' | 'text' | 'border',
-  paletteName: 'red-orange' | 'sky-blue' | 'leaf-green'
+  paletteName: 'red-orange' | 'sapphire' | 'aquamarine' | 'rose' | 'rusty-nail' | 'electric-violet'
 ): ThemeClassPalette => ({
   '50': `${utilityPrefix}-${paletteName}-50`,
   '100': `${utilityPrefix}-${paletteName}-100`,
@@ -90,7 +93,7 @@ const createClassPalette = (
 
 const createTheme = (
   id: ColorThemeSetting,
-  paletteName: 'red-orange' | 'sky-blue' | 'leaf-green',
+  paletteName: 'red-orange' | 'sapphire' | 'aquamarine' | 'rose' | 'rusty-nail' | 'electric-violet',
   primaryPalette: ThemePalette
 ): AppTheme => ({
   id,
@@ -133,14 +136,20 @@ const createTheme = (
 
 const themePalettes: Record<ColorThemeSetting, ThemePalette> = {
   redOrange: RED_ORANGE_PALETTE as ThemePalette,
-  skyBlue: SKY_BLUE_PALETTE as ThemePalette,
-  leafGreen: LEAF_GREEN_PALETTE as ThemePalette,
+  sapphire: SAPPHIRE_PALETTE as ThemePalette,
+  aquamarine: AQUAMARINE_PALETTE as ThemePalette,
+  rose: ROSE_PALETTE as ThemePalette,
+  rustyNail: RUSTY_NAIL_PALETTE as ThemePalette,
+  electricViolet: ELECTRIC_VIOLET_PALETTE as ThemePalette,
 };
 
 const appThemes: Record<ColorThemeSetting, AppTheme> = {
   redOrange: createTheme('redOrange', 'red-orange', themePalettes.redOrange),
-  skyBlue: createTheme('skyBlue', 'sky-blue', themePalettes.skyBlue),
-  leafGreen: createTheme('leafGreen', 'leaf-green', themePalettes.leafGreen),
+  sapphire: createTheme('sapphire', 'sapphire', themePalettes.sapphire),
+  aquamarine: createTheme('aquamarine', 'aquamarine', themePalettes.aquamarine),
+  rose: createTheme('rose', 'rose', themePalettes.rose),
+  rustyNail: createTheme('rustyNail', 'rusty-nail', themePalettes.rustyNail),
+  electricViolet: createTheme('electricViolet', 'electric-violet', themePalettes.electricViolet),
 };
 
 export const APP_COLOR_THEME_OPTIONS: AppColorThemeOption[] = [
@@ -150,14 +159,29 @@ export const APP_COLOR_THEME_OPTIONS: AppColorThemeOption[] = [
     representativeColor: themePalettes.redOrange['400'],
   },
   {
-    value: 'skyBlue',
-    label: '스카이 블루',
-    representativeColor: themePalettes.skyBlue['400'],
+    value: 'sapphire',
+    label: '사파이어',
+    representativeColor: themePalettes.sapphire['400'],
   },
   {
-    value: 'leafGreen',
-    label: '리프 그린',
-    representativeColor: themePalettes.leafGreen['400'],
+    value: 'aquamarine',
+    label: '아쿠아마린',
+    representativeColor: themePalettes.aquamarine['400'],
+  },
+  {
+    value: 'rose',
+    label: '로즈',
+    representativeColor: themePalettes.rose['400'],
+  },
+  {
+    value: 'rustyNail',
+    label: '러스티 네일',
+    representativeColor: themePalettes.rustyNail['400'],
+  },
+  {
+    value: 'electricViolet',
+    label: '일렉트릭 바이올렛',
+    representativeColor: themePalettes.electricViolet['400'],
   },
 ];
 

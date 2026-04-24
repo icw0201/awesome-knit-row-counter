@@ -40,7 +40,13 @@ const DEFAULT_SELECTED_COLOR_THEME: ColorThemeSetting = 'redOrange';
 const DEFAULT_SUB_SLIDE_MODALS_ENABLED = true;
 
 export type VoiceCommandSettingMode = 'default' | 'custom';
-export type ColorThemeSetting = 'redOrange' | 'skyBlue' | 'leafGreen';
+export type ColorThemeSetting =
+  | 'redOrange'
+  | 'sapphire'
+  | 'aquamarine'
+  | 'rose'
+  | 'rustyNail'
+  | 'electricViolet';
 
 export interface CustomVoiceCommandInputsSetting {
   mainDecrease: [string, string, string];
@@ -78,7 +84,26 @@ export type VoiceRecognitionPermissionStatus =
 export const isColorThemeSetting = (
   value: unknown
 ): value is ColorThemeSetting => {
-  return value === 'redOrange' || value === 'skyBlue' || value === 'leafGreen';
+  return value === 'redOrange'
+    || value === 'sapphire'
+    || value === 'aquamarine'
+    || value === 'rose'
+    || value === 'rustyNail'
+    || value === 'electricViolet';
+};
+
+export const normalizeColorThemeSetting = (
+  value: unknown
+): ColorThemeSetting | null => {
+  if (value === 'skyBlue') {
+    return 'sapphire';
+  }
+
+  if (value === 'leafGreen') {
+    return 'aquamarine';
+  }
+
+  return isColorThemeSetting(value) ? value : null;
 };
 
 const isThreeStringTuple = (value: unknown): value is [string, string, string] => {
@@ -373,9 +398,7 @@ export const setSelectedColorThemeSetting = (
 export const getSelectedColorThemeSetting = (): ColorThemeSetting => {
   const value = storage.getString(KEY_SELECTED_COLOR_THEME);
 
-  return isColorThemeSetting(value)
-    ? value
-    : DEFAULT_SELECTED_COLOR_THEME;
+  return normalizeColorThemeSetting(value) ?? DEFAULT_SELECTED_COLOR_THEME;
 };
 
 /**

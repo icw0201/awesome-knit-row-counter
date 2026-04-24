@@ -32,7 +32,7 @@ const SettingsSingleSelect = <T extends string>({
       </View>
 
       <View className="px-4">
-        <View className="flex-row overflow-hidden">
+        <View className="flex-row flex-wrap overflow-hidden">
         {options.map((option) => {
           const selected = selectedValue === option.value;
 
@@ -41,7 +41,7 @@ const SettingsSingleSelect = <T extends string>({
               key={option.value}
               onPress={() => onSelect(option.value)}
               activeOpacity={0.7}
-              className="flex-1"
+              className="w-1/3"
               accessibilityRole="radio"
               accessibilityState={{ checked: selected }}
               accessibilityLabel={option.label}

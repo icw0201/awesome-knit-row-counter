@@ -1,8 +1,11 @@
 const path = require('path');
 const {
   RED_ORANGE_PALETTE,
-  SKY_BLUE_PALETTE,
-  LEAF_GREEN_PALETTE,
+  SAPPHIRE_PALETTE,
+  AQUAMARINE_PALETTE,
+  ROSE_PALETTE,
+  RUSTY_NAIL_PALETTE,
+  ELECTRIC_VIOLET_PALETTE,
   EMPHASIS_RED,
 } = require(path.join(__dirname, 'src/constants/colors'));
 
@@ -24,15 +27,18 @@ module.exports = {
     'border-white',
     'border-lightgray',
     {
-      pattern: /(bg|text|border)-(red-orange|sky-blue|leaf-green)-(50|100|200|300|400|500|600|700|800|900|950)/,
+      pattern: /(bg|text|border)-(red-orange|sapphire|aquamarine|rose|rusty-nail|electric-violet)-(50|100|200|300|400|500|600|700|800|900|950)/,
     },
   ],
   theme: {
     extend: {
       colors: {
         'red-orange': RED_ORANGE_PALETTE,
-        'sky-blue': SKY_BLUE_PALETTE,
-        'leaf-green': LEAF_GREEN_PALETTE,
+        sapphire: SAPPHIRE_PALETTE,
+        aquamarine: AQUAMARINE_PALETTE,
+        rose: ROSE_PALETTE,
+        'rusty-nail': RUSTY_NAIL_PALETTE,
+        'electric-violet': ELECTRIC_VIOLET_PALETTE,
         'emphasis-red': EMPHASIS_RED,
         black: '#111111',
         darkgray: '#767676',

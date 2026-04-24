@@ -35,7 +35,7 @@ import {
   setVibrationSetting,
   setVoiceCommandsEnabledSetting,
   setVoiceRecognitionPermissionStatusSetting,
-  isColorThemeSetting,
+  normalizeColorThemeSetting,
   type ColorThemeSetting,
   type CustomVoiceCommandInputsSetting,
   type VoiceCommandSettingMode,
@@ -702,9 +702,8 @@ const assertValidBackupSettings = (value: unknown): BackupSettingsPayload => {
     sound: value.sound,
     vibration: value.vibration,
     screenAwake: value.screenAwake,
-    selectedColorTheme: isColorThemeSetting(value.selectedColorTheme)
-      ? value.selectedColorTheme
-      : 'redOrange',
+    selectedColorTheme: normalizeColorThemeSetting(value.selectedColorTheme)
+      ?? 'redOrange',
     sortCriteria: value.sortCriteria,
     sortOrder: value.sortOrder,
     moveCompletedToBottom: value.moveCompletedToBottom,
