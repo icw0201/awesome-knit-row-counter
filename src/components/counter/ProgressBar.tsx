@@ -67,7 +67,11 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ count, targetCount, screenSiz
           {isZeroState ? (
             <>
               <View className="mr-1.5">
-                <FlagIcon width={18} height={18} />
+                <FlagIcon
+                  width={18}
+                  height={18}
+                  color={appTheme.colors.primary['400']}
+                />
               </View>
               <Text className="text-darkgray text-xs font-bold" numberOfLines={1}>
                 터치하여 목표치를 설정해 주세요
