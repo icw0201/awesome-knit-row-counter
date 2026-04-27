@@ -1,11 +1,11 @@
 import {
-  ELECTRIC_VIOLET_PALETTE,
+  ANY_BLUE_PALETTE,
   EMPHASIS_RED,
   GRAY_PALETTE,
-  ISLAND_SPICE_PALETTE,
+  HONEY_BANANA_PALETTE,
+  LAVENDER_PALETTE,
   OLIVE_PALETTE,
   RED_ORANGE_PALETTE,
-  SAPPHIRE_PALETTE,
 } from '@constants/colors';
 import {
   getSelectedColorThemeSetting,
@@ -76,7 +76,7 @@ export interface AppTheme {
 
 const createClassPalette = (
   utilityPrefix: 'bg' | 'text' | 'border',
-  paletteName: 'red-orange' | 'sapphire' | 'island-spice' | 'electric-violet' | 'olive' | 'gray'
+  paletteName: 'red-orange' | 'any-blue' | 'honey-banana' | 'lavender' | 'olive' | 'gray'
 ): ThemeClassPalette => ({
   '50': `${utilityPrefix}-${paletteName}-50`,
   '100': `${utilityPrefix}-${paletteName}-100`,
@@ -93,7 +93,7 @@ const createClassPalette = (
 
 const createTheme = (
   id: ColorThemeSetting,
-  paletteName: 'red-orange' | 'sapphire' | 'island-spice' | 'electric-violet' | 'olive' | 'gray',
+  paletteName: 'red-orange' | 'any-blue' | 'honey-banana' | 'lavender' | 'olive' | 'gray',
   primaryPalette: ThemePalette
 ): AppTheme => ({
   id,
@@ -135,43 +135,43 @@ const createTheme = (
 });
 
 const themePalettes: Record<ColorThemeSetting, ThemePalette> = {
-  redOrange: RED_ORANGE_PALETTE as ThemePalette,
-  sapphire: SAPPHIRE_PALETTE as ThemePalette,
-  islandSpice: ISLAND_SPICE_PALETTE as ThemePalette,
-  electricViolet: ELECTRIC_VIOLET_PALETTE as ThemePalette,
+  awesomeRed: RED_ORANGE_PALETTE as ThemePalette,
+  anyBlue: ANY_BLUE_PALETTE as ThemePalette,
+  honeyBanana: HONEY_BANANA_PALETTE as ThemePalette,
+  lavender: LAVENDER_PALETTE as ThemePalette,
   olive: OLIVE_PALETTE as ThemePalette,
   gray: GRAY_PALETTE as ThemePalette,
 };
 
 const appThemes: Record<ColorThemeSetting, AppTheme> = {
-  redOrange: createTheme('redOrange', 'red-orange', themePalettes.redOrange),
-  sapphire: createTheme('sapphire', 'sapphire', themePalettes.sapphire),
-  islandSpice: createTheme('islandSpice', 'island-spice', themePalettes.islandSpice),
-  electricViolet: createTheme('electricViolet', 'electric-violet', themePalettes.electricViolet),
+  awesomeRed: createTheme('awesomeRed', 'red-orange', themePalettes.awesomeRed),
+  anyBlue: createTheme('anyBlue', 'any-blue', themePalettes.anyBlue),
+  honeyBanana: createTheme('honeyBanana', 'honey-banana', themePalettes.honeyBanana),
+  lavender: createTheme('lavender', 'lavender', themePalettes.lavender),
   olive: createTheme('olive', 'olive', themePalettes.olive),
   gray: createTheme('gray', 'gray', themePalettes.gray),
 };
 
 export const APP_COLOR_THEME_OPTIONS: AppColorThemeOption[] = [
   {
-    value: 'redOrange',
-    label: '밝은오렌지',
-    representativeColor: themePalettes.redOrange['400'],
+    value: 'awesomeRed',
+    label: '어쩜레드',
+    representativeColor: themePalettes.awesomeRed['400'],
   },
   {
-    value: 'islandSpice',
-    label: '아일랜드 스파이스',
-    representativeColor: themePalettes.islandSpice['400'],
+    value: 'honeyBanana',
+    label: '꿀바나나',
+    representativeColor: themePalettes.honeyBanana['400'],
   },
   {
-    value: 'electricViolet',
-    label: '일렉트릭 바이올렛',
-    representativeColor: themePalettes.electricViolet['400'],
+    value: 'lavender',
+    label: '라벤더',
+    representativeColor: themePalettes.lavender['400'],
   },
   {
-    value: 'sapphire',
-    label: '사파이어',
-    representativeColor: themePalettes.sapphire['400'],
+    value: 'anyBlue',
+    label: '애니블루',
+    representativeColor: themePalettes.anyBlue['400'],
   },
   {
     value: 'olive',
@@ -188,7 +188,7 @@ export const APP_COLOR_THEME_OPTIONS: AppColorThemeOption[] = [
 export const getAppTheme = (
   selectedTheme: ColorThemeSetting = getSelectedColorThemeSetting()
 ): AppTheme => {
-  return appThemes[selectedTheme] ?? appThemes.redOrange;
+  return appThemes[selectedTheme] ?? appThemes.awesomeRed;
 };
 
 // 이후 selectedTheme 저장/구독을 붙일 때 이 단일 export를 교체하는 방식으로 확장한다.

@@ -703,7 +703,7 @@ const assertValidBackupSettings = (value: unknown): BackupSettingsPayload => {
     vibration: value.vibration,
     screenAwake: value.screenAwake,
     selectedColorTheme: normalizeColorThemeSetting(value.selectedColorTheme)
-      ?? 'redOrange',
+      ?? 'awesomeRed',
     sortCriteria: value.sortCriteria,
     sortOrder: value.sortOrder,
     moveCompletedToBottom: value.moveCompletedToBottom,

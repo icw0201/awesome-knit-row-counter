@@ -17,8 +17,8 @@ const RED_ORANGE_PALETTE = {
   '950': '#490806',
 };
 
-/** sapphire 팔레트 */
-const SAPPHIRE_PALETTE = {
+/** any-blue 팔레트 (Any Blue 테마) */
+const ANY_BLUE_PALETTE = {
   '50': '#f3f6fb',
   '100': '#e3eaf6',
   '200': '#cedaef',
@@ -32,8 +32,8 @@ const SAPPHIRE_PALETTE = {
   '950': '#262b45',
 };
 
-/** island-spice 팔레트 */
-const ISLAND_SPICE_PALETTE = {
+/** honey-banana 팔레트 (꿀바나나 테마) */
+const HONEY_BANANA_PALETTE = {
   '50': '#fefaec',
   '100': '#fbf0ca',
   '200': '#f7e090',
@@ -77,8 +77,8 @@ const GRAY_PALETTE = {
   '950': '#02050e',
 };
 
-/** electric-violet 팔레트 */
-const ELECTRIC_VIOLET_PALETTE = {
+/** lavender 팔레트 (라벤더 테마) */
+const LAVENDER_PALETTE = {
   '50': '#faf5ff',
   '100': '#f2e9fe',
   '200': '#e8d6fe',
@@ -111,11 +111,11 @@ const RULE_SWATCH_COLORS = [
 
 module.exports = {
   RED_ORANGE_PALETTE,
-  SAPPHIRE_PALETTE,
-  ISLAND_SPICE_PALETTE,
+  ANY_BLUE_PALETTE,
+  HONEY_BANANA_PALETTE,
   OLIVE_PALETTE,
   GRAY_PALETTE,
-  ELECTRIC_VIOLET_PALETTE,
+  LAVENDER_PALETTE,
   EMPHASIS_RED,
   RULE_SWATCH_COLORS,
 };

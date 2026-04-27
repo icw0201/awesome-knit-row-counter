@@ -36,17 +36,17 @@ const DEFAULT_TOOLTIP_ENABLED = true;
 const DEFAULT_SHOW_ELAPSED_TIME_IN_LIST = false;
 const DEFAULT_VOICE_COMMANDS_ENABLED = false;
 const DEFAULT_SELECTED_VOICE_COMMAND_MODE: VoiceCommandSettingMode = 'default';
-const DEFAULT_SELECTED_COLOR_THEME: ColorThemeSetting = 'redOrange';
+const DEFAULT_SELECTED_COLOR_THEME: ColorThemeSetting = 'awesomeRed';
 const DEFAULT_SUB_SLIDE_MODALS_ENABLED = true;
 
 export type VoiceCommandSettingMode = 'default' | 'custom';
 export type ColorThemeSetting =
-  | 'redOrange'
-  | 'sapphire'
-  | 'islandSpice'
+  | 'awesomeRed'
+  | 'anyBlue'
+  | 'honeyBanana'
+  | 'lavender'
   | 'olive'
-  | 'gray'
-  | 'electricViolet';
+  | 'gray';
 
 export interface CustomVoiceCommandInputsSetting {
   mainDecrease: [string, string, string];
@@ -84,12 +84,12 @@ export type VoiceRecognitionPermissionStatus =
 export const isColorThemeSetting = (
   value: unknown
 ): value is ColorThemeSetting => {
-  return value === 'redOrange'
-    || value === 'sapphire'
-    || value === 'islandSpice'
+  return value === 'awesomeRed'
+    || value === 'anyBlue'
+    || value === 'honeyBanana'
+    || value === 'lavender'
     || value === 'olive'
-    || value === 'gray'
-    || value === 'electricViolet';
+    || value === 'gray';
 };
 
 export const normalizeColorThemeSetting = (
@@ -385,7 +385,7 @@ export const setSelectedColorThemeSetting = (
 
 /**
  * 선택된 색상 테마를 가져옵니다.
- * @returns 선택된 색상 테마 (기본값: 'redOrange')
+ * @returns 선택된 색상 테마 (기본값: 'awesomeRed')
  */
 export const getSelectedColorThemeSetting = (): ColorThemeSetting => {
   const value = storage.getString(KEY_SELECTED_COLOR_THEME);

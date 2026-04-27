@@ -8,7 +8,7 @@ import {
 import { APP_COLOR_THEME_OPTIONS } from '@styles/appTheme';
 
 const SettingsThemeSelector: React.FC = () => {
-  const [selectedTheme, setSelectedTheme] = useState<ColorThemeSetting>('redOrange');
+  const [selectedTheme, setSelectedTheme] = useState<ColorThemeSetting>('awesomeRed');
 
   useEffect(() => {
     setSelectedTheme(getSelectedColorThemeSetting());

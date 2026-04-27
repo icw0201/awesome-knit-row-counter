@@ -1,11 +1,11 @@
 const path = require('path');
 const {
   RED_ORANGE_PALETTE,
-  SAPPHIRE_PALETTE,
-  ISLAND_SPICE_PALETTE,
+  ANY_BLUE_PALETTE,
+  HONEY_BANANA_PALETTE,
   OLIVE_PALETTE,
   GRAY_PALETTE,
-  ELECTRIC_VIOLET_PALETTE,
+  LAVENDER_PALETTE,
   EMPHASIS_RED,
 } = require(path.join(__dirname, 'src/constants/colors'));
 
@@ -27,16 +27,16 @@ module.exports = {
     'border-white',
     'border-lightgray',
     {
-      pattern: /(bg|text|border)-(red-orange|sapphire|island-spice|electric-violet|olive|gray)-(50|100|200|300|400|500|600|700|800|900|950)/,
+      pattern: /(bg|text|border)-(red-orange|any-blue|honey-banana|lavender|olive|gray)-(50|100|200|300|400|500|600|700|800|900|950)/,
     },
   ],
   theme: {
     extend: {
       colors: {
         'red-orange': RED_ORANGE_PALETTE,
-        sapphire: SAPPHIRE_PALETTE,
-        'island-spice': ISLAND_SPICE_PALETTE,
-        'electric-violet': ELECTRIC_VIOLET_PALETTE,
+        'any-blue': ANY_BLUE_PALETTE,
+        'honey-banana': HONEY_BANANA_PALETTE,
+        lavender: LAVENDER_PALETTE,
         olive: OLIVE_PALETTE,
         gray: GRAY_PALETTE,
         'emphasis-red': EMPHASIS_RED,
