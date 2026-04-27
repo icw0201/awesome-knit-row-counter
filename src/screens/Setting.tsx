@@ -8,6 +8,7 @@ import {
   SettingsBackup,
   SettingsCheckBoxes,
   SettingsDataManagement,
+  SettingsPremiumLink,
   SettingsVersion,
 } from '@components/settings';
 import { useAppThemeSync } from '@hooks/useAppThemeSync';
@@ -32,6 +33,8 @@ const Settings = () => {
           contentContainerStyle={screenStyles.scrollViewContentCentered}
           keyboardShouldPersistTaps="handled"
         >
+          <SettingsPremiumLink />
+
           <SettingsCheckBoxes />
 
           <SettingsBackup />
@@ -40,7 +43,7 @@ const Settings = () => {
 
           <SettingsAppInfo />
 
-          <SettingsVersion version="1.5.0-internal.3" />
+          <SettingsVersion version="1.5.0-internal.4" />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
