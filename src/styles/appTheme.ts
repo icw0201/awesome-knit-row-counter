@@ -174,7 +174,7 @@ export const APP_COLOR_THEME_OPTIONS: AppColorThemeOption[] = [
   },
   {
     value: 'honeyBanana',
-    label: '바나나',
+    label: '꿀바나나',
     primary200: themePalettes.honeyBanana['200'],
     primary400: themePalettes.honeyBanana['400'],
   },
