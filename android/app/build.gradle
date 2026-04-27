@@ -106,8 +106,8 @@ android {
         applicationId 'com.simpleknitcounter'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 30
-        versionName "1.5.0-internal.3"
+        versionCode 31
+        versionName "1.5.0-internal.4"
     }
     signingConfigs {
         debug {
@@ -182,6 +182,10 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+
+    // Google Play 인앱 결제 / 구독 (Billing Library)
+    def billing_version = "8.3.0"
+    implementation "com.android.billingclient:billing:$billing_version"
 
     // Expo가 여는 이미지 포맷 플래그를 Android 의존성에 연결해
     // 음성 기능 도입으로 늘어난 Expo 설정과 앱 빌드 결과가 일치하도록 맞춥니다.
