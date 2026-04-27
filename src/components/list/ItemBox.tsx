@@ -80,13 +80,14 @@ const ItemBox: React.FC<ItemBoxProps> = ({
             <Text className={clsx('text-lg font-semibold', isEditMode ? appTheme.tw.text.black : textClassName)}>{title}</Text>
           </View>
           {number !== undefined && (
-            <View className="relative items-end justify-center">
+            <View className="relative items-end justify-center self-stretch">
               {isCompleted && (
                 <Image
                   source={completeImage}
-                  className="absolute h-20 w-20 right-10 top-1/2 -mt-11"
+                  className="absolute right-10 top-1/2 h-20 w-20"
                   resizeMode="cover"
                   style={{
+                    marginTop: -40,
                     tintColor: isEditMode
                       ? appTheme.colors.primary['400']
                       : appTheme.colors.primary['100'],
