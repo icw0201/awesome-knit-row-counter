@@ -32,7 +32,8 @@ type ThemeClassPalette = Record<ThemePaletteShade, string>;
 export interface AppColorThemeOption {
   value: ColorThemeSetting;
   label: string;
-  representativeColor: string;
+  primary200: string;
+  primary400: string;
 }
 
 export interface AppTheme {
@@ -156,32 +157,38 @@ export const APP_COLOR_THEME_OPTIONS: AppColorThemeOption[] = [
   {
     value: 'awesomeRed',
     label: '어쩜레드',
-    representativeColor: themePalettes.awesomeRed['400'],
-  },
-  {
-    value: 'honeyBanana',
-    label: '꿀바나나',
-    representativeColor: themePalettes.honeyBanana['400'],
-  },
-  {
-    value: 'lavender',
-    label: '라벤더',
-    representativeColor: themePalettes.lavender['400'],
+    primary200: themePalettes.awesomeRed['200'],
+    primary400: themePalettes.awesomeRed['400'],
   },
   {
     value: 'anyBlue',
     label: '애니블루',
-    representativeColor: themePalettes.anyBlue['400'],
+    primary200: themePalettes.anyBlue['200'],
+    primary400: themePalettes.anyBlue['400'],
+  },
+  {
+    value: 'lavender',
+    label: '라벤더',
+    primary200: themePalettes.lavender['200'],
+    primary400: themePalettes.lavender['400'],
+  },
+  {
+    value: 'honeyBanana',
+    label: '바나나',
+    primary200: themePalettes.honeyBanana['200'],
+    primary400: themePalettes.honeyBanana['400'],
   },
   {
     value: 'olive',
     label: '올리브',
-    representativeColor: themePalettes.olive['400'],
+    primary200: themePalettes.olive['200'],
+    primary400: themePalettes.olive['400'],
   },
   {
     value: 'gray',
     label: '그레이',
-    representativeColor: themePalettes.gray['400'],
+    primary200: themePalettes.gray['200'],
+    primary400: themePalettes.gray['400'],
   },
 ];
 
