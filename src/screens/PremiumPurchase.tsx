@@ -23,8 +23,8 @@ import RoundedButton from '@components/common/RoundedButton';
 
 const FEATURES = [
   '추가 색상 테마 4종',
-  '데이터 내보내기&파일 데이터 불러오기',
   '사용자 지정 음성 인식 명령어',
+  '데이터 내보내기&파일 데이터 불러오기',
   '개발자의 감사',
 ] as const;
 
@@ -127,11 +127,13 @@ const PremiumPurchase: React.FC = () => {
         showsVerticalScrollIndicator={false}
       >
         <View className="items-center px-1 pt-2">
-          <View className="mb-3 flex-row items-center justify-center gap-2">
+          <View className="mb-3 w-full flex-row items-center justify-center gap-2 px-2">
             <Star size={24} color={starTint} fill={starTint} />
-            <Text className="text-center text-xl font-bold text-black">
-              프리미엄 버전을{'\n'}사용해보세요!
-            </Text>
+            <View className="min-w-0 flex-1">
+              <Text className="text-center text-xl font-bold text-black">
+                프리미엄 버전을{'\n'}사용해보세요!
+              </Text>
+            </View>
             <Star size={24} color={starTint} fill={starTint} />
           </View>
 
