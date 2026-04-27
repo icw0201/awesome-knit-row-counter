@@ -2,6 +2,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { Minus, Plus, Speech } from 'lucide-react-native';
+import { appTheme } from '@styles/appTheme';
 
 interface CounterTouchAreaProps {
   onAdd: () => void;
@@ -28,14 +29,20 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
 }) => {
   const isSubtractHighlighted = highlightedAction === 'subtract';
   const isAddHighlighted = highlightedAction === 'add';
-  const voiceHintIconColor = '#767676';
+  const voiceHintIconColor = appTheme.colors.darkgray;
+  const subtractBackgroundColor = isSubtractHighlighted
+    ? appTheme.colors.neutral['100']
+    : appTheme.colors.white;
+  const addBackgroundColor = isAddHighlighted
+    ? appTheme.colors.primary['200']
+    : appTheme.colors.primary['100'];
 
   return (
     <View className="absolute top-0 left-0 right-0 bottom-0 flex-row">
       {/* 왼쪽 터치 영역 (감소) - 37% */}
       <View
-        className={`items-start justify-center ${isSubtractHighlighted ? 'bg-gray-100' : 'bg-white'}`}
-        style={{ width: '37%' }}
+        className="items-start justify-center"
+        style={{ width: '37%', backgroundColor: subtractBackgroundColor }}
         focusable={false}
         accessible={false}
         // 이 오버레이는 화면 전체를 덮는 입력 레이어라 접근성/포커스를 열어두면
@@ -47,7 +54,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
         <View className="relative ml-3 items-center">
           <Minus
             size={60}
-            color="#fc3e39"
+            color={appTheme.colors.primary['500']}
             strokeWidth={2}
           />
           {showVoiceCommandHints && (
@@ -61,8 +68,8 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
 
       {/* 오른쪽 터치 영역 (증가) - 63% */}
       <View
-        className={`items-end justify-center ${isAddHighlighted ? 'bg-red-200' : 'bg-red-100'}`}
-        style={{ width: '63%' }}
+        className="items-end justify-center"
+        style={{ width: '63%', backgroundColor: addBackgroundColor }}
         focusable={false}
         accessible={false}
         // 오른쪽 영역도 같은 이유로 포커스/접근성 대상에서 제외한다.
@@ -73,7 +80,7 @@ const CounterTouchArea: React.FC<CounterTouchAreaProps> = ({
         <View className="relative mr-3 items-center">
           <Plus
             size={60}
-            color="#fc3e39"
+            color={appTheme.colors.primary['500']}
             strokeWidth={2}
           />
           {showVoiceCommandHints && (

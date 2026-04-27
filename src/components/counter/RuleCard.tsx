@@ -6,6 +6,7 @@ import CircleIcon from '@components/common/CircleIcon';
 import CircleRadioButtons, { type CircleRadioOption } from '@components/common/CircleRadioButtons';
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
 import ColorPicker from '@components/counter/ColorPicker';
+import { appTheme } from '@styles/appTheme';
 import { getActiveRuleValues, calculateRulePreviewSummary, calculateRuleRepeatCount } from '@utils/ruleUtils';
 import { RuleEndMode } from '@storage/types';
 
@@ -137,7 +138,7 @@ const renderRulePreview = (
       <View className="mt-2 flex-row items-center">
         <Text className="text-base font-extrabold text-black mr-2">적용 단 :</Text>
         <View className="flex-1">
-          <Text className="text-sm text-red-orange-500">{ruleError}</Text>
+          <Text className={`text-sm ${appTheme.tw.text.emphasisRed}`}>{ruleError}</Text>
         </View>
       </View>
     );
@@ -480,7 +481,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
 
   // 편집 모드 (늘림단 카드 또는 줄임단 카드 편집 상태)
   return (
-    <View className="mb-4 bg-red-orange-50 border border-lightgray rounded-xl p-4">
+    <View className={`mb-4 ${appTheme.tw.bg.primary['50']} border ${appTheme.tw.border.lightgray} rounded-xl p-4`}>
       {/* 메시지 섹션 */}
       <View className="mb-3 flex-row items-center">
         <Text className="text-base font-extrabold text-black mr-2">메시지 :</Text>

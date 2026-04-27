@@ -3,6 +3,7 @@ import React from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { ScreenSize, getProgressBarHeightClass } from '@constants/screenSizeConfig';
 import FlagIcon from '@assets/images/flag.svg';
+import { appTheme } from '@styles/appTheme';
 
 interface ProgressBarProps {
   count: number;
@@ -37,7 +38,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ count, targetCount, screenSiz
   const isCompact = screenSize === ScreenSize.COMPACT;
   const heightClass = getProgressBarHeightClass(screenSize);
 
-  const containerClassName = `absolute top-0 left-0 right-0 ${heightClass} bg-red-orange-50`;
+  const containerClassName = `absolute top-0 left-0 right-0 ${heightClass} ${appTheme.tw.bg.primary['50']}`;
 
   // 프로그레스 바와 텍스트 내용
   const content = (
@@ -45,7 +46,7 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ count, targetCount, screenSiz
       {/* 프로그레스 바 (왼쪽부터 채워지는 부분, 목표 0일 때는 2% 표시) */}
       {progressWidth > 0 && (
         <View
-          className={`absolute left-0 top-0 bottom-0 bg-red-orange-300 ${isFullWidth ? '' : 'rounded-tr-2xl rounded-br-2xl'}`}
+          className={`absolute left-0 top-0 bottom-0 ${appTheme.tw.bg.primary['300']} ${isFullWidth ? '' : 'rounded-tr-2xl rounded-br-2xl'}`}
           style={{ width: progressWidth }}
         />
       )}
@@ -66,7 +67,11 @@ const ProgressBar: React.FC<ProgressBarProps> = ({ count, targetCount, screenSiz
           {isZeroState ? (
             <>
               <View className="mr-1.5">
-                <FlagIcon width={18} height={18} />
+                <FlagIcon
+                  width={18}
+                  height={18}
+                  color={appTheme.colors.primary['400']}
+                />
               </View>
               <Text className="text-darkgray text-xs font-bold" numberOfLines={1}>
                 터치하여 목표치를 설정해 주세요

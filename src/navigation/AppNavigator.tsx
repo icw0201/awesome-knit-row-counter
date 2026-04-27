@@ -4,6 +4,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { NavigationContainer } from '@react-navigation/native';
 import { getDefaultHeaderLeft, getDefaultHeaderRight, getDefaultTitle } from './HeaderOptions';
 import { StatusBar } from 'react-native';
+import { appTheme } from '@styles/appTheme';
 
 // 화면 컴포넌트들 import
 import CounterDetail from '@screens/CounterDetail';
@@ -32,7 +33,10 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AppNavigator = () => (
   <NavigationContainer>
     {/* 상태바 설정 */}
-    <StatusBar barStyle="dark-content" backgroundColor="#fff1f1" />
+    <StatusBar
+      barStyle="dark-content"
+      backgroundColor={appTheme.colors.primary['50']}
+    />
 
     {/* 네비게이션 스택 설정 */}
     <Stack.Navigator

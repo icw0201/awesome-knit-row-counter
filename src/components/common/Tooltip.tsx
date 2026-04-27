@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated } from 'react-native';
 import { View, Text } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
+import { appTheme } from '@styles/appTheme';
 
 interface TooltipProps {
   text?: string;
@@ -71,7 +72,7 @@ const Tooltip: React.FC<TooltipProps> = ({
           <View className="relative flex-row items-center">
             {/* placement top의 Path를 -90° 회전한 형태와 동일한 둥근 삼각형(왼쪽 끝이 뾰족, 오른쪽이 밑변) */}
             <Svg width={20} height={12} viewBox="0 0 20 12">
-              <Path d="M20 0 L6 5 Q5 6 6 7 L20 12 Z" fill="rgba(0,0,0,1)" />
+              <Path d="M20 0 L6 5 Q5 6 6 7 L20 12 Z" fill={appTheme.colors.black} />
             </Svg>
             <View
               className="rounded-md bg-black px-2 py-3"
@@ -102,7 +103,7 @@ const Tooltip: React.FC<TooltipProps> = ({
                 transform: [{ translateX: -6 }, { rotate: '180deg' }],
               }}
             >
-              <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill="rgba(0,0,0,1)" />
+              <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill={appTheme.colors.black} />
             </Svg>
             <View className="px-2 py-3 rounded-md bg-black mb-3" style={{ maxWidth: 240 }}>
               {text ? (
@@ -131,7 +132,7 @@ const Tooltip: React.FC<TooltipProps> = ({
                 transform: [{ translateX: -6 }],
               }}
             >
-              <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill="rgba(0,0,0,1)" />
+              <Path d="M0 20 L5 5 Q6 4 7 5 L12 20 Z" fill={appTheme.colors.black} />
             </Svg>
             <View className="px-2 py-3 rounded-md bg-black mt-3" style={{ maxWidth: 240 }}>
               {text ? (

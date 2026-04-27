@@ -20,6 +20,7 @@ import {
   SORT_CRITERIA_OPTIONS,
   SORT_ORDER_OPTIONS,
 } from '@constants/sortConfig';
+import { appTheme } from '@styles/appTheme';
 
 interface SortDropdownProps {
   visible: boolean;
@@ -126,7 +127,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
                 onPress={() => handleSortBySelect(option)}
               >
                 {selectedSortBy === option ? (
-                  <View className="bg-red-orange-50 -mx-2 py-2 rounded">
+                  <View className={`${appTheme.tw.bg.primary['50']} -mx-2 py-2 rounded`}>
                     <Text className="text-xs text-black px-2">
                       {option}
                     </Text>
@@ -153,7 +154,7 @@ const SortDropdown: React.FC<SortDropdownProps> = ({
                 onPress={() => handleOrderSelect(option)}
               >
                 {selectedOrder === option ? (
-                  <View className="bg-red-orange-50 -mx-2 py-2 rounded">
+                  <View className={`${appTheme.tw.bg.primary['50']} -mx-2 py-2 rounded`}>
                     <Text className="text-xs text-black px-2">
                       {option}
                     </Text>

@@ -2,8 +2,9 @@
 import React from 'react';
 import { Text, TouchableOpacity, View, Image } from 'react-native';
 import clsx from 'clsx';
+import { completeImage } from '@assets/images';
 import { colorStyles } from '@styles/colorStyles';
-import { completeImages } from '@assets/images';
+import { appTheme } from '@styles/appTheme';
 
 interface ItemBoxProps {
   title: string;
@@ -32,14 +33,18 @@ const ItemBox: React.FC<ItemBoxProps> = ({
   isCompleted = false,
   isEditMode = false,
 }) => {
-  const { container, text, subtext } = colorStyles.default;
+  const {
+    containerClassName,
+    textClassName,
+    subtextClassName,
+  } = colorStyles.default;
   const hasProgress = progressPercentage !== undefined && progressPercentage !== null;
   const hasElapsedTime = !!elapsedTimeText;
 
   const boxView = (
     <View className={clsx(
-      container,
-      isEditMode && 'bg-red-orange-300 border border-white',
+      containerClassName,
+      isEditMode && `${appTheme.tw.bg.primary['300']} border ${appTheme.tw.border.white}`,
       'rounded-xl',
       'relative overflow-hidden'
     )}>
@@ -47,8 +52,8 @@ const ItemBox: React.FC<ItemBoxProps> = ({
       {isCompleted ? (
         <View
           className={isEditMode
-            ? 'absolute left-0 top-0 bottom-0 right-0 bg-red-orange-100'
-            : 'absolute left-0 top-0 bottom-0 right-0 bg-red-orange-400'}
+            ? `absolute left-0 top-0 bottom-0 right-0 ${appTheme.tw.bg.primary['100']}`
+            : `absolute left-0 top-0 bottom-0 right-0 ${appTheme.tw.bg.primary['400']}`}
           pointerEvents="none"
         />
       ) : (
@@ -56,8 +61,8 @@ const ItemBox: React.FC<ItemBoxProps> = ({
         hasProgress && progressPercentage > 0 && (
           <View
             className={isEditMode
-              ? `absolute left-0 top-0 bottom-0 bg-red-orange-100 ${progressPercentage >= 100 ? 'right-0' : ''}`
-              : `absolute left-0 top-0 bottom-0 bg-red-orange-200 ${progressPercentage >= 100 ? 'right-0' : ''}`}
+              ? `absolute left-0 top-0 bottom-0 ${appTheme.tw.bg.primary['100']} ${progressPercentage >= 100 ? 'right-0' : ''}`
+              : `absolute left-0 top-0 bottom-0 ${appTheme.tw.bg.primary['200']} ${progressPercentage >= 100 ? 'right-0' : ''}`}
             style={progressPercentage >= 100 ? undefined : { width: `${progressPercentage}%` }}
             pointerEvents="none"
           />
@@ -68,31 +73,37 @@ const ItemBox: React.FC<ItemBoxProps> = ({
         <View className="flex-row items-center justify-between">
           <View className="flex flex-col">
             {subtitle && (
-              <Text className={clsx('text-xs', isEditMode ? 'text-darkgray' : (isCompleted ? 'text-white' : subtext))}>
+              <Text className={clsx('text-xs', isEditMode ? appTheme.tw.text.darkgray : (isCompleted ? appTheme.tw.text.white : subtextClassName))}>
                 {subtitle}
               </Text>
             )}
-            <Text className={clsx('text-lg font-semibold', isEditMode ? 'text-black' : text)}>{title}</Text>
+            <Text className={clsx('text-lg font-semibold', isEditMode ? appTheme.tw.text.black : textClassName)}>{title}</Text>
           </View>
           {number !== undefined && (
-            <View className="relative items-end justify-center">
+            <View className="relative items-end justify-center self-stretch">
               {isCompleted && (
                 <Image
-                  source={isEditMode ? completeImages.reverse : completeImages.normal}
-                  className="absolute h-20 w-20 right-10 top-1/2 -mt-11"
+                  source={completeImage}
+                  className="absolute right-10 top-1/2 h-20 w-20"
                   resizeMode="cover"
+                  style={{
+                    marginTop: -40,
+                    tintColor: isEditMode
+                      ? appTheme.colors.primary['400']
+                      : appTheme.colors.primary['100'],
+                  }}
                 />
               )}
               <View className="items-end justify-center h-10">
                 {hasElapsedTime ? (
                   <>
-                    <Text className={clsx('text-2xl font-bold', text)}>{number}</Text>
-                    <Text className={clsx('text-xs font-bold', text)}>
+                    <Text className={clsx('text-2xl font-bold', textClassName)}>{number}</Text>
+                    <Text className={clsx('text-xs font-bold', textClassName)}>
                       {elapsedTimeText}
                     </Text>
                   </>
                 ) : (
-                  <Text className={clsx('text-2xl font-bold', text)}>{number}</Text>
+                  <Text className={clsx('text-2xl font-bold', textClassName)}>{number}</Text>
                 )}
               </View>
             </View>

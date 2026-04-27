@@ -9,6 +9,7 @@ import {
   TextInputSubmitEditingEventData,
 } from 'react-native';
 import clsx from 'clsx';
+import { appTheme } from '@styles/appTheme';
 
 // 상수 정의
 const INPUT_LIMITS = {
@@ -210,8 +211,10 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
   const inputFieldClass = clsx(
     'w-full px-3 border rounded-xl',
     type === 'longText' ? 'text-sm min-h-[54px]' : 'h-[54px]',
-    editable ? 'bg-white text-black' : 'bg-lightgray text-darkgray',
-    isFocused ? 'border-red-orange-400' : 'border-lightgray',
+    editable
+      ? `${appTheme.tw.bg.white} ${appTheme.tw.text.black}`
+      : `${appTheme.tw.bg.lightgray} ${appTheme.tw.text.darkgray}`,
+    isFocused ? appTheme.tw.border.primary['400'] : appTheme.tw.border.lightgray,
     inputClassName
   );
 
@@ -236,12 +239,12 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
       {shouldShowLabelArea && (
         <View className="pl-1 mb-1 flex-row justify-between items-center">
           <View className="flex-row items-center">
-            {hasLabel && <Text className="text-sm text-darkgray font-medium">{label}</Text>}
-            {required && <Text className="text-sm text-red-orange-500 ml-1">*</Text>}
+            {hasLabel && <Text className={`text-sm ${appTheme.tw.text.darkgray} font-medium`}>{label}</Text>}
+            {required && <Text className={`text-sm ${appTheme.tw.text.primary['500']} ml-1`}>*</Text>}
           </View>
           {/* 텍스트와 롱텍스트 타입일 때만 문자 수 카운터 표시 */}
           {shouldShowCounter && (
-            <Text className="text-xs text-darkgray">
+            <Text className={`text-xs ${appTheme.tw.text.darkgray}`}>
               {currentLength}/{maxLengthForType}
             </Text>
           )}
@@ -256,7 +259,7 @@ const TextInputBox = forwardRef<TextInputBoxRef, TextInputBoxProps>(({
         multiline={type === 'longText'}
         textAlignVertical="center"
         placeholder={placeholder}
-        placeholderTextColor="#767676"
+        placeholderTextColor={appTheme.colors.darkgray}
         value={value}
         onChangeText={handleChangeText}
         onFocus={(event) => {

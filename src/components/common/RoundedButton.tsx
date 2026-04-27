@@ -38,12 +38,15 @@ const RoundedButton: React.FC<RoundedButtonProps> = ({
   containerClassName = '',
 }) => {
   // 선택된 색상 테마에서 색상 값들을 가져오기
-  const { container, text } = colorStyles[colorStyle];
+  const {
+    containerClassName: themeContainerClassName,
+    textClassName,
+  } = colorStyles[colorStyle];
 
   // 박스 뷰 생성 (rounded는 full로 고정)
   const boxView = (
-    <View className={clsx('mx-1 py-3 px-8 rounded-full', container, containerClassName)}>
-      {renderDefaultLayout(title, text)}
+    <View className={clsx('mx-1 py-3 px-8 rounded-full', themeContainerClassName, containerClassName)}>
+      {renderDefaultLayout(title, textClassName)}
     </View>
   );
 

@@ -5,6 +5,7 @@ import { View, Text } from 'react-native';
 import CheckBox from '@components/common/CheckBox';
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
 import SettingsAccordion from './SettingsAccordion';
+import SettingsThemeSelector from './SettingsThemeSelector';
 import {
   setSoundSetting,
   setVibrationSetting,
@@ -429,6 +430,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
       <View className="mb-6">
         <SettingsSection title="기기 설정" items={deviceSettings} />
         <SettingsSection title="카운터 설정" items={counterSettings} />
+        <SettingsThemeSelector />
 
         {/* 음성인식 명령어: 기본(고정 안내) / 사용자(입력) — 카드별 테두리 */}
         <View className="mb-6">

@@ -2,6 +2,7 @@ import React from 'react';
 import { Mic } from 'lucide-react-native';
 import { View, Text, type NativeSyntheticEvent, type TextLayoutEventData } from 'react-native';
 import { VOICE_LISTENING_TEXT } from '@hooks/useVoiceCommands';
+import { appTheme } from '@styles/appTheme';
 
 const MIC_SIZE = 18;
 const MIC_OFFSET_Y = 2;
@@ -54,13 +55,18 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
       <View className="rounded bg-lightgray px-2 py-1.5">
         {/* 아이콘 + 텍스트를 한 줄로 배치한다. */}
         <View className="flex-row items-center gap-1.5">
-          <Mic size={MIC_SIZE} color="#111111" strokeWidth={2} style={{ marginTop: MIC_OFFSET_Y }} />
+          <Mic
+            size={MIC_SIZE}
+            color={appTheme.colors.black}
+            strokeWidth={2}
+            style={{ marginTop: MIC_OFFSET_Y }}
+          />
           {hasVoiceError ? (
             // 에러는 잘라내지 않고 전체 문구를 그대로 보여준다.
             <View className="shrink">
               <Text
                 allowFontScaling={false}
-                className="text-red-orange-500"
+                className={appTheme.tw.text.primary['500']}
                 style={{ fontSize: errorFontSize, lineHeight: oneLineHeight }}
               >
                 에러: {voiceError}
