@@ -4,8 +4,8 @@ export const RED_ORANGE_PALETTE: Record<string, string>;
 /** sapphire 팔레트 (tailwind theme용) */
 export const SAPPHIRE_PALETTE: Record<string, string>;
 
-/** aquamarine 팔레트 (tailwind theme용) */
-export const AQUAMARINE_PALETTE: Record<string, string>;
+/** island-spice 팔레트 (tailwind theme용) */
+export const ISLAND_SPICE_PALETTE: Record<string, string>;
 
 /** olive 팔레트 (tailwind theme용) */
 export const OLIVE_PALETTE: Record<string, string>;

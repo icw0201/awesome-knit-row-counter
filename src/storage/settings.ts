@@ -43,7 +43,7 @@ export type VoiceCommandSettingMode = 'default' | 'custom';
 export type ColorThemeSetting =
   | 'redOrange'
   | 'sapphire'
-  | 'aquamarine'
+  | 'islandSpice'
   | 'olive'
   | 'gray'
   | 'electricViolet';
@@ -86,7 +86,7 @@ export const isColorThemeSetting = (
 ): value is ColorThemeSetting => {
   return value === 'redOrange'
     || value === 'sapphire'
-    || value === 'aquamarine'
+    || value === 'islandSpice'
     || value === 'olive'
     || value === 'gray'
     || value === 'electricViolet';

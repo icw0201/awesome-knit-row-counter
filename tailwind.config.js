@@ -2,7 +2,7 @@ const path = require('path');
 const {
   RED_ORANGE_PALETTE,
   SAPPHIRE_PALETTE,
-  AQUAMARINE_PALETTE,
+  ISLAND_SPICE_PALETTE,
   OLIVE_PALETTE,
   GRAY_PALETTE,
   ELECTRIC_VIOLET_PALETTE,
@@ -27,7 +27,7 @@ module.exports = {
     'border-white',
     'border-lightgray',
     {
-      pattern: /(bg|text|border)-(red-orange|sapphire|aquamarine|electric-violet|olive|gray)-(50|100|200|300|400|500|600|700|800|900|950)/,
+      pattern: /(bg|text|border)-(red-orange|sapphire|island-spice|electric-violet|olive|gray)-(50|100|200|300|400|500|600|700|800|900|950)/,
     },
   ],
   theme: {
@@ -35,7 +35,7 @@ module.exports = {
       colors: {
         'red-orange': RED_ORANGE_PALETTE,
         sapphire: SAPPHIRE_PALETTE,
-        aquamarine: AQUAMARINE_PALETTE,
+        'island-spice': ISLAND_SPICE_PALETTE,
         'electric-violet': ELECTRIC_VIOLET_PALETTE,
         olive: OLIVE_PALETTE,
         gray: GRAY_PALETTE,

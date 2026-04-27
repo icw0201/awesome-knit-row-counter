@@ -1,8 +1,8 @@
 import {
-  AQUAMARINE_PALETTE,
   ELECTRIC_VIOLET_PALETTE,
   EMPHASIS_RED,
   GRAY_PALETTE,
+  ISLAND_SPICE_PALETTE,
   OLIVE_PALETTE,
   RED_ORANGE_PALETTE,
   SAPPHIRE_PALETTE,
@@ -76,7 +76,7 @@ export interface AppTheme {
 
 const createClassPalette = (
   utilityPrefix: 'bg' | 'text' | 'border',
-  paletteName: 'red-orange' | 'sapphire' | 'aquamarine' | 'electric-violet' | 'olive' | 'gray'
+  paletteName: 'red-orange' | 'sapphire' | 'island-spice' | 'electric-violet' | 'olive' | 'gray'
 ): ThemeClassPalette => ({
   '50': `${utilityPrefix}-${paletteName}-50`,
   '100': `${utilityPrefix}-${paletteName}-100`,
@@ -93,7 +93,7 @@ const createClassPalette = (
 
 const createTheme = (
   id: ColorThemeSetting,
-  paletteName: 'red-orange' | 'sapphire' | 'aquamarine' | 'electric-violet' | 'olive' | 'gray',
+  paletteName: 'red-orange' | 'sapphire' | 'island-spice' | 'electric-violet' | 'olive' | 'gray',
   primaryPalette: ThemePalette
 ): AppTheme => ({
   id,
@@ -137,7 +137,7 @@ const createTheme = (
 const themePalettes: Record<ColorThemeSetting, ThemePalette> = {
   redOrange: RED_ORANGE_PALETTE as ThemePalette,
   sapphire: SAPPHIRE_PALETTE as ThemePalette,
-  aquamarine: AQUAMARINE_PALETTE as ThemePalette,
+  islandSpice: ISLAND_SPICE_PALETTE as ThemePalette,
   electricViolet: ELECTRIC_VIOLET_PALETTE as ThemePalette,
   olive: OLIVE_PALETTE as ThemePalette,
   gray: GRAY_PALETTE as ThemePalette,
@@ -146,7 +146,7 @@ const themePalettes: Record<ColorThemeSetting, ThemePalette> = {
 const appThemes: Record<ColorThemeSetting, AppTheme> = {
   redOrange: createTheme('redOrange', 'red-orange', themePalettes.redOrange),
   sapphire: createTheme('sapphire', 'sapphire', themePalettes.sapphire),
-  aquamarine: createTheme('aquamarine', 'aquamarine', themePalettes.aquamarine),
+  islandSpice: createTheme('islandSpice', 'island-spice', themePalettes.islandSpice),
   electricViolet: createTheme('electricViolet', 'electric-violet', themePalettes.electricViolet),
   olive: createTheme('olive', 'olive', themePalettes.olive),
   gray: createTheme('gray', 'gray', themePalettes.gray),
@@ -159,9 +159,9 @@ export const APP_COLOR_THEME_OPTIONS: AppColorThemeOption[] = [
     representativeColor: themePalettes.redOrange['400'],
   },
   {
-    value: 'aquamarine',
-    label: '아쿠아마린',
-    representativeColor: themePalettes.aquamarine['400'],
+    value: 'islandSpice',
+    label: '아일랜드 스파이스',
+    representativeColor: themePalettes.islandSpice['400'],
   },
   {
     value: 'electricViolet',

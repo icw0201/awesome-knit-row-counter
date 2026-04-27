@@ -32,19 +32,19 @@ const SAPPHIRE_PALETTE = {
   '950': '#262b45',
 };
 
-/** aquamarine 팔레트 */
-const AQUAMARINE_PALETTE = {
-  '50': '#e8fff5',
-  '100': '#c8ffe4',
-  '200': '#97ffd1',
-  '300': '#54ffbf',
-  '400': '#2ef6b1',
-  '500': '#00dd98',
-  '600': '#00b580',
-  '700': '#00916b',
-  '800': '#007254',
-  '900': '#005d46',
-  '950': '#003529',
+/** island-spice 팔레트 */
+const ISLAND_SPICE_PALETTE = {
+  '50': '#fefaec',
+  '100': '#fbf0ca',
+  '200': '#f7e090',
+  '300': '#f3cb56',
+  '400': '#f0b62f',
+  '500': '#e99617',
+  '600': '#ce7211',
+  '700': '#ab5112',
+  '800': '#8b3f15',
+  '900': '#733414',
+  '950': '#421a06',
 };
 
 /** olive 팔레트 */
@@ -112,7 +112,7 @@ const RULE_SWATCH_COLORS = [
 module.exports = {
   RED_ORANGE_PALETTE,
   SAPPHIRE_PALETTE,
-  AQUAMARINE_PALETTE,
+  ISLAND_SPICE_PALETTE,
   OLIVE_PALETTE,
   GRAY_PALETTE,
   ELECTRIC_VIOLET_PALETTE,
