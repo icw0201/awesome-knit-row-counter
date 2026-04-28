@@ -2272,6 +2272,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@expo/schema-utils@npm:^55.0.3":
+  version: 55.0.3
+  resolution: "@expo/schema-utils@npm:55.0.3"
+  checksum: 0af91b7eb5046a367fac92934ea45a233cbef8fa72b8a6a14e7d98c821b0d56e162f800f20eb20fc52d23473f5ef61e312893a19f5efe64a02e80739493ca895
+  languageName: node
+  linkType: hard
+
 "@expo/sdk-runtime-versions@npm:^1.0.0":
   version: 1.0.0
   resolution: "@expo/sdk-runtime-versions@npm:1.0.0"
@@ -4176,6 +4183,7 @@ __metadata:
     clsx: ^2.1.1
     eslint: ^8.19.0
     expo: ~53.0.0
+    expo-build-properties: ^55.0.13
     expo-document-picker: ~13.1.6
     expo-file-system: ~18.1.11
     expo-sharing: ~13.1.5
@@ -4189,10 +4197,12 @@ __metadata:
     react-native-device-info: ^15.0.1
     react-native-gesture-handler: ^2.25.0
     react-native-haptic-feedback: ^2.3.3
+    react-native-iap: ^15.2.0
     react-native-in-app-review: ^4.4.2
     react-native-keyevent: ^0.3.2
     react-native-linear-gradient: ^2.8.3
     react-native-mmkv: ^3.2.0
+    react-native-nitro-modules: ^0.35.5
     react-native-reanimated: 4.1.1
     react-native-safe-area-context: ^5.4.1
     react-native-screens: ^4.10.0
@@ -6636,6 +6646,19 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: fcbd7b1c1ab665757b3fb8f11592f35f252ada7f093eb70c17461c611347161a4bdd74a4e9717970f62ef191a400e9080426ed199c89042d020abe85007a8c79
+  languageName: node
+  linkType: hard
+
+"expo-build-properties@npm:^55.0.13":
+  version: 55.0.13
+  resolution: "expo-build-properties@npm:55.0.13"
+  dependencies:
+    "@expo/schema-utils": ^55.0.3
+    resolve-from: ^5.0.0
+    semver: ^7.6.0
+  peerDependencies:
+    expo: "*"
+  checksum: afde9d807486a2830a3e9a39df56fe79f6a6ea87a726a48b75eb4db6b1b5e576f074127ad0c9632fb5ff6a5c999bb6f56764ef3b6930f5f1f13ba3f6acbd6919
   languageName: node
   linkType: hard
 
@@ -10705,6 +10728,17 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-iap@npm:^15.2.0":
+  version: 15.2.0
+  resolution: "react-native-iap@npm:15.2.0"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+    react-native-nitro-modules: ^0.35.0
+  checksum: 708fc3c1931c5e21190a7bdecf0b18dd83861f66adc8fb87889b93f51c6cbd9a2ecf61b0ffdce33ddfc4ea0779a67ff1ede73cf566b256d9f735c0ca134d9675
+  languageName: node
+  linkType: hard
+
 "react-native-in-app-review@npm:^4.4.2":
   version: 4.4.2
   resolution: "react-native-in-app-review@npm:4.4.2"
@@ -10748,6 +10782,16 @@ __metadata:
     react: "*"
     react-native: "*"
   checksum: 766944a7cbf265e27b57576e51bff8604cd8f58c88eaec78bd93d4ce10ff9127d5f75f4c3bb03d6c7ce5dafa07c65e233d5363c0504db802cc88eaf1ccbffaa1
+  languageName: node
+  linkType: hard
+
+"react-native-nitro-modules@npm:^0.35.5":
+  version: 0.35.5
+  resolution: "react-native-nitro-modules@npm:0.35.5"
+  peerDependencies:
+    react: "*"
+    react-native: "*"
+  checksum: f293f4b4c5d3191830aef511132bba5de09e28b6bf3a2c35757e4a3e94c8659dfc9fde44426fbeedcaa9d177384e8265ef8967ffc43c24a1be5a31ef8ec44cf1
   languageName: node
   linkType: hard
 

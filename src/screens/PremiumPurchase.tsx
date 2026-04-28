@@ -6,7 +6,7 @@ import {
   Image,
   ScrollView,
   TouchableOpacity,
-  Alert,
+  ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -20,6 +20,7 @@ import { useAppThemeSync } from '@hooks/useAppThemeSync';
 import { appTheme } from '@styles/appTheme';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
 import RoundedButton from '@components/common/RoundedButton';
+import { useIapContext } from '../providers/IapProvider';
 
 const FEATURES = [
   '추가 색상 테마 4종',
@@ -35,7 +36,16 @@ const CAROUSEL_CARD_WIDTH = 126;
 const CAROUSEL_CARD_HEIGHT = 224;
 const CAROUSEL_GAP = 12;
 
+/** 구매 / 구매 복원 — 동일한 가로 박스(React Native flex에서 확실한 기준) */
+const CTA_MAX_WIDTH = 320;
+
 const styles = StyleSheet.create({
+  ctaBlock: {
+    width: '100%',
+    maxWidth: CTA_MAX_WIDTH,
+    alignSelf: 'center',
+    alignItems: 'stretch',
+  },
   themeCarouselContent: {
     flexDirection: 'row',
     gap: CAROUSEL_GAP,
@@ -67,6 +77,17 @@ function getCarouselLoopWidth(itemCount: number): number {
 const PremiumPurchase: React.FC = () => {
   useAppThemeSync();
   const isFocused = useIsFocused();
+  const {
+    premiumUnlocked,
+    iapReady,
+    premiumDisplayPrice,
+    purchasePremium,
+    restorePremium,
+    purchaseBusy,
+    restoreBusy,
+    lastError,
+    clearLastError,
+  } = useIapContext();
 
   const carouselRef = useRef<ScrollView>(null);
   const scrollXRef = useRef(0);
@@ -105,18 +126,18 @@ const PremiumPurchase: React.FC = () => {
     };
   }, [isFocused, loopWidth]);
 
+  const purchaseButtonTitle = premiumDisplayPrice
+    ? `${premiumDisplayPrice}에 구매하기`
+    : '구매하기';
+
   const handlePurchase = () => {
-    Alert.alert(
-      '구매',
-      '플레이 스토어 인앱 결제 연동 후 이 버튼에서 결제를 진행할 수 있습니다.'
-    );
+    clearLastError();
+    void purchasePremium();
   };
 
   const handleRestore = () => {
-    Alert.alert(
-      '구매 복원',
-      '결제 라이브러리 연동 후 구매 내역 복원을 처리합니다.'
-    );
+    clearLastError();
+    void restorePremium();
   };
 
   return (
@@ -140,6 +161,19 @@ const PremiumPurchase: React.FC = () => {
           <Text className="mb-8 px-2 text-center text-lg text-black">
             한 번의 결제로{'\n'}모든 유료 기능을 사용할 수 있습니다.
           </Text>
+
+          {premiumUnlocked ? (
+            <View
+              className={clsx(
+                'mb-4 w-full max-w-[340px] rounded-[10px] border bg-white px-4 py-3',
+                appTheme.tw.border.primary['300']
+              )}
+            >
+              <Text className="text-center text-base font-semibold text-black">
+                이 기기에서 프리미엄이 활성화되어 있습니다.
+              </Text>
+            </View>
+          ) : null}
 
           <View
             className={clsx(
@@ -191,22 +225,56 @@ const PremiumPurchase: React.FC = () => {
             ))}
           </ScrollView>
 
-          <View className="mb-4 w-full max-w-[320px] self-center">
+          <View style={styles.ctaBlock} className="mb-4">
             <RoundedButton
               onPress={handlePurchase}
-              title="5000원에 구매하기"
+              title={purchaseButtonTitle}
               colorStyle="light"
-              containerClassName="w-full"
+              containerClassName="w-full mx-0"
+              disabled={purchaseBusy || !iapReady || premiumUnlocked}
             />
+            {!iapReady ? (
+              <View className="mt-2 flex-row items-center justify-center gap-2">
+                <ActivityIndicator size="small" />
+                <Text className="text-sm text-darkgray">스토어 연결 중…</Text>
+              </View>
+            ) : null}
+            {purchaseBusy ? (
+              <View className="mt-2 items-center">
+                <ActivityIndicator size="small" />
+              </View>
+            ) : null}
+            <TouchableOpacity
+              onPress={handleRestore}
+              activeOpacity={0.7}
+              disabled={restoreBusy || !iapReady}
+              className="mt-2 w-full items-center py-1"
+            >
+              {restoreBusy ? (
+                <ActivityIndicator size="small" />
+              ) : (
+                <Text
+                  className={clsx(
+                    'text-center text-base font-bold',
+                    appTheme.tw.text.primary['950']
+                  )}
+                >
+                  구매 복원
+                </Text>
+              )}
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity onPress={handleRestore} activeOpacity={0.7}>
+          {lastError ? (
             <Text
-              className={clsx('text-base font-bold', appTheme.tw.text.primary['950'])}
+              className={clsx(
+                'mt-4 max-w-[320px] px-2 text-center text-sm',
+                appTheme.tw.text.emphasisRed
+              )}
             >
-              구매 복원
+              {lastError}
             </Text>
-          </TouchableOpacity>
+          ) : null}
         </View>
       </ScrollView>
     </SafeAreaView>

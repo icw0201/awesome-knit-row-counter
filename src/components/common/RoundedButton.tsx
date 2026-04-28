@@ -1,6 +1,7 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import clsx from 'clsx';
+import { twMerge } from 'tailwind-merge';
 import { colorStyles, ColorStyleKey } from '@styles/colorStyles';
 
 /**
@@ -15,6 +16,7 @@ interface RoundedButtonProps {
   title: string;
   colorStyle?: ColorStyleKey;
   containerClassName?: string;
+  disabled?: boolean;
 }
 
 /**
@@ -36,6 +38,7 @@ const RoundedButton: React.FC<RoundedButtonProps> = ({
   title,
   colorStyle = 'default',
   containerClassName = '',
+  disabled = false,
 }) => {
   // 선택된 색상 테마에서 색상 값들을 가져오기
   const {
@@ -45,14 +48,24 @@ const RoundedButton: React.FC<RoundedButtonProps> = ({
 
   // 박스 뷰 생성 (rounded는 full로 고정)
   const boxView = (
-    <View className={clsx('mx-1 py-3 px-8 rounded-full', themeContainerClassName, containerClassName)}>
+    <View
+      className={twMerge(
+        'mx-1 py-3 px-8 rounded-full',
+        themeContainerClassName,
+        containerClassName
+      )}
+    >
       {renderDefaultLayout(title, textClassName)}
     </View>
   );
 
   // 항상 TouchableOpacity로 감싸서 버튼으로 동작
   return (
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      className={clsx(disabled && 'opacity-45')}
+    >
       {boxView}
     </TouchableOpacity>
   );

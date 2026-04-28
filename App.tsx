@@ -5,6 +5,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { useScreenAwakeSync } from './src/hooks/useScreenAwakeSync';
 import { useAppThemeSync } from './src/hooks/useAppThemeSync';
 import StoreUpdatePrompt from '@features/update/StoreUpdatePrompt';
+import { IapProvider } from './src/providers/IapProvider';
 
 export default function App() {
   useScreenAwakeSync();
@@ -12,8 +13,10 @@ export default function App() {
 
   return (
     <SafeAreaView style={{ flex: 1 }}>
-      <StoreUpdatePrompt />
-      <AppNavigator />
+      <IapProvider>
+        <StoreUpdatePrompt />
+        <AppNavigator />
+      </IapProvider>
     </SafeAreaView>
   );
 }
