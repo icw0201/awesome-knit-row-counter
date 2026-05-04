@@ -106,8 +106,8 @@ android {
         applicationId 'com.simpleknitcounter'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
-        versionCode 34
-        versionName "1.5.0-internal.7"
+        versionCode 37
+        versionName "1.5.0-internal.10"
     }
     signingConfigs {
         debug {

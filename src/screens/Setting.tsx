@@ -1,5 +1,5 @@
-// src/screens/Settings.tsx
-import React from 'react';
+// src/screens/Setting.tsx
+// import React from 'react';
 import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -43,7 +43,7 @@ const Settings = () => {
 
           <SettingsAppInfo />
 
-          <SettingsVersion version="1.5.0-internal.7" />
+          <SettingsVersion version="1.5.0-internal.10" />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
