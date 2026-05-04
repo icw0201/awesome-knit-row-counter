@@ -43,7 +43,7 @@ const Settings = () => {
 
           <SettingsAppInfo />
 
-          <SettingsVersion version="1.5.0-internal.6" />
+          <SettingsVersion version="1.5.0-internal.7" />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
