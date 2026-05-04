@@ -8,6 +8,7 @@ import React, {
   useRef,
   useState,
 } from 'react';
+import { InteractionManager } from 'react-native';
 import {
   useIAP,
   isUserCancelledError,
@@ -22,11 +23,18 @@ import {
   subscribePremiumUnlockedChange,
 } from '@storage/settings';
 
+/** useIAP이 마운트된 뒤에만 채워짐 — 첫 프레임에는 초기 빌링 연결 없이 진행한다. */
+type BillingApisPatch = {
+  connected: boolean;
+  premiumDisplayPrice: string | null;
+  requestPurchase: ReturnType<typeof useIAP>['requestPurchase'];
+  restorePurchases: ReturnType<typeof useIAP>['restorePurchases'];
+};
+
 type IapContextValue = {
   premiumUnlocked: boolean;
   /** Billing 연결 및 initConnection 성공 */
   iapReady: boolean;
-  /** 스토어에서 가져온 표시 가격 (없으면 null) */
   premiumDisplayPrice: string | null;
   purchasePremium: () => Promise<void>;
   restorePremium: () => Promise<void>;
@@ -48,27 +56,42 @@ export function useIapContext(): IapContextValue {
 
 const PREMIUM_SKUS = [...PREMIUM_INAPP_PRODUCT_IDS];
 
-export function IapProvider({ children }: { children: React.ReactNode }) {
-  const [premiumUnlocked, setPremiumUnlockedState] = useState(getPremiumUnlocked);
-  const [purchaseBusy, setPurchaseBusy] = useState(false);
-  const [restoreBusy, setRestoreBusy] = useState(false);
-  const [lastError, setLastError] = useState<string | null>(null);
+const emptyBillingApis = (): BillingApisPatch => ({
+  connected: false,
+  premiumDisplayPrice: null,
+  requestPurchase:
+    ((_args: Parameters<BillingApisPatch['requestPurchase']>[0]) =>
+      Promise.resolve()) as BillingApisPatch['requestPurchase'],
+  restorePurchases: async () => {
+    //
+  },
+});
 
-  const finishTransactionRef = useRef<
+/**
+ * 첫 레이아웃·네이티브 활동 준비 이후에만 useIAP( OpenIAP / Play Billing 초기화 )를 건다.
+ * 내부 테스트 AAB에서 Activity 초기 단계 타이밍과 겹치면 JS가 멎거나 크래시가 나며 흰 화면으로 보일 수 있어 분리했다.
+ */
+function IapBillingConnection({
+  billingRef,
+  finishTransactionRef,
+  applyPremiumFromPurchases,
+  setPremiumUnlockedState,
+  bump,
+  setPurchaseBusy,
+  setRestoreBusy,
+  setLastError,
+}: {
+  billingRef: React.MutableRefObject<BillingApisPatch>;
+  finishTransactionRef: React.MutableRefObject<
     ((args: { purchase: Purchase; isConsumable?: boolean | null }) => Promise<void>) | null
-  >(null);
-
-  const applyPremiumFromPurchases = useCallback((purchases: Purchase[]) => {
-    const entitled = purchases.some((p) => isPremiumInAppProductId(p.productId));
-    if (!entitled) {
-      return;
-    }
-    if (!getPremiumUnlocked()) {
-      setPremiumUnlocked(true);
-    }
-    setPremiumUnlockedState(true);
-  }, []);
-
+  >;
+  applyPremiumFromPurchases: (purchases: Purchase[]) => void;
+  setPremiumUnlockedState: React.Dispatch<React.SetStateAction<boolean>>;
+  bump: () => void;
+  setPurchaseBusy: React.Dispatch<React.SetStateAction<boolean>>;
+  setRestoreBusy: React.Dispatch<React.SetStateAction<boolean>>;
+  setLastError: React.Dispatch<React.SetStateAction<string | null>>;
+}) {
   const onPurchaseSuccess = useCallback(
     async (purchase: Purchase) => {
       if (!isPremiumInAppProductId(purchase.productId)) {
@@ -88,20 +111,31 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
         setPurchaseBusy(false);
       }
     },
-    []
+    [
+      finishTransactionRef,
+      setPremiumUnlockedState,
+      setLastError,
+      setPurchaseBusy,
+    ]
   );
 
-  const onPurchaseError = useCallback((error: PurchaseError) => {
-    setPurchaseBusy(false);
-    if (isUserCancelledError(error)) {
-      return;
-    }
-    setLastError(error.message);
-  }, []);
+  const onPurchaseError = useCallback(
+    (error: PurchaseError) => {
+      setPurchaseBusy(false);
+      if (isUserCancelledError(error)) {
+        return;
+      }
+      setLastError(error.message);
+    },
+    [setLastError, setPurchaseBusy]
+  );
 
-  const onError = useCallback((error: Error) => {
-    setLastError(error.message);
-  }, []);
+  const onError = useCallback(
+    (error: Error) => {
+      setLastError(error.message);
+    },
+    [setLastError]
+  );
 
   const {
     connected,
@@ -120,14 +154,19 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     finishTransactionRef.current = finishTransaction;
-  }, [finishTransaction]);
+  }, [finishTransaction, finishTransactionRef]);
 
   useEffect(() => {
-    setPremiumUnlockedState(getPremiumUnlocked());
-    return subscribePremiumUnlockedChange(() => {
-      setPremiumUnlockedState(getPremiumUnlocked());
-    });
-  }, []);
+    const premiumProduct = products.find((p) => isPremiumInAppProductId(p.id)) ?? null;
+
+    billingRef.current = {
+      connected,
+      premiumDisplayPrice: premiumProduct?.displayPrice ?? null,
+      requestPurchase,
+      restorePurchases,
+    };
+    bump();
+  }, [connected, products, requestPurchase, restorePurchases, billingRef, bump]);
 
   useEffect(() => {
     if (!connected) {
@@ -144,7 +183,7 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
       try {
         await getAvailablePurchases();
       } catch {
-        // onError에서 처리
+        //
       }
     })();
   }, [connected, getAvailablePurchases]);
@@ -153,15 +192,56 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
     applyPremiumFromPurchases(availablePurchases);
   }, [availablePurchases, applyPremiumFromPurchases]);
 
-  const premiumProduct = useMemo(
-    () => products.find((p) => isPremiumInAppProductId(p.id)),
-    [products]
-  );
+  return null;
+}
 
-  const premiumDisplayPrice = premiumProduct?.displayPrice ?? null;
+export function IapProvider({ children }: { children: React.ReactNode }) {
+  const [premiumUnlocked, setPremiumUnlockedState] = useState(getPremiumUnlocked);
+  const [purchaseBusy, setPurchaseBusy] = useState(false);
+  const [restoreBusy, setRestoreBusy] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
+
+  const [billingHostReady, setBillingHostReady] = useState(false);
+  const [tick, bump] = useState(0);
+  const doBump = useCallback(() => bump((x) => x + 1), []);
+
+  const billingRef = useRef<BillingApisPatch>(emptyBillingApis());
+  const finishTransactionRef = useRef<
+    ((args: { purchase: Purchase; isConsumable?: boolean | null }) => Promise<void>) | null
+  >(null);
+
+  const applyPremiumFromPurchases = useCallback((purchases: Purchase[]) => {
+    const entitled = purchases.some((p) => isPremiumInAppProductId(p.productId));
+    if (!entitled) {
+      return;
+    }
+    if (!getPremiumUnlocked()) {
+      setPremiumUnlocked(true);
+    }
+    setPremiumUnlockedState(true);
+  }, []);
+
+  useEffect(() => {
+    setPremiumUnlockedState(getPremiumUnlocked());
+    return subscribePremiumUnlockedChange(() => {
+      setPremiumUnlockedState(getPremiumUnlocked());
+    });
+  }, []);
+
+  useEffect(() => {
+    const handle = InteractionManager.runAfterInteractions(() => {
+      setBillingHostReady(true);
+    });
+    return () => {
+      if (typeof handle?.cancel === 'function') {
+        handle.cancel();
+      }
+    };
+  }, []);
 
   const purchasePremium = useCallback(async () => {
-    if (!connected) {
+    const b = billingRef.current;
+    if (!b.connected) {
       setLastError('스토어에 연결되지 않았습니다. 잠시 후 다시 시도해 주세요.');
       return;
     }
@@ -169,7 +249,7 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
     setPurchaseBusy(true);
     const sku = PREMIUM_SKUS[0];
     try {
-      await requestPurchase({
+      await b.requestPurchase({
         type: 'in-app',
         request: {
           google: { skus: [sku] },
@@ -180,29 +260,30 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
       setPurchaseBusy(false);
       setLastError(e instanceof Error ? e.message : String(e));
     }
-  }, [connected, requestPurchase]);
+  }, []);
 
   const restorePremium = useCallback(async () => {
     setLastError(null);
     setRestoreBusy(true);
     try {
-      await restorePurchases();
+      await billingRef.current.restorePurchases();
     } catch (e) {
       setLastError(e instanceof Error ? e.message : String(e));
     } finally {
       setRestoreBusy(false);
     }
-  }, [restorePurchases]);
+  }, []);
 
   const clearLastError = useCallback(() => {
     setLastError(null);
   }, []);
 
+  const patch = billingRef.current;
   const value = useMemo<IapContextValue>(
     () => ({
       premiumUnlocked,
-      iapReady: connected,
-      premiumDisplayPrice,
+      iapReady: patch.connected,
+      premiumDisplayPrice: patch.premiumDisplayPrice,
       purchasePremium,
       restorePremium,
       purchaseBusy,
@@ -212,8 +293,9 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       premiumUnlocked,
-      connected,
-      premiumDisplayPrice,
+      tick,
+      patch.connected,
+      patch.premiumDisplayPrice,
       purchasePremium,
       restorePremium,
       purchaseBusy,
@@ -223,5 +305,21 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
     ]
   );
 
-  return <IapContext.Provider value={value}>{children}</IapContext.Provider>;
+  return (
+    <IapContext.Provider value={value}>
+      {billingHostReady ? (
+        <IapBillingConnection
+          billingRef={billingRef}
+          finishTransactionRef={finishTransactionRef}
+          applyPremiumFromPurchases={applyPremiumFromPurchases}
+          setPremiumUnlockedState={setPremiumUnlockedState}
+          bump={doBump}
+          setPurchaseBusy={setPurchaseBusy}
+          setRestoreBusy={setRestoreBusy}
+          setLastError={setLastError}
+        />
+      ) : null}
+      {children}
+    </IapContext.Provider>
+  );
 }

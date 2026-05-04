@@ -1,6 +1,7 @@
 // App.tsx (루트 최상위 파일)
 import React from 'react';
-import { SafeAreaView } from 'react-native';
+import { View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import AppNavigator from './src/navigation/AppNavigator';
 import { useScreenAwakeSync } from './src/hooks/useScreenAwakeSync';
 import { useAppThemeSync } from './src/hooks/useAppThemeSync';
@@ -12,11 +13,13 @@ export default function App() {
   useAppThemeSync();
 
   return (
-    <SafeAreaView style={{ flex: 1 }}>
-      <IapProvider>
-        <StoreUpdatePrompt />
-        <AppNavigator />
-      </IapProvider>
-    </SafeAreaView>
+    <SafeAreaProvider>
+      <View style={{ flex: 1 }}>
+        <IapProvider>
+          <StoreUpdatePrompt />
+          <AppNavigator />
+        </IapProvider>
+      </View>
+    </SafeAreaProvider>
   );
 }

@@ -12,12 +12,25 @@
 # react-native-reanimated
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
-
+# OkHttp — R8이 okhttp3.Callback 등을 제거/축약하면 브리지리스 초기화에서
+# BridgelessReact: "Incomplete hierarchy for class NativeResponse, unresolved classes [okhttp3.Callback]"
+# 같은 오류 후 흰 화면이 납니다 (로그 확인됨 · pid 연관).
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-dontwarn javax.annotation.**
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+-keep class okio.** { *; }
 # react-native-iap 15.x / Nitro Modules
 # 릴리즈 R8에서 Nitro HybridObject/JNI 진입점이 제거되면 JS 초기화가 중단되어
 # 내부 테스트 빌드에서 흰 화면에 머물 수 있습니다.
 -keep class com.margelo.nitro.** { *; }
 -keep class com.margelo.nitro.iap.** { *; }
+# Play Billing 클라이언트(연동 초기 리플렉션/내부 타입 이름 유지)
+-keep class com.android.billingclient.api.** { *; }
+
+# react-native-mmkv (Turbo 네이티브 모듈 + JNI 쪽 이름 유지 — R8이 제거하면 MMKV 접근 단계에서 네이티브 크래시 가능)
+-keep class com.mrousavy.mmkv.** { *; }
 -keepclassmembers class * {
   native <methods>;
 }
