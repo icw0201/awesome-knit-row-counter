@@ -1,7 +1,12 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Star } from 'lucide-react-native';
+
 import { ConfirmModal } from '@components/common/modals';
+import type { RootStackParamList } from '@navigation/AppNavigator';
+import { HONEY_BANANA_PALETTE } from '@constants/colors';
 import {
   exportBackupToTemporaryFile,
   getBackupSummary,
@@ -10,13 +15,15 @@ import {
   shareBackupFile,
   type BackupDocument,
 } from '@storage/backup';
+import { useIapContext } from '../../providers/IapProvider';
 import IconBox from './IconBox';
 
 interface SettingsBackupProps {}
 
 const SettingsBackup: React.FC<SettingsBackupProps> = () => {
-  const navigation = useNavigation();
-  const onNoticeConfirmRef = useRef<(() => void) | null>(null);
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { premiumUnlocked } = useIapContext();  const onNoticeConfirmRef = useRef<(() => void) | null>(null);
 
   const [pendingImportDocument, setPendingImportDocument] = useState<BackupDocument | null>(
     null
@@ -157,20 +164,61 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
         <Text className="mb-3 px-1 text-sm font-semibold text-darkgray">
           백업 및 복원
         </Text>
-        <IconBox
-          title={isBusy ? '처리 중...' : '데이터 내보내기'}
-          iconName="download"
-          onPress={async () => {
-            await handleExportPress();
-          }}
-        />
-        <IconBox
-          title={isBusy ? '처리 중...' : '데이터 불러오기'}
-          iconName="upload"
-          onPress={async () => {
-            await handleImportPress();
-          }}
-        />
+        <View className="relative">
+          <IconBox
+            title={isBusy ? '처리 중...' : '데이터 내보내기'}
+            iconName="download"
+            disabled={!premiumUnlocked}
+            onPress={async () => {
+              await handleExportPress();
+            }}
+          />
+          <IconBox
+            title={isBusy ? '처리 중...' : '데이터 불러오기'}
+            iconName="upload"
+            omitTrailingMargin
+            disabled={!premiumUnlocked}
+            onPress={async () => {
+              await handleImportPress();
+            }}
+          />
+          {!premiumUnlocked ? (
+            <>
+              <View
+                className="pointer-events-none absolute -inset-2 z-[5] rounded-2xl bg-mediumgray overflow-hidden"
+                style={{ mixBlendMode: 'multiply' }}
+              />
+              <TouchableOpacity
+                activeOpacity={1}
+                className="absolute -inset-2 z-[10] rounded-2xl"
+                onPress={() => navigation.navigate('PremiumPurchase')}
+                accessibilityRole="button"
+                accessibilityLabel="백업 및 복원, 프리미엄 전용"
+                accessibilityHint="탭하면 프리미엄 구매 화면으로 이동합니다."
+              />
+              <View
+                className="pointer-events-none absolute right-4 top-0 z-[20] w-6 items-center justify-center"
+                style={{ height: '50%' }}
+              >
+                <Star
+                  size={22}
+                  color={HONEY_BANANA_PALETTE['400']}
+                  fill={HONEY_BANANA_PALETTE['400']}
+                />
+              </View>
+              <View
+                className="pointer-events-none absolute bottom-0 right-4 z-[20] w-6 items-center justify-center"
+                style={{ height: '50%' }}
+              >
+                <Star
+                  size={22}
+                  color={HONEY_BANANA_PALETTE['400']}
+                  fill={HONEY_BANANA_PALETTE['400']}
+                />
+              </View>
+            </>
+          ) : null}
+        </View>
       </View>
 
       <ConfirmModal

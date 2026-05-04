@@ -1,11 +1,17 @@
 // src/components/settings/SettingsCheckBoxes.tsx
 import React, { useEffect, useState, useCallback, useRef } from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
+import { Star } from 'lucide-react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import CheckBox from '@components/common/CheckBox';
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
+import { HONEY_BANANA_PALETTE } from '@constants/colors';
+import type { RootStackParamList } from '@navigation/AppNavigator';
 import SettingsAccordion from './SettingsAccordion';
 import SettingsThemeSelector from './SettingsThemeSelector';
+import { useIapContext } from '../../providers/IapProvider';
 import {
   setSoundSetting,
   setVibrationSetting,
@@ -145,6 +151,10 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
  */
 const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
 }) => {
+  const { premiumUnlocked } = useIapContext();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+
   // 설정 상태 관리
   const [sound, setSound] = useState(true);
   const [vibration, setVibration] = useState(true);
@@ -190,6 +200,16 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
 
     setCustomVoiceCommandInputsSetting(voiceCommandInputs);
   }, [voiceCommandInputs, voiceCommandSettingsHydrated]);
+
+  useEffect(() => {
+    if (!voiceCommandSettingsHydrated || premiumUnlocked) {
+      return;
+    }
+
+    if (selectedVoiceCommandMode === 'custom') {
+      setSelectedVoiceCommandMode('default');
+    }
+  }, [premiumUnlocked, voiceCommandSettingsHydrated, selectedVoiceCommandMode]);
 
   /**
    * 소리 설정 토글 처리
@@ -240,6 +260,11 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
    * 사용자 지정 음성 명령어 토글 처리
    */
   const handleCustomVoiceCommandsToggle = () => {
+    if (!premiumUnlocked) {
+      navigation.navigate('PremiumPurchase');
+      return;
+    }
+
     setSelectedVoiceCommandMode('custom');
   };
 
@@ -463,46 +488,71 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
             </SettingsAccordion>
           </View>
 
-          {/* 카드 2: 사용자 지정 2글자×3 입력 */}
-          <View className="rounded-2xl border border-lightgray bg-transparent py-2">
-            <SettingsAccordion
-              label="사용자 설정"
-              checked={selectedVoiceCommandMode === 'custom'}
-              onToggle={handleCustomVoiceCommandsToggle}
-            >
-              {/* 본 카운터: 상단 컬럼 라벨(명령어/유사어) + 행 입력 */}
-              <View className="mb-4 pl-4">
-                <Text className="mb-3 text-base font-medium text-black">
-                  본 카운터
-                </Text>
-                <View className="mb-3 flex-row items-end pl-2">
-                  <View className="w-24 pr-3" />
-                  <View className="flex-1 pl-3">
-                    <View className="flex-row">
-                      <View className="flex-1 pr-2">
-                        <Text className="text-center text-xs text-darkgray">
-                          명령어
-                        </Text>
-                      </View>
-                      <View className="flex-[2]">
-                        <Text className="text-center text-xs text-darkgray">
-                          유사어
-                        </Text>
+          {/* 카드 2: 사용자 지정 2글자×3 입력 (프리미엄 전용 시 multiply·별 오버레이) */}
+          <View className="relative overflow-hidden rounded-2xl border border-lightgray bg-transparent">
+            <View className="bg-transparent py-2">
+              <SettingsAccordion
+                label="사용자 설정"
+                checked={selectedVoiceCommandMode === 'custom'}
+                onToggle={handleCustomVoiceCommandsToggle}
+              >
+                {/* 본 카운터: 상단 컬럼 라벨(명령어/유사어) + 행 입력 */}
+                <View className="mb-4 pl-4">
+                  <Text className="mb-3 text-base font-medium text-black">
+                    본 카운터
+                  </Text>
+                  <View className="mb-3 flex-row items-end pl-2">
+                    <View className="w-24 pr-3" />
+                    <View className="flex-1 pl-3">
+                      <View className="flex-row">
+                        <View className="flex-1 pr-2">
+                          <Text className="text-center text-xs text-darkgray">
+                            명령어
+                          </Text>
+                        </View>
+                        <View className="flex-[2]">
+                          <Text className="text-center text-xs text-darkgray">
+                            유사어
+                          </Text>
+                        </View>
                       </View>
                     </View>
                   </View>
+                  {mainCounterVoiceCommandRows.map(renderVoiceCommandInputRow)}
                 </View>
-                {mainCounterVoiceCommandRows.map(renderVoiceCommandInputRow)}
-              </View>
 
-              {/* 보조 카운터: 행만 (컬럼 라벨은 위와 동일하게 한 번만) */}
-              <View className="pl-4">
-                <Text className="mb-3 text-base font-medium text-black">
-                  보조 카운터
-                </Text>
-                {subCounterVoiceCommandRows.map(renderVoiceCommandInputRow)}
-              </View>
-            </SettingsAccordion>
+                {/* 보조 카운터: 행만 (컬럼 라벨은 위와 동일하게 한 번만) */}
+                <View className="pl-4">
+                  <Text className="mb-3 text-base font-medium text-black">
+                    보조 카운터
+                  </Text>
+                  {subCounterVoiceCommandRows.map(renderVoiceCommandInputRow)}
+                </View>
+              </SettingsAccordion>
+            </View>
+            {!premiumUnlocked ? (
+              <>
+                <View
+                  className="pointer-events-none absolute inset-0 z-[5] bg-mediumgray"
+                  style={{ mixBlendMode: 'multiply' }}
+                />
+                <TouchableOpacity
+                  activeOpacity={1}
+                  className="absolute inset-0 z-[10]"
+                  onPress={() => navigation.navigate('PremiumPurchase')}
+                  accessibilityRole="button"
+                  accessibilityLabel="사용자 설정, 프리미엄 전용"
+                  accessibilityHint="탭하면 프리미엄 구매 화면으로 이동합니다."
+                />
+                <View className="pointer-events-none absolute top-2 right-4 z-20 h-[52px] w-6 items-center justify-center">
+                  <Star
+                    size={22}
+                    color={HONEY_BANANA_PALETTE['400']}
+                    fill={HONEY_BANANA_PALETTE['400']}
+                  />
+                </View>
+              </>
+            ) : null}
           </View>
         </View>
 

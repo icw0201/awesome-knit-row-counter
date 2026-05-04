@@ -1,6 +1,7 @@
 import React from 'react';
-import { Check } from 'lucide-react-native';
-import { Dimensions, Text, TouchableOpacity, View } from 'react-native';
+import { Check, Star } from 'lucide-react-native';
+import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { HONEY_BANANA_PALETTE } from '@constants/colors';
 import { appTheme } from '@styles/appTheme';
 
 export interface SettingsSingleSelectOption<T extends string = string> {
@@ -15,6 +16,10 @@ interface SettingsSingleSelectProps<T extends string = string> {
   selectedValue: T;
   options: SettingsSingleSelectOption<T>[];
   onSelect: (value: T) => void;
+  /** true면 해당 값은 선택 불가 UI(별·그레이 multiply) 처리 */
+  isOptionLocked?: (value: T) => boolean;
+  /** 잠긴 칩을 눌렀을 때 (예: 프리미엄 결제 화면으로 이동) */
+  onLockedOptionPress?: () => void;
 }
 
 const SettingsSingleSelect = <T extends string>({
@@ -22,43 +27,87 @@ const SettingsSingleSelect = <T extends string>({
   selectedValue,
   options,
   onSelect,
+  isOptionLocked,
+  onLockedOptionPress,
 }: SettingsSingleSelectProps<T>) => {
   const chipSize = (Dimensions.get('window').width - 32 - 16) / 4.5;
 
+  /** RN 타입에는 없을 수 있으나 새 아키텍처/플랫폼에서 multiply 합성에 사용됨 */
+  const multiplyOverlayBlend = { mixBlendMode: 'multiply' as const };
+
   const renderChip = (option: SettingsSingleSelectOption<T>) => {
     const selected = selectedValue === option.value;
+    const locked = isOptionLocked?.(option.value) ?? false;
 
     return (
       <TouchableOpacity
         key={option.value}
-        onPress={() => onSelect(option.value)}
+        onPress={() => {
+          if (locked) {
+            onLockedOptionPress?.();
+            return;
+          }
+          onSelect(option.value);
+        }}
         activeOpacity={0.7}
-        className="flex-col overflow-hidden rounded-[10px]"
+        className="overflow-hidden rounded-[10px]"
         style={{ width: chipSize, height: chipSize }}
         accessibilityRole="radio"
-        accessibilityState={{ checked: selected }}
-        accessibilityLabel={option.label}
+        accessibilityState={{ checked: locked ? false : selected }}
+        accessibilityLabel={locked ? `${option.label}, 프리미엄 전용` : option.label}
       >
-        <View
-          className="flex-1 items-center justify-center"
-          style={{ backgroundColor: option.primary200 }}
-        >
-          {selected ? (
-            <Check size={20} color={appTheme.colors.white} strokeWidth={2.5} />
-          ) : null}
-        </View>
-        <View
-          className="flex-1 items-center justify-center px-1.5"
-          style={{ backgroundColor: option.primary400 }}
-        >
-          {selected ? (
-            <Text
-              className="text-center text-sm font-semibold text-white"
-              numberOfLines={1}
-              ellipsizeMode="tail"
+        <View className="flex-1 overflow-hidden rounded-[10px]" collapsable={false}>
+          <View className="flex-1 flex-col">
+            <View
+              className="flex-1 items-center justify-center"
+              style={{ backgroundColor: option.primary200 }}
             >
-              {option.label}
-            </Text>
+              {selected && !locked ? (
+                <Check size={20} color={appTheme.colors.white} strokeWidth={2.5} />
+              ) : null}
+            </View>
+            <View
+              className="flex-1 items-center justify-center px-1.5"
+              style={{ backgroundColor: option.primary400 }}
+            >
+              {selected && !locked ? (
+                <Text
+                  className="text-center text-sm font-semibold text-white"
+                  numberOfLines={1}
+                  ellipsizeMode="tail"
+                >
+                  {option.label}
+                </Text>
+              ) : null}
+            </View>
+          </View>
+          {locked ? (
+            <View pointerEvents="none" className="absolute inset-0" collapsable={false}>
+              <View
+                pointerEvents="none"
+                collapsable={false}
+                style={[
+                  StyleSheet.absoluteFillObject,
+                  {
+                    margin: 3,
+                    borderRadius: 10 - 3,
+                    backgroundColor: appTheme.colors.mediumgray,
+                    ...multiplyOverlayBlend,
+                  },
+                ]}
+              />
+              <View
+                pointerEvents="none"
+                style={StyleSheet.absoluteFillObject}
+                className="items-center justify-center"
+              >
+                <Star
+                  size={20}
+                  color={HONEY_BANANA_PALETTE['400']}
+                  fill={HONEY_BANANA_PALETTE['400']}
+                />
+              </View>
+            </View>
           ) : null}
         </View>
       </TouchableOpacity>
