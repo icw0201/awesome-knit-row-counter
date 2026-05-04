@@ -13,4 +13,13 @@
 -keep class com.swmansion.reanimated.** { *; }
 -keep class com.facebook.react.turbomodule.** { *; }
 
+# react-native-iap 15.x / Nitro Modules
+# 릴리즈 R8에서 Nitro HybridObject/JNI 진입점이 제거되면 JS 초기화가 중단되어
+# 내부 테스트 빌드에서 흰 화면에 머물 수 있습니다.
+-keep class com.margelo.nitro.** { *; }
+-keep class com.margelo.nitro.iap.** { *; }
+-keepclassmembers class * {
+  native <methods>;
+}
+
 # Add any project specific keep options here:

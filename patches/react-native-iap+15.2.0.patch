@@ -1,0 +1,21 @@
+diff --git a/node_modules/react-native-iap/android/fix-prefab.gradle b/node_modules/react-native-iap/android/fix-prefab.gradle
+--- a/node_modules/react-native-iap/android/fix-prefab.gradle
++++ b/node_modules/react-native-iap/android/fix-prefab.gradle
+@@ -24,13 +24,16 @@
+     }
+     if (!dependsOnThisLib && proj != project) return
+ 
+     if (!proj.plugins.hasPlugin('com.android.application') && !proj.plugins.hasPlugin('com.android.library')) {
+       return
+     }
+ 
+-    def variants = proj.android.hasProperty('applicationVariants') ? proj.android.applicationVariants : proj.android.libraryVariants
++    def androidExt = proj.extensions.findByName('android')
++    if (androidExt == null) return
++
++    def variants = androidExt.hasProperty('applicationVariants') ? androidExt.applicationVariants : androidExt.libraryVariants
+     // Touch the prefab_config.json files to ensure that in ExternalNativeJsonGenerator.kt we will re-trigger the prefab CLI to
+     // generate a libnameConfig.cmake file that will contain our native library (.so).
+     // See this condition: https://cs.android.com/android-studio/platform/tools/base/+/mirror-goog-studio-main:build-system/gradle-core/src/main/java/com/android/build/gradle/tasks/ExternalNativeJsonGenerator.kt;l=207-219?q=createPrefabBuildSystemGlue
+     variants.all { variant ->
+       def variantName = variant.name
