@@ -8,7 +8,6 @@ import {
   SettingsBackup,
   SettingsCheckBoxes,
   SettingsDataManagement,
-  SettingsPremiumLink,
   SettingsVersion,
 } from '@components/settings';
 import { useAppThemeSync } from '@hooks/useAppThemeSync';
@@ -33,8 +32,6 @@ const Settings = () => {
           contentContainerStyle={screenStyles.scrollViewContentCentered}
           keyboardShouldPersistTaps="handled"
         >
-          <SettingsPremiumLink />
-
           <SettingsCheckBoxes />
 
           <SettingsBackup />
