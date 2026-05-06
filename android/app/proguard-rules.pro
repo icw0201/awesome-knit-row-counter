@@ -35,4 +35,9 @@
   native <methods>;
 }
 
+# expo-speech-recognition — 릴리즈 R8이 RecognitionSupportCallback·모듈 내부 클래스를 축소하면
+# getSupportedLocales()가 실패하거나 빈 결과만 돌아가 debug에서는 정상·Play 릴리즈에서만
+# "온디바이스 모델 없음"으로 오진될 수 있습니다.
+-keep class expo.modules.speechrecognition.** { *; }
+
 # Add any project specific keep options here:

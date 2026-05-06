@@ -18,6 +18,8 @@
   <queries>
     <!-- Google 음성 인식 서비스 존재 여부를 조회해야 지원 기기/미설치 상태를 구분할 수 있습니다. -->
     <package android:name="com.google.android.googlequicksearchbox"/>
+    <!-- 온디바이스 음성 인식에 사용하는 com.google.android.as 패키지 가시성(Android 11+ 패키지 쿼리) -->
+    <package android:name="com.google.android.as"/>
     <intent>
       <action android:name="android.speech.RecognitionService"/>
     </intent>
