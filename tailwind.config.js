@@ -7,6 +7,7 @@ const {
   GRAY_PALETTE,
   LAVENDER_PALETTE,
   EMPHASIS_RED,
+  PREMIUM_GOLD,
 } = require(path.join(__dirname, 'src/constants/colors'));
 
 /** @type {import('tailwindcss').Config} */
@@ -24,6 +25,9 @@ module.exports = {
     'text-darkgray',
     'text-mediumgray',
     'text-emphasis-red',
+    'text-premium-gold',
+    'bg-premium-gold',
+    'border-premium-gold',
     'border-white',
     'border-lightgray',
     {
@@ -40,6 +44,7 @@ module.exports = {
         olive: OLIVE_PALETTE,
         gray: GRAY_PALETTE,
         'emphasis-red': EMPHASIS_RED,
+        'premium-gold': PREMIUM_GOLD,
         black: '#111111',
         darkgray: '#767676',
         mediumgray: '#B8B8B8',

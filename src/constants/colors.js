@@ -95,6 +95,9 @@ const LAVENDER_PALETTE = {
 /** 테마와 무관하게 경고/강조 의미를 유지하는 고정 red */
 const EMPHASIS_RED = '#dc2626';
 
+/** 테마와 무관한 프리미엄(IAP) 표시 별 등 고정 골드 */
+const PREMIUM_GOLD = '#FFD900';
+
 /** 규칙 카드와 ColorPicker 스와치 전용 색상 */
 const RULE_SWATCH_COLORS = [
   '#EF5777',
@@ -117,5 +120,6 @@ module.exports = {
   GRAY_PALETTE,
   LAVENDER_PALETTE,
   EMPHASIS_RED,
+  PREMIUM_GOLD,
   RULE_SWATCH_COLORS,
 };

@@ -6,7 +6,7 @@ import { Star } from 'lucide-react-native';
 
 import { ConfirmModal } from '@components/common/modals';
 import type { RootStackParamList } from '@navigation/AppNavigator';
-import { HONEY_BANANA_PALETTE } from '@constants/colors';
+import { appTheme } from '@styles/appTheme';
 import {
   exportBackupToTemporaryFile,
   getBackupSummary,
@@ -202,8 +202,8 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
               >
                 <Star
                   size={22}
-                  color={HONEY_BANANA_PALETTE['400']}
-                  fill={HONEY_BANANA_PALETTE['400']}
+                  color={appTheme.colors.premiumGold}
+                  fill={appTheme.colors.premiumGold}
                 />
               </View>
               <View
@@ -212,8 +212,8 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
               >
                 <Star
                   size={22}
-                  color={HONEY_BANANA_PALETTE['400']}
-                  fill={HONEY_BANANA_PALETTE['400']}
+                  color={appTheme.colors.premiumGold}
+                  fill={appTheme.colors.premiumGold}
                 />
               </View>
             </>

@@ -5,6 +5,7 @@ import {
   HONEY_BANANA_PALETTE,
   LAVENDER_PALETTE,
   OLIVE_PALETTE,
+  PREMIUM_GOLD,
   RED_ORANGE_PALETTE,
 } from '@constants/colors';
 import {
@@ -65,6 +66,7 @@ export interface AppTheme {
     darkgray: string;
     mediumgray: string;
     emphasisRed: string;
+    premiumGold: string;
     lightgray: string;
     transparent: string;
     shadow: string;
@@ -125,6 +127,7 @@ const createTheme = (
     darkgray: '#767676',
     mediumgray: '#B8B8B8',
     emphasisRed: EMPHASIS_RED,
+    premiumGold: PREMIUM_GOLD,
     lightgray: '#DBDBDB',
     transparent: 'transparent',
     shadow: '#000000',

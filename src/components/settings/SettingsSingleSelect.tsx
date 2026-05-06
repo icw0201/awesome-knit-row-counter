@@ -1,7 +1,6 @@
 import React from 'react';
 import { Check, Star } from 'lucide-react-native';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { HONEY_BANANA_PALETTE } from '@constants/colors';
 import { appTheme } from '@styles/appTheme';
 
 export interface SettingsSingleSelectOption<T extends string = string> {
@@ -103,8 +102,8 @@ const SettingsSingleSelect = <T extends string>({
               >
                 <Star
                   size={20}
-                  color={HONEY_BANANA_PALETTE['400']}
-                  fill={HONEY_BANANA_PALETTE['400']}
+                  color={appTheme.colors.premiumGold}
+                  fill={appTheme.colors.premiumGold}
                 />
               </View>
             </View>

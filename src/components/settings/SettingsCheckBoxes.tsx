@@ -7,8 +7,8 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 import CheckBox from '@components/common/CheckBox';
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
-import { HONEY_BANANA_PALETTE } from '@constants/colors';
 import type { RootStackParamList } from '@navigation/AppNavigator';
+import { appTheme } from '@styles/appTheme';
 import SettingsAccordion from './SettingsAccordion';
 import SettingsThemeSelector from './SettingsThemeSelector';
 import { useIapContext } from '../../providers/IapProvider';
@@ -547,8 +547,8 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
                 <View className="pointer-events-none absolute top-2 right-4 z-20 h-[52px] w-6 items-center justify-center">
                   <Star
                     size={22}
-                    color={HONEY_BANANA_PALETTE['400']}
-                    fill={HONEY_BANANA_PALETTE['400']}
+                    color={appTheme.colors.premiumGold}
+                    fill={appTheme.colors.premiumGold}
                   />
                 </View>
               </>

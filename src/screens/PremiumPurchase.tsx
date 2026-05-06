@@ -15,21 +15,18 @@ import clsx from 'clsx';
 import { useIsFocused } from '@react-navigation/native';
 
 import { premiumPreviewCarouselSlides } from '@assets/images';
-import { HONEY_BANANA_PALETTE } from '@constants/colors';
 import { useAppThemeSync } from '@hooks/useAppThemeSync';
 import { appTheme } from '@styles/appTheme';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
 import RoundedButton from '@components/common/RoundedButton';
 import { useIapContext } from '../providers/IapProvider';
 
-const FEATURES = [
+const premiumPurchaseFeatureLines = [
   '추가 색상 테마 4종',
   '사용자 지정 음성 인식 명령어',
   '데이터 내보내기&파일 데이터 불러오기',
   '개발자의 감사',
 ] as const;
-
-const starTint = HONEY_BANANA_PALETTE['400'];
 
 /** 캐러셀 한 바퀴 너비 (카드 폭 + 간격) */
 const CAROUSEL_CARD_WIDTH = 126;
@@ -150,13 +147,13 @@ const PremiumPurchase: React.FC = () => {
       >
         <View className="items-center px-1 pt-2">
           <View className="mb-3 w-full flex-row items-center justify-center gap-2 px-2">
-            <Star size={24} color={starTint} fill={starTint} />
+            <Star size={24} color={appTheme.colors.premiumGold} fill={appTheme.colors.premiumGold} />
             <View className="min-w-0 flex-1">
               <Text className="text-center text-xl font-bold text-black">
                 프리미엄 버전을{'\n'}사용해보세요!
               </Text>
             </View>
-            <Star size={24} color={starTint} fill={starTint} />
+            <Star size={24} color={appTheme.colors.premiumGold} fill={appTheme.colors.premiumGold} />
           </View>
 
           <Text className="mb-8 px-2 text-center text-lg text-black">
@@ -182,13 +179,13 @@ const PremiumPurchase: React.FC = () => {
               appTheme.tw.border.primary['300']
             )}
           >
-            {FEATURES.map((line, index) => (
+            {premiumPurchaseFeatureLines.map((line, index) => (
               <View key={line}>
                 <View className="flex-row items-center gap-2 py-3">
-                  <Star size={22} color={starTint} fill={starTint} />
+                  <Star size={22} color={appTheme.colors.premiumGold} fill={appTheme.colors.premiumGold} />
                   <Text className="flex-1 text-lg text-black">{line}</Text>
                 </View>
-                {index < FEATURES.length - 1 ? (
+                {index !== premiumPurchaseFeatureLines.length - 1 ? (
                   <View className="h-px w-full bg-lightgray" />
                 ) : null}
               </View>
