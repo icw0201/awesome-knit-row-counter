@@ -10,6 +10,7 @@ import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
 import type { RootStackParamList } from '@navigation/AppNavigator';
 import { appTheme } from '@styles/appTheme';
 import SettingsAccordion from './SettingsAccordion';
+import SettingsSectionHeader from './SettingsSectionHeader';
 import SettingsThemeSelector from './SettingsThemeSelector';
 import { useIapContext } from '../../providers/IapProvider';
 import {
@@ -58,11 +59,6 @@ interface VoiceCommandRowConfig {
   placeholders: [string, string, string];
 }
 
-interface SectionHeaderProps {
-  title: string;
-  titleClassName?: string;
-}
-
 const DEFAULT_VOICE_COMMAND_SECTIONS = [
   {
     title: '본 카운터',
@@ -109,20 +105,6 @@ const VOICE_COMMAND_INPUT_ORDER = VOICE_COMMAND_ROW_CONFIGS.flatMap((config) =>
   }))
 );
 
-const SectionHeader: React.FC<SectionHeaderProps> = ({
-  title,
-  titleClassName = 'text-darkgray',
-}) => {
-  return (
-    <View className="mb-2 flex-row items-center px-4">
-      <Text className={`mr-3 text-sm font-semibold ${titleClassName}`}>
-        {title}
-      </Text>
-      <View className="flex-1 border-b border-lightgray" />
-    </View>
-  );
-};
-
 const SettingsSection: React.FC<SettingsSectionProps> = ({
   title,
   items,
@@ -130,7 +112,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({
 }) => {
   return (
     <View className="mb-6">
-      <SectionHeader title={title} titleClassName={titleClassName} />
+      <SettingsSectionHeader title={title} titleClassName={titleClassName} />
       <View>
         {items.map((item) => (
           <View key={item.label}>
@@ -459,7 +441,7 @@ const SettingsCheckBoxes: React.FC<SettingsCheckBoxesProps> = ({
 
         {/* 음성인식 명령어: 기본(고정 안내) / 사용자(입력) — 카드별 테두리 */}
         <View className="mb-6">
-          <SectionHeader title="음성인식 명령어" />
+          <SettingsSectionHeader title="음성인식 명령어" />
 
           {/* 카드 1: 기본 명령어 안내(읽기 전용) */}
           <View className="mb-3 rounded-2xl border border-lightgray bg-transparent py-2">

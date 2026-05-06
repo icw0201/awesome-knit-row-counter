@@ -2,6 +2,7 @@ import React from 'react';
 import { Check, Star } from 'lucide-react-native';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { appTheme } from '@styles/appTheme';
+import SettingsSectionHeader from './SettingsSectionHeader';
 
 export interface SettingsSingleSelectOption<T extends string = string> {
   value: T;
@@ -115,12 +116,7 @@ const SettingsSingleSelect = <T extends string>({
 
   return (
     <View className="mb-6">
-      <View className="mb-2 flex-row items-center px-4">
-        <Text className={`mr-3 text-sm font-semibold ${appTheme.tw.text.darkgray}`}>
-          {title}
-        </Text>
-        <View className={`flex-1 border-b ${appTheme.tw.border.lightgray}`} />
-      </View>
+      <SettingsSectionHeader title={title} />
 
       <View className="mb-2 flex-row justify-center gap-6 px-4 mb-5">
         {options.slice(0, 3).map(renderChip)}
