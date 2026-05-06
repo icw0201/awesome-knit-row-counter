@@ -1,8 +1,8 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import clsx from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { colorStyles, ColorStyleKey } from '@styles/colorStyles';
+import { appTheme } from '@styles/appTheme';
 
 /**
  * RoundedButton 컴포넌트의 Props 인터페이스
@@ -22,15 +22,15 @@ interface RoundedButtonProps {
 /**
  * 기본 레이아웃: 중앙 정렬된 제목 표시
  */
-const renderDefaultLayout = (title: string, textColor: string) => (
+const renderDefaultLayout = (title: string, textClassName: string) => (
   <View className="items-center justify-center min-h-16">
-    <Text className={clsx('text-base font-semibold', textColor)}>{title}</Text>
+    <Text className={twMerge('text-base font-semibold', textClassName)}>{title}</Text>
   </View>
 );
 
 /**
  * 둥근 모서리를 가진 버튼 컴포넌트
- * 중앙 정렬된 제목을 표시하며, 항상 터치 가능한 버튼으로 동작합니다.
+ * 중앙 정렬된 제목을 표시합니다. disabled일 때는 회색 스타일이며 터치되지 않습니다.
  * rounded는 full로 고정되어 있습니다.
  */
 const RoundedButton: React.FC<RoundedButtonProps> = ({
@@ -46,26 +46,28 @@ const RoundedButton: React.FC<RoundedButtonProps> = ({
     textClassName,
   } = colorStyles[colorStyle];
 
+  const resolvedContainerClassName = disabled
+    ? twMerge(appTheme.tw.bg.lightgray, `border ${appTheme.tw.border.lightgray}`)
+    : themeContainerClassName;
+  const resolvedTextClassName = disabled
+    ? appTheme.tw.text.black
+    : textClassName;
+
   // 박스 뷰 생성 (rounded는 full로 고정)
   const boxView = (
     <View
       className={twMerge(
         'mx-1 py-3 px-8 rounded-full',
-        themeContainerClassName,
+        resolvedContainerClassName,
         containerClassName
       )}
     >
-      {renderDefaultLayout(title, textClassName)}
+      {renderDefaultLayout(title, resolvedTextClassName)}
     </View>
   );
 
-  // 항상 TouchableOpacity로 감싸서 버튼으로 동작
   return (
-    <TouchableOpacity
-      onPress={onPress}
-      disabled={disabled}
-      className={clsx(disabled && 'opacity-45')}
-    >
+    <TouchableOpacity onPress={onPress} disabled={disabled} activeOpacity={disabled ? 1 : 0.2}>
       {boxView}
     </TouchableOpacity>
   );
