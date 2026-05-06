@@ -164,6 +164,10 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
         <Text className="mb-3 px-1 text-sm font-semibold text-darkgray">
           백업 및 복원
         </Text>
+        <Text className="mb-4 pl-4 pr-1 text-xs font-normal leading-5 text-darkgray">
+          앱 데이터는 이 기기에만 저장됩니다. 앱을 삭제하거나 기기를 바꾸면 데이터가
+          사라질 수 있으니, 파일로 내보내 두었다가 필요할 때 불러와 복구할 수 있습니다.
+        </Text>
         <View className="relative">
           <IconBox
             title={isBusy ? '처리 중...' : '데이터 내보내기'}
