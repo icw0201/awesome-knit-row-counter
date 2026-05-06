@@ -67,6 +67,18 @@ function getCarouselLoopWidth(itemCount: number): number {
   return itemCount * CAROUSEL_CARD_WIDTH + (itemCount - 1) * CAROUSEL_GAP;
 }
 
+/** 스토어 원문(예: Item is already owned)을 화면용 안내로 바꿉니다. */
+function getPremiumPurchaseErrorMessage(raw: string): string {
+  const lower = raw.trim().toLowerCase();
+  if (
+    lower.includes('already owned') ||
+    lower.includes('item_already_owned')
+  ) {
+    return '이미 이 상품을 보유 중입니다. 아래 「구매 복원」을 눌러 스토어에서 구매 내역을 다시 불러와 보세요.';
+  }
+  return raw;
+}
+
 /**
  * 프리미엄 일회성 구매 안내 화면 (Figma: 프리미엄 구독 프레임)
  * 결제 플로우는 Google Play Billing 연동 시 버튼 핸들러에 연결합니다.
@@ -280,7 +292,7 @@ const PremiumPurchase: React.FC = () => {
                 appTheme.tw.text.emphasisRed
               )}
             >
-              {lastError}
+              {getPremiumPurchaseErrorMessage(lastError)}
             </Text>
           ) : null}
         </View>
