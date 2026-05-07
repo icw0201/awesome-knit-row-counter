@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
-import { twMerge } from 'tailwind-merge';
+import clsx from 'clsx';
 import { colorStyles, ColorStyleKey } from '@styles/colorStyles';
 import { appTheme } from '@styles/appTheme';
 
@@ -24,7 +24,7 @@ interface RoundedButtonProps {
  */
 const renderDefaultLayout = (title: string, textClassName: string) => (
   <View className="items-center justify-center min-h-16">
-    <Text className={twMerge('text-base font-semibold', textClassName)}>{title}</Text>
+    <Text className={clsx('text-base font-semibold', textClassName)}>{title}</Text>
   </View>
 );
 
@@ -47,7 +47,7 @@ const RoundedButton: React.FC<RoundedButtonProps> = ({
   } = colorStyles[colorStyle];
 
   const resolvedContainerClassName = disabled
-    ? twMerge(appTheme.tw.bg.lightgray, `border ${appTheme.tw.border.lightgray}`)
+    ? clsx(appTheme.tw.bg.lightgray, `border ${appTheme.tw.border.lightgray}`)
     : themeContainerClassName;
   const resolvedTextClassName = disabled
     ? appTheme.tw.text.black
@@ -56,7 +56,7 @@ const RoundedButton: React.FC<RoundedButtonProps> = ({
   // 박스 뷰 생성 (rounded는 full로 고정)
   const boxView = (
     <View
-      className={twMerge(
+      className={clsx(
         'mx-1 py-3 px-8 rounded-full',
         resolvedContainerClassName,
         containerClassName
