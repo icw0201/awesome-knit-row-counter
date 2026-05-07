@@ -10,6 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import LinearGradient from 'react-native-linear-gradient';
 import { Star } from 'lucide-react-native';
 import clsx from 'clsx';
 import { useIsFocused } from '@react-navigation/native';
@@ -27,6 +28,9 @@ const premiumPurchaseFeatureLines = [
   '데이터 내보내기&파일 데이터 불러오기',
   '개발자의 감사',
 ] as const;
+
+const PREMIUM_FEATURES_THANKS_LINE =
+  premiumPurchaseFeatureLines[premiumPurchaseFeatureLines.length - 1];
 
 /** 캐러셀 한 바퀴 너비 (카드 폭 + 간격) */
 const CAROUSEL_CARD_WIDTH = 126;
@@ -66,6 +70,21 @@ function getCarouselLoopWidth(itemCount: number): number {
   }
   return itemCount * CAROUSEL_CARD_WIDTH + (itemCount - 1) * CAROUSEL_GAP;
 }
+
+/** 6자리 hex → rgba (테마 색 + 알파) */
+function hexToRgba(hex: string, alpha: number): string {
+  const normalized = hex.replace('#', '');
+  if (normalized.length !== 6) {
+    return hex;
+  }
+  const r = parseInt(normalized.slice(0, 2), 16);
+  const g = parseInt(normalized.slice(2, 4), 16);
+  const b = parseInt(normalized.slice(4, 6), 16);
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
+/** ScrollView content padding(16) + 상단 래퍼 px-1(4)만큼 상쇄해 가로 풀블리드 */
+const PREMIUM_FEATURES_BLEED_X = 20;
 
 /** 스토어 원문(예: Item is already owned)을 화면용 안내로 바꿉니다. */
 function getPremiumPurchaseErrorMessage(raw: string): string {
@@ -150,21 +169,42 @@ const PremiumPurchase: React.FC = () => {
     void restorePremium();
   };
 
+  const screenBackgroundColor = hexToRgba(
+    appTheme.colors.primary['200'],
+    0.3
+  );
+  const premiumFeaturesPanelBleedStyle = {
+    alignSelf: 'stretch' as const,
+    marginHorizontal: -PREMIUM_FEATURES_BLEED_X,
+  };
+  const premiumFeaturesPanelInnerStyle = {
+    backgroundColor: hexToRgba(appTheme.colors.white, 0.7),
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: appTheme.colors.primary['300'],
+  };
+  const premiumFeaturesPanelShadowColors = [
+    hexToRgba(appTheme.colors.shadow, 0.14),
+    appTheme.colors.transparent,
+  ] as const;
+
   return (
-    <SafeAreaView style={screenStyles.flex1} edges={safeAreaEdges}>
+    <SafeAreaView
+      style={[screenStyles.flex1, { backgroundColor: screenBackgroundColor }]}
+      edges={safeAreaEdges}
+    >
       <ScrollView
         contentContainerStyle={screenStyles.scrollViewContent}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
         <View className="items-center px-1 pt-2">
-          <View className="mb-3 w-full flex-row items-center justify-center gap-2 px-2">
+          <View className="mb-3 flex-row items-center justify-center gap-3 px-2">
             <Star size={24} color={appTheme.colors.premiumGold} fill={appTheme.colors.premiumGold} />
-            <View className="min-w-0 flex-1">
-              <Text className="text-center text-xl font-bold text-black">
-                프리미엄 버전을{'\n'}사용해보세요!
-              </Text>
-            </View>
+            <Text className="text-center text-xl font-bold text-black">
+              프리미엄 버전을{'\n'}사용해보세요!
+            </Text>
             <Star size={24} color={appTheme.colors.premiumGold} fill={appTheme.colors.premiumGold} />
           </View>
 
@@ -185,27 +225,46 @@ const PremiumPurchase: React.FC = () => {
             </View>
           ) : null}
 
-          <View
-            className={clsx(
-              'mb-6 w-full max-w-[340px] rounded-[10px] border bg-white px-4 py-4',
-              appTheme.tw.border.primary['300']
-            )}
-          >
-            {premiumPurchaseFeatureLines.map((line, index) => (
-              <View key={line}>
-                <View className="flex-row items-center gap-2 py-3">
-                  <Star size={22} color={appTheme.colors.premiumGold} fill={appTheme.colors.premiumGold} />
-                  <Text className="flex-1 text-lg text-black">{line}</Text>
+          <View className="mb-6" style={premiumFeaturesPanelBleedStyle}>
+            <View style={premiumFeaturesPanelInnerStyle}>
+              {premiumPurchaseFeatureLines.map((line, index) => (
+                <View key={line}>
+                  <View className="items-center justify-center px-2 py-3">
+                    <Text
+                      className={clsx(
+                        'shrink text-center text-black',
+                        line === PREMIUM_FEATURES_THANKS_LINE
+                          ? 'text-sm font-normal'
+                          : 'text-lg font-bold'
+                      )}
+                    >
+                      {line}
+                    </Text>
+                  </View>
+                  {index !== premiumPurchaseFeatureLines.length - 1 ? (
+                    <View
+                      className="h-px self-center"
+                      style={{
+                        width: '55%',
+                        backgroundColor: appTheme.colors.primary['200'],
+                      }}
+                    />
+                  ) : null}
                 </View>
-                {index !== premiumPurchaseFeatureLines.length - 1 ? (
-                  <View className="h-px w-full bg-lightgray" />
-                ) : null}
-              </View>
-            ))}
+              ))}
+            </View>
+            <LinearGradient
+              pointerEvents="none"
+              colors={[...premiumFeaturesPanelShadowColors]}
+              locations={[0, 1]}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={{ height: 10 }}
+            />
           </View>
 
           <Text className="mb-2 self-start text-sm text-darkgray">
-            테마 색상 미리보기
+            유료 기능 미리보기
           </Text>
           <ScrollView
             ref={carouselRef}
