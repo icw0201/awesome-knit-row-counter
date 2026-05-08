@@ -59,7 +59,7 @@ const RoundedButton: React.FC<RoundedButtonProps> = ({
       className={clsx(
         'mx-1 py-3 px-8 rounded-full',
         resolvedContainerClassName,
-        containerClassName
+        !disabled && containerClassName
       )}
     >
       {renderDefaultLayout(title, resolvedTextClassName)}

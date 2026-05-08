@@ -118,7 +118,7 @@ const SettingsSingleSelect = <T extends string>({
     <View className="mb-6">
       <SettingsSectionHeader title={title} />
 
-      <View className="mb-2 flex-row justify-center gap-6 px-4 mb-5">
+      <View className="flex-row justify-center gap-6 px-4 mb-5">
         {options.slice(0, 3).map(renderChip)}
       </View>
       <View className="flex-row justify-center gap-6 px-4">

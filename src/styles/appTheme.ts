@@ -12,6 +12,7 @@ import {
   getSelectedColorThemeSetting,
   type ColorThemeSetting,
 } from '@storage/settings';
+import { hexToRgba } from '@utils/colorUtils';
 
 type ThemePaletteShade =
   | '50'
@@ -74,6 +75,8 @@ export interface AppTheme {
     neutral: {
       '100': string;
     };
+    /** 프리미엄 구매 화면 SafeArea — primary 200 @ 0.3 알파(rgba 문자열) */
+    premiumPurchaseScreenBackground: string;
   };
 }
 
@@ -135,6 +138,7 @@ const createTheme = (
     neutral: {
       '100': '#F3F4F6',
     },
+    premiumPurchaseScreenBackground: hexToRgba(primaryPalette['200'], 0.3),
   },
 });
 

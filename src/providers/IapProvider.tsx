@@ -184,11 +184,13 @@ function IapBillingConnection({
     void (async () => {
       try {
         await getAvailablePurchases();
-      } catch {
-        //
+      } catch (e) {
+        const detail = e instanceof Error ? e.message : String(e);
+        console.error('[IAP] getAvailablePurchases at startup', e);
+        setLastError(`시작 시 구매 내역을 불러오지 못했습니다: ${detail}`);
       }
     })();
-  }, [connected, getAvailablePurchases]);
+  }, [connected, getAvailablePurchases, setLastError]);
 
   useEffect(() => {
     applyPremiumFromPurchases(availablePurchases);
@@ -265,10 +267,15 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const restorePremium = useCallback(async () => {
+    const b = billingRef.current;
+    if (!b.connected) {
+      setLastError('스토어에 연결되지 않았습니다. 잠시 후 다시 시도해 주세요.');
+      return;
+    }
     setLastError(null);
     setRestoreBusy(true);
     try {
-      await billingRef.current.restorePurchases();
+      await b.restorePurchases();
     } catch (e) {
       setLastError(e instanceof Error ? e.message : String(e));
     } finally {

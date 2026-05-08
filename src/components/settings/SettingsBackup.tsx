@@ -24,7 +24,8 @@ interface SettingsBackupProps {}
 const SettingsBackup: React.FC<SettingsBackupProps> = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-  const { premiumUnlocked } = useIapContext();  const onNoticeConfirmRef = useRef<(() => void) | null>(null);
+  const { premiumUnlocked } = useIapContext();
+  const onNoticeConfirmRef = useRef<(() => void) | null>(null);
 
   const [pendingImportDocument, setPendingImportDocument] = useState<BackupDocument | null>(
     null
@@ -118,7 +119,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     setIsBusy(true);
 
     try {
-      restoreBackupDocument(pendingImportDocument);
+      await restoreBackupDocument(pendingImportDocument);
       setPendingImportDocument(null);
       showNoticeModal(
         '불러오기 완료',
@@ -126,6 +127,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
         resetToMain
       );
     } catch (error) {
+      console.error('SettingsBackup: restore backup failed', error);
       showErrorModal(getReadableErrorMessage(error));
     } finally {
       setIsBusy(false);

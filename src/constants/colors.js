@@ -98,6 +98,12 @@ const EMPHASIS_RED = '#dc2626';
 /** 테마와 무관한 프리미엄(IAP) 표시 별 등 고정 골드 */
 const PREMIUM_GOLD = '#FFD900';
 
+/**
+ * 프리미엄 구매 화면 유료 기능 패널 하단 LinearGradient 상단색.
+ * GRAY_PALETTE['600']('#424d5c') @ 알파 0.14 — 팔레트 변경 시 이 문자열도 맞출 것.
+ */
+const PREMIUM_FEATURES_PANEL_SHADOW_GRADIENT_TOP = 'rgba(66, 77, 92, 0.14)';
+
 /** 규칙 카드와 ColorPicker 스와치 전용 색상 */
 const RULE_SWATCH_COLORS = [
   '#EF5777',
@@ -121,5 +127,6 @@ module.exports = {
   LAVENDER_PALETTE,
   EMPHASIS_RED,
   PREMIUM_GOLD,
+  PREMIUM_FEATURES_PANEL_SHADOW_GRADIENT_TOP,
   RULE_SWATCH_COLORS,
 };

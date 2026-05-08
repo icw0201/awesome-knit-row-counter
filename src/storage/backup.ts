@@ -922,7 +922,7 @@ const setOptionalNumberValue = (key: string, value: Nullable<number>) => {
 };
 
 /** 검증이 끝난 백업 문서를 현재 로컬 스토리지 상태로 복원한다. */
-export const restoreBackupDocument = (document: BackupDocument) => {
+export const restoreBackupDocument = async (document: BackupDocument): Promise<void> => {
   storage.set(STORAGE_KEY, JSON.stringify(document.payload.knitItems));
   storage.set(DATA_VERSION_KEY, document.dataVersion);
 

@@ -15,6 +15,7 @@ import clsx from 'clsx';
 import { useIsFocused } from '@react-navigation/native';
 
 import { premiumPreviewCarouselSlides } from '@assets/images';
+import { PREMIUM_FEATURES_PANEL_SHADOW_GRADIENT_TOP } from '@constants/colors';
 import { useAppThemeSync } from '@hooks/useAppThemeSync';
 import {
   APP_COLOR_THEME_OPTIONS,
@@ -71,18 +72,6 @@ function getCarouselLoopWidth(itemCount: number): number {
   return itemCount * CAROUSEL_CARD_WIDTH + (itemCount - 1) * CAROUSEL_GAP;
 }
 
-/** 6자리 hex → rgba (테마 색 + 알파) */
-function hexToRgba(hex: string, alpha: number): string {
-  const normalized = hex.replace('#', '');
-  if (normalized.length !== 6) {
-    return hex;
-  }
-  const r = parseInt(normalized.slice(0, 2), 16);
-  const g = parseInt(normalized.slice(2, 4), 16);
-  const b = parseInt(normalized.slice(4, 6), 16);
-  return `rgba(${r},${g},${b},${alpha})`;
-}
-
 /** ScrollView content padding(16) + 상단 래퍼 px-1(4)만큼 상쇄해 가로 풀블리드 */
 const PREMIUM_FEATURES_BLEED_X = 20;
 
@@ -91,6 +80,7 @@ const PREMIUM_FEATURES_BLEED_X = 20;
 function PremiumSplitThemeChip({ option }: { option: AppColorThemeOption }) {
   return (
     <View
+      accessibilityRole="image"
       accessibilityLabel={option.label}
       className="h-7 w-7 overflow-hidden rounded-md"
       collapsable={false}
@@ -190,13 +180,9 @@ const PremiumPurchase: React.FC = () => {
     void restorePremium();
   };
 
-  // SafeArea 배경·패널 하단 막대: 테마·알파는 rgba 문자열로만 전달(자식 opacity 불가, Gradient는 colors 배열)
-  const screenBackgroundColor = hexToRgba(
-    appTheme.colors.primary['200'],
-    0.3
-  );
+  const screenBackgroundColor = appTheme.colors.premiumPurchaseScreenBackground;
   const premiumFeaturesPanelShadowColors = [
-    hexToRgba(appTheme.colors.shadow, 0.14),
+    PREMIUM_FEATURES_PANEL_SHADOW_GRADIENT_TOP,
     appTheme.colors.transparent,
   ] as const;
 

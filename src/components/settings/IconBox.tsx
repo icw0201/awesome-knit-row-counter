@@ -56,7 +56,7 @@ const IconBox: React.FC<IconBoxProps> = ({
   }
 
   return (
-    <TouchableOpacity onPress={onPress} disabled={disabled}>
+    <TouchableOpacity onPress={onPress} disabled={disabled} activeOpacity={0.7}>
       <View
         className={clsx(
           'rounded-2xl p-4',
