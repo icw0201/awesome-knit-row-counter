@@ -12,7 +12,7 @@ import { appTheme } from '@styles/appTheme';
 import SettingsAccordion from './SettingsAccordion';
 import SettingsSectionHeader from './SettingsSectionHeader';
 import SettingsThemeSelector from './SettingsThemeSelector';
-import { useIapContext } from '../../providers/IapProvider';
+import { useIapContext } from '@provider/IapProvider';
 import {
   setSoundSetting,
   setVibrationSetting,

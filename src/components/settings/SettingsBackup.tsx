@@ -15,7 +15,7 @@ import {
   shareBackupFile,
   type BackupDocument,
 } from '@storage/backup';
-import { useIapContext } from '../../providers/IapProvider';
+import { useIapContext } from '@provider/IapProvider';
 import IconBox from './IconBox';
 import SettingsSectionHeader from './SettingsSectionHeader';
 

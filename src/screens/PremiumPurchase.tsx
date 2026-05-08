@@ -24,7 +24,7 @@ import {
 } from '@styles/appTheme';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
 import RoundedButton from '@components/common/RoundedButton';
-import { useIapContext } from '../providers/IapProvider';
+import { useIapContext } from '@provider/IapProvider';
 
 // 유료 기능 설명 줄에 붙는 추가 테마 색상 칩(4종) 데이터
 const PREMIUM_EXTRA_THEME_CHIP_OPTIONS: AppColorThemeOption[] = (

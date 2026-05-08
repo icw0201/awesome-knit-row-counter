@@ -9,7 +9,7 @@ import {
 } from '@storage/settings';
 import { APP_COLOR_THEME_OPTIONS } from '@styles/appTheme';
 import type { RootStackParamList } from '@navigation/AppNavigator';
-import { useIapContext } from '../../providers/IapProvider';
+import { useIapContext } from '@provider/IapProvider';
 
 /** 어쩜레드·애니블루만 무료 사용자에게 허용 (APP_COLOR_THEME_OPTIONS 상단 2개와 동일) */
 const FREE_COLOR_THEME_VALUES = new Set<ColorThemeSetting>(['awesomeRed', 'anyBlue']);

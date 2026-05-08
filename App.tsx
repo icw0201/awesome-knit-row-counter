@@ -6,7 +6,7 @@ import AppNavigator from './src/navigation/AppNavigator';
 import { useScreenAwakeSync } from './src/hooks/useScreenAwakeSync';
 import { useAppThemeSync } from './src/hooks/useAppThemeSync';
 import StoreUpdatePrompt from '@features/update/StoreUpdatePrompt';
-import { IapProvider } from './src/providers/IapProvider';
+import { IapProvider } from '@provider/IapProvider';
 
 export default function App() {
   useScreenAwakeSync();
