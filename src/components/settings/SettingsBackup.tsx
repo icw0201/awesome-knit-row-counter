@@ -195,7 +195,6 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
           <IconBox
             title={isBusy ? '처리 중...' : '데이터 불러오기'}
             iconName="upload"
-            omitTrailingMargin
             disabled={!premiumUnlocked}
             onPress={async () => {
               await handleImportPress();
