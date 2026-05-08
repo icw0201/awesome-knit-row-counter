@@ -19,9 +19,14 @@ import { useIapContext } from '@provider/IapProvider';
 import IconBox from './IconBox';
 import SettingsSectionHeader from './SettingsSectionHeader';
 
+// 설정: 백업 파일 내보내기·불러오기, 프리미엄 잠금 및 복원 후 안내 모달.
+
+// 설정 백업 블록용 프롭(필요 시 확장).
+
 interface SettingsBackupProps {}
 
 const SettingsBackup: React.FC<SettingsBackupProps> = () => {
+  // 네비게이션, 프리미엄 여부, 공지 확인 콜백 ref, 불러오기·모달·처리 중 상태.
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { premiumUnlocked } = useIapContext();
@@ -38,6 +43,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
   const [noticeMessage, setNoticeMessage] = useState('');
   const [isBusy, setIsBusy] = useState(false);
 
+  // 복원 완료 등 이후 메인 화면으로 스택을 초기화.
   const resetToMain = useCallback(() => {
     navigation.dispatch(
       CommonActions.reset({
@@ -47,6 +53,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     );
   }, [navigation]);
 
+  // 오류·안내 모달 표시와 사용자에게 보여줄 에러 문구 정리.
   const showErrorModal = useCallback((message: string) => {
     setErrorMessage(message);
     setErrorModalVisible(true);
@@ -71,6 +78,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     return '처리 중 오류가 발생했습니다.';
   }, []);
 
+  // 임시 백업 파일 생성 후 OS 공유 시트로 내보내기.
   const handleExportPress = useCallback(async () => {
     if (isBusy) {
       return;
@@ -88,6 +96,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     }
   }, [getReadableErrorMessage, isBusy, showErrorModal]);
 
+  // 백업 파일 선택 후 덮어쓰기 확인 모달을 띄울 데이터만 준비.
   const handleImportPress = useCallback(async () => {
     if (isBusy) {
       return;
@@ -111,6 +120,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     }
   }, [getReadableErrorMessage, isBusy, showErrorModal]);
 
+  // 확인 시 스토리지 복원 → 완료 공지(확인 시 메인으로 이동).
   const handleImportConfirm = useCallback(async () => {
     if (!pendingImportDocument) {
       return;
@@ -140,12 +150,14 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     showNoticeModal,
   ]);
 
+  // 안내 모달에서 확인을 누르면 ref에 넣어 둔 후속 동작(예: resetToMain) 실행.
   const handleNoticeConfirm = useCallback(() => {
     const callback = onNoticeConfirmRef.current;
     onNoticeConfirmRef.current = null;
     callback?.();
   }, []);
 
+  // 불러오기 확인 모달 본문: 경고 문구 + 선택한 백업의 요약(시각·개수 등).
   const importDescription = pendingImportDocument
     ? (() => {
       const summary = getBackupSummary(pendingImportDocument);
@@ -163,12 +175,14 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
 
   return (
     <>
+      {/* 백업 섹션: 제목·안내 문구·내보내기/불러오기(및 미구독 시 잠금 UI). */}
       <View className="mb-8">
         <SettingsSectionHeader title="백업 및 복원" />
         <Text className="mb-4 pl-6 pr-1 text-xs font-normal leading-5 text-darkgray">
           앱 데이터는 이 기기에만 저장됩니다. 앱을 삭제하거나 기기를 바꾸면 데이터가
           사라질 수 있으니, 파일로 내보내 두었다가 필요할 때 불러와 복구할 수 있습니다.
         </Text>
+        {/* IconBox 두 줄과, 미구독일 때만 씌우는 multiply·구매 진입·별 표시. */}
         <View className="relative">
           <IconBox
             title={isBusy ? '처리 중...' : '데이터 내보내기'}
@@ -226,6 +240,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
         </View>
       </View>
 
+      {/* 불러오기 확인, 완료 안내, 오류 각각 전용 ConfirmModal. */}
       <ConfirmModal
         visible={importConfirmVisible}
         onClose={() => {
