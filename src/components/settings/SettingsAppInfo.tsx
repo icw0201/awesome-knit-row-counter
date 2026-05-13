@@ -1,6 +1,6 @@
 // src/components/settings/SettingsAppInfo.tsx
 import React from 'react';
-import { View, Text, Linking } from 'react-native';
+import { View, Linking } from 'react-native';
 import InAppReview from 'react-native-in-app-review';
 import { PLAY_STORE_URL, RELEASE_NOTES_URL } from '@constants/storeUrls';
 import IconBox from './IconBox';

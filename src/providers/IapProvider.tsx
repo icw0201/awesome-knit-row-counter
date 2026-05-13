@@ -80,7 +80,6 @@ function IapBillingConnection({
   setPremiumUnlockedState,
   bump,
   setPurchaseBusy,
-  setRestoreBusy,
   setLastError,
 }: {
   billingRef: React.MutableRefObject<BillingApisPatch>;
@@ -91,7 +90,6 @@ function IapBillingConnection({
   setPremiumUnlockedState: React.Dispatch<React.SetStateAction<boolean>>;
   bump: () => void;
   setPurchaseBusy: React.Dispatch<React.SetStateAction<boolean>>;
-  setRestoreBusy: React.Dispatch<React.SetStateAction<boolean>>;
   setLastError: React.Dispatch<React.SetStateAction<string | null>>;
 }) {
   const onPurchaseSuccess = useCallback(
@@ -206,7 +204,7 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
   const [lastError, setLastError] = useState<string | null>(null);
 
   const [billingHostReady, setBillingHostReady] = useState(false);
-  const [tick, bump] = useState(0);
+  const [, bump] = useState(0);
   const doBump = useCallback(() => bump((x) => x + 1), []);
 
   const billingRef = useRef<BillingApisPatch>(emptyBillingApis());
@@ -308,7 +306,6 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
     }),
     [
       premiumUnlocked,
-      tick,
       patch.connected,
       patch.premiumDisplayPrice,
       purchasePremium,
@@ -331,7 +328,6 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
           setPremiumUnlockedState={setPremiumUnlockedState}
           bump={doBump}
           setPurchaseBusy={setPurchaseBusy}
-          setRestoreBusy={setRestoreBusy}
           setLastError={setLastError}
         />
       ) : null}
