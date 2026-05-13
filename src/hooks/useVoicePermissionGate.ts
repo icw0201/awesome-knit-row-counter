@@ -9,6 +9,7 @@ import {
   setVoiceRecognitionPermissionStatusSetting,
 } from '@storage/settings';
 
+const MIN_ANDROID_ON_DEVICE_SPEECH_API_LEVEL = 33;
 const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
 const REQUIRED_ON_DEVICE_LOCALE = 'ko-KR';
 
@@ -37,6 +38,16 @@ function hasMatchingOnDeviceLocale(
     // 일부 Android 인식 서비스는 region 없이 "ko"만 돌려주거나 "_" 구분자를 사용한다.
     return getLocaleLanguage(normalizedLocale) === requiredLanguage;
   });
+}
+
+function getAndroidApiLevel(): number {
+  const version = Platform.Version;
+
+  if (typeof version === 'number') {
+    return version;
+  }
+
+  return Number.parseInt(version, 10);
 }
 
 /**
@@ -145,18 +156,21 @@ export function useVoicePermissionGate() {
   }, [shouldOpenSettingsOnModalConfirm]);
 
   /**
-   * Android에서 Google on-device recognition 서비스에
-   * 요청한 locale을 온디바이스 인식으로 사용할 수 있는지 확인한다.
+   * Android 온디바이스 음성 인식을 시작할 수 있는 조건을 확인한다.
    *
    * - iOS/기타 플랫폼은 현재 이 제약을 강제하지 않으므로 true
-   * - on-device recognition 자체를 지원하지 않으면 false
+   * - Android 13+에서만 온디바이스/continuous 인식 흐름을 허용한다.
+   * - Google on-device recognition 서비스가 ko-KR을 지원하는지 확인한다.
    * - 모델이 아직 설치되지 않았더라도 지원 locale이면 true로 보고,
    *   실제 다운로드 안내는 음성 인식 시작 후 라이브러리 오류 흐름에서 처리한다.
-   * - locale 목록 조회가 실패해도 "사용 불가"로 안전하게 처리하기 위해 false
    */
-  const checkOnDeviceKoLocaleSupport = useCallback(async (): Promise<boolean> => {
+  const checkOnDeviceSpeechPrerequisites = useCallback(async (): Promise<boolean> => {
     if (Platform.OS !== 'android') {
       return true;
+    }
+
+    if (getAndroidApiLevel() < MIN_ANDROID_ON_DEVICE_SPEECH_API_LEVEL) {
+      return false;
     }
 
     try {
@@ -169,17 +183,16 @@ export function useVoicePermissionGate() {
           androidRecognitionServicePackage: ANDROID_ON_DEVICE_SERVICE,
         });
 
-      const installedLocales = supportedLocales.installedLocales ?? [];
-      const matchedInstalledLocale = hasMatchingOnDeviceLocale(
-        installedLocales,
-        REQUIRED_ON_DEVICE_LOCALE
+      return (
+        hasMatchingOnDeviceLocale(
+          supportedLocales.installedLocales ?? [],
+          REQUIRED_ON_DEVICE_LOCALE
+        )
+        || hasMatchingOnDeviceLocale(
+          supportedLocales.locales ?? [],
+          REQUIRED_ON_DEVICE_LOCALE
+        )
       );
-      const matchedSupportedLocale = hasMatchingOnDeviceLocale(
-        supportedLocales.locales ?? [],
-        REQUIRED_ON_DEVICE_LOCALE
-      );
-
-      return matchedInstalledLocale || matchedSupportedLocale;
     } catch {
       return false;
     }
@@ -264,9 +277,9 @@ export function useVoicePermissionGate() {
       // 이미 허용된 경우: 저장소에 남아 있던 enabled 여부를 기준으로 복원한다.
       // 단, 최초 허용 직후처럼 저장 상태가 없으면 기본값을 true로 둔다.
       if (currentPermission.granted) {
-        const isLocaleSupported = await checkOnDeviceKoLocaleSupport();
+        const canStartOnDeviceSpeech = await checkOnDeviceSpeechPrerequisites();
 
-        if (!isLocaleSupported) {
+        if (!canStartOnDeviceSpeech) {
           applyUnavailableVoiceRecognition(getVoiceCommandsEnabledSetting());
           return;
         }
@@ -298,9 +311,9 @@ export function useVoicePermissionGate() {
             await ExpoSpeechRecognitionModule.requestPermissionsAsync();
 
           if (requestedPermission.granted) {
-            const isLocaleSupported = await checkOnDeviceKoLocaleSupport();
+            const canStartOnDeviceSpeech = await checkOnDeviceSpeechPrerequisites();
 
-            if (!isLocaleSupported) {
+            if (!canStartOnDeviceSpeech) {
               applyUnavailableVoiceRecognition(true);
               return;
             }
@@ -332,7 +345,7 @@ export function useVoicePermissionGate() {
     applyDeniedVoicePermission,
     applyGrantedVoicePermission,
     applyUnavailableVoiceRecognition,
-    checkOnDeviceKoLocaleSupport,
+    checkOnDeviceSpeechPrerequisites,
     showMicPrimerThen,
     showVoicePermissionSettingsModal,
   ]);
@@ -370,7 +383,7 @@ export function useVoicePermissionGate() {
    * 헤더의 음성 토글 버튼 처리.
    *
    * - 이미 켜져 있으면 즉시 OFF
-   * - 실제 OS 권한이 이미 있으면 곧바로 온디바이스 locale 지원 여부까지 확인
+   * - 실제 OS 권한이 이미 있으면 곧바로 온디바이스 음성 최소 OS 조건까지 확인
    * - OS 차원에서 더 이상 권한 요청이 불가능하면 설정 이동 모달 노출
    * - 그 외에는 시스템 권한을 요청하고 결과에 따라 granted/denied 적용
    */
@@ -387,9 +400,9 @@ export function useVoicePermissionGate() {
         await ExpoSpeechRecognitionModule.getPermissionsAsync();
 
       if (currentPermission.granted) {
-        const isLocaleSupported = await checkOnDeviceKoLocaleSupport();
+        const canStartOnDeviceSpeech = await checkOnDeviceSpeechPrerequisites();
 
-        if (!isLocaleSupported) {
+        if (!canStartOnDeviceSpeech) {
           applyUnavailableVoiceRecognition(true);
           return;
         }
@@ -408,9 +421,9 @@ export function useVoicePermissionGate() {
           const granted = await requestVoicePermission();
 
           if (granted) {
-            const isLocaleSupported = await checkOnDeviceKoLocaleSupport();
+            const canStartOnDeviceSpeech = await checkOnDeviceSpeechPrerequisites();
 
-            if (!isLocaleSupported) {
+            if (!canStartOnDeviceSpeech) {
               applyUnavailableVoiceRecognition(true);
               return;
             }
@@ -440,7 +453,7 @@ export function useVoicePermissionGate() {
     applyDeniedVoicePermission,
     applyGrantedVoicePermission,
     applyUnavailableVoiceRecognition,
-    checkOnDeviceKoLocaleSupport,
+    checkOnDeviceSpeechPrerequisites,
     requestVoicePermission,
     showMicPrimerThen,
     showVoicePermissionSettingsModal,
