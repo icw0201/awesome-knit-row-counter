@@ -365,11 +365,20 @@ const PremiumPurchase: React.FC = () => {
             </TouchableOpacity>
           </View>
 
+          <Text
+            className={clsx(
+              'mt-4 max-w-[320px] px-2 text-center text-sm',
+              appTheme.tw.text.darkgray
+            )}
+          >
+            본 상품은 디지털 콘텐츠의 특성상 구매 후 즉시 콘텐츠가 제공되어 청약철회가 제한됩니다.
+          </Text>
+
           {/* Billing 오류 시 스토어 문구를 한국어 안내로 치환해 표시 */}
           {lastError ? (
             <Text
               className={clsx(
-                'mt-4 max-w-[320px] px-2 text-center text-sm',
+                'mt-2 max-w-[320px] px-2 text-center text-sm',
                 appTheme.tw.text.emphasisRed
               )}
             >

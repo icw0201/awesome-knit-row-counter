@@ -7,7 +7,9 @@ import {
   SettingsBackup,
   SettingsCheckBoxes,
   SettingsDataManagement,
+  SettingsThemeSelector,
   SettingsVersion,
+  SettingsVoiceCommands,
 } from '@components/settings';
 import { useAppThemeSync } from '@hooks/useAppThemeSync';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
@@ -32,6 +34,8 @@ const Settings = () => {
           keyboardShouldPersistTaps="handled"
         >
           <SettingsCheckBoxes />
+          <SettingsThemeSelector />
+          <SettingsVoiceCommands />
 
           <SettingsBackup />
 
