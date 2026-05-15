@@ -6,8 +6,8 @@ import {
   SettingsAppInfo,
   SettingsBackup,
   SettingsCheckBoxes,
+  SettingsColorThemeSelector,
   SettingsDataManagement,
-  SettingsThemeSelector,
   SettingsVersion,
   SettingsVoiceCommands,
 } from '@components/settings';
@@ -34,7 +34,7 @@ const Settings = () => {
           keyboardShouldPersistTaps="handled"
         >
           <SettingsCheckBoxes />
-          <SettingsThemeSelector />
+          <SettingsColorThemeSelector />
           <SettingsVoiceCommands />
 
           <SettingsBackup />
