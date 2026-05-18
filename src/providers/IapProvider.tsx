@@ -136,6 +136,7 @@ function IapBillingConnection({
     },
     [setLastError]
   );
+  const [availablePurchasesLoaded, setAvailablePurchasesLoaded] = useState(false);
 
   const {
     connected,
@@ -172,27 +173,35 @@ function IapBillingConnection({
     if (!connected) {
       return;
     }
-    void fetchProducts({ skus: PREMIUM_SKUS, type: 'in-app' });
-  }, [connected, fetchProducts]);
+    fetchProducts({ skus: PREMIUM_SKUS, type: 'in-app' }).catch(onError);
+  }, [connected, fetchProducts, onError]);
 
   useEffect(() => {
     if (!connected) {
       return;
     }
-    void (async () => {
+    const loadAvailablePurchases = async () => {
       try {
-        await getAvailablePurchases();
+        const purchases = await getAvailablePurchases();
+        if (Array.isArray(purchases)) {
+          applyPremiumFromPurchases(purchases);
+        }
+        setAvailablePurchasesLoaded(true);
       } catch (e) {
         const detail = e instanceof Error ? e.message : String(e);
         console.error('[IAP] getAvailablePurchases at startup', e);
         setLastError(`시작 시 구매 내역을 불러오지 못했습니다: ${detail}`);
       }
-    })();
-  }, [connected, getAvailablePurchases, setLastError]);
+    };
+    loadAvailablePurchases();
+  }, [connected, getAvailablePurchases, applyPremiumFromPurchases, setLastError]);
 
   useEffect(() => {
+    if (!availablePurchasesLoaded) {
+      return;
+    }
     applyPremiumFromPurchases(availablePurchases);
-  }, [availablePurchases, applyPremiumFromPurchases]);
+  }, [availablePurchases, availablePurchasesLoaded, applyPremiumFromPurchases]);
 
   return null;
 }
@@ -214,13 +223,10 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
 
   const applyPremiumFromPurchases = useCallback((purchases: Purchase[]) => {
     const entitled = purchases.some((p) => isPremiumInAppProductId(p.productId));
-    if (!entitled) {
-      return;
+    if (getPremiumUnlocked() !== entitled) {
+      setPremiumUnlocked(entitled);
     }
-    if (!getPremiumUnlocked()) {
-      setPremiumUnlocked(true);
-    }
-    setPremiumUnlockedState(true);
+    setPremiumUnlockedState(entitled);
   }, []);
 
   useEffect(() => {
