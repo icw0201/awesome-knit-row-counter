@@ -123,7 +123,6 @@ const PremiumPurchase: React.FC = () => {
     restoreBusy,
     lastError,
     clearLastError,
-    resetLocalPremiumForTesting,
   } = useIapContext();
 
   // 테마 미리보기 가로 캐러셀(프레임 기반 자동 스크롤)
@@ -314,7 +313,7 @@ const PremiumPurchase: React.FC = () => {
             ))}
           </ScrollView>
 
-          {/* 결제·복원·개발용 로컬 초기화 */}
+          {/* 결제·복원 */}
           <View style={styles.ctaBlock} className="mb-4">
             <RoundedButton
               onPress={handlePurchase}
@@ -352,16 +351,6 @@ const PremiumPurchase: React.FC = () => {
                   구매 복원
                 </Text>
               )}
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={resetLocalPremiumForTesting}
-              activeOpacity={0.7}
-              className="mt-4 w-full items-center rounded-lg bg-lightgray py-2"
-              accessibilityLabel="기기 로컬에 저장된 프리미엄 해제 상태로 초기화"
-            >
-              <Text className="text-center text-sm text-mediumgray">
-                프리미엄 상태 초기화 (로컬)
-              </Text>
             </TouchableOpacity>
           </View>
 

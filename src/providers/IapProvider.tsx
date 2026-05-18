@@ -42,8 +42,6 @@ type IapContextValue = {
   restoreBusy: boolean;
   lastError: string | null;
   clearLastError: () => void;
-  /** 테스트용: MMKV 플래그만 해제 후 UI 동기화. 빌링/스토어 구매는 변경 없음 — 출시 전 제거 */
-  resetLocalPremiumForTesting: () => void;
 };
 
 const IapContext = createContext<IapContextValue | null>(null);
@@ -291,11 +289,6 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
     setLastError(null);
   }, []);
 
-  const resetLocalPremiumForTesting = useCallback(() => {
-    setPremiumUnlocked(false);
-    setPremiumUnlockedState(false);
-  }, []);
-
   const patch = billingRef.current;
   const value = useMemo<IapContextValue>(
     () => ({
@@ -308,7 +301,6 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
       restoreBusy,
       lastError,
       clearLastError,
-      resetLocalPremiumForTesting,
     }),
     [
       premiumUnlocked,
@@ -320,7 +312,6 @@ export function IapProvider({ children }: { children: React.ReactNode }) {
       restoreBusy,
       lastError,
       clearLastError,
-      resetLocalPremiumForTesting,
     ]
   );
 

@@ -1,10 +1,6 @@
 // src/components/settings/SettingsVersion.tsx
 import React from 'react';
-import { Pressable, Text } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-
-import type { RootStackParamList } from '@navigation/AppNavigator';
+import { Text, View } from 'react-native';
 
 interface SettingsVersionProps {
   version?: string;
@@ -16,16 +12,12 @@ interface SettingsVersionProps {
 const SettingsVersion: React.FC<SettingsVersionProps> = ({
   version,
 }) => {
-  const navigation =
-    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
-
   return (
-    <Pressable
+    <View
       className="items-center mt-4"
-      onPress={() => navigation.navigate('PremiumPurchase')}
     >
       <Text className="text-s text-darkgray">Ver {version}</Text>
-    </Pressable>
+    </View>
   );
 };
 
