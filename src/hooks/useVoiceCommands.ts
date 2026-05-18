@@ -121,11 +121,6 @@ function normalizeTranscriptWords(text: string): string[] {
     .filter(Boolean);
 }
 
-/** STT가 같은 토큰을 연속으로 넣을 때 1번만 남긴다(배너·newWords 처리용). */
-function collapseConsecutiveDuplicateWords(words: string[]): string[] {
-  return words.filter((w, i) => i === 0 || w !== words[i - 1]);
-}
-
 function getCommonPrefixLength(previousWords: string[], nextWords: string[]): number {
   const maxLength = Math.min(previousWords.length, nextWords.length);
   let index = 0;
@@ -301,8 +296,6 @@ export function useVoiceCommands(
         lastTranscriptWords = nextWords;
         return;
       }
-
-      newWords = collapseConsecutiveDuplicateWords(newWords);
 
       lastTranscriptWords = nextWords;
       newWords.forEach((word) => {
@@ -608,9 +601,7 @@ export function useVoiceCommands(
         if (transcript) {
           touchActivity(event.isFinal ? 'result-final' : 'result-partial');
           onErrorRef.current?.('');
-          const forDisplay = collapseConsecutiveDuplicateWords(
-            normalizeTranscriptWords(transcript)
-          ).join(' ');
+          const forDisplay = normalizeTranscriptWords(transcript).join(' ');
           onRecognizedRef.current?.(forDisplay);
           runActionsFromTranscript(transcript);
         }
