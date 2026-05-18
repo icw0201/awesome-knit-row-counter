@@ -90,13 +90,9 @@ const ProjectCreateModal: React.FC<ProjectCreateModalProps> = ({
         {/* 생성 버튼 - 입력값이 있을 때만 활성화 */}
         <RoundedButton
           title="생성"
-          onPress={() => {
-            if (textValue?.trim()) {
-              handleConfirm();
-            }
-          }}
-          colorStyle={textValue?.trim() ? 'vivid' : undefined}
-          containerClassName={!textValue?.trim() ? 'bg-lightgray' : undefined}
+          onPress={handleConfirm}
+          colorStyle="vivid"
+          disabled={!textValue?.trim()}
         />
       </View>
     </BaseModal>

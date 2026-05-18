@@ -1,9 +1,10 @@
 // src/components/settings/SettingsAppInfo.tsx
 import React from 'react';
-import { View, Text, Linking } from 'react-native';
+import { View, Linking } from 'react-native';
 import InAppReview from 'react-native-in-app-review';
 import { PLAY_STORE_URL, RELEASE_NOTES_URL } from '@constants/storeUrls';
 import IconBox from './IconBox';
+import SettingsSectionHeader from './SettingsSectionHeader';
 
 interface SettingsAppInfoProps {}
 
@@ -62,9 +63,7 @@ const SettingsAppInfo: React.FC<SettingsAppInfoProps> = () => {
 
   return (
     <View className="mb-8">
-      <Text className="mb-3 px-1 text-sm font-semibold text-darkgray">
-        앱 정보
-      </Text>
+      <SettingsSectionHeader title="앱 정보" />
       <IconBox
         title="별점 남기기"
         iconName="star"

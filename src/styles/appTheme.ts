@@ -5,12 +5,14 @@ import {
   HONEY_BANANA_PALETTE,
   LAVENDER_PALETTE,
   OLIVE_PALETTE,
+  PREMIUM_GOLD,
   RED_ORANGE_PALETTE,
 } from '@constants/colors';
 import {
   getSelectedColorThemeSetting,
   type ColorThemeSetting,
 } from '@storage/settings';
+import { hexToRgba } from '@utils/colorUtils';
 
 type ThemePaletteShade =
   | '50'
@@ -65,6 +67,7 @@ export interface AppTheme {
     darkgray: string;
     mediumgray: string;
     emphasisRed: string;
+    premiumGold: string;
     lightgray: string;
     transparent: string;
     shadow: string;
@@ -72,6 +75,8 @@ export interface AppTheme {
     neutral: {
       '100': string;
     };
+    /** 프리미엄 구매 화면 SafeArea — primary 200 @ 0.3 알파(rgba 문자열) */
+    premiumPurchaseScreenBackground: string;
   };
 }
 
@@ -125,6 +130,7 @@ const createTheme = (
     darkgray: '#767676',
     mediumgray: '#B8B8B8',
     emphasisRed: EMPHASIS_RED,
+    premiumGold: PREMIUM_GOLD,
     lightgray: '#DBDBDB',
     transparent: 'transparent',
     shadow: '#000000',
@@ -132,6 +138,7 @@ const createTheme = (
     neutral: {
       '100': '#F3F4F6',
     },
+    premiumPurchaseScreenBackground: hexToRgba(primaryPalette['200'], 0.3),
   },
 });
 

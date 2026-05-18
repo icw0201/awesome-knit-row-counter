@@ -1,5 +1,4 @@
-// src/screens/Settings.tsx
-import React from 'react';
+// src/screens/Setting.tsx
 import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -7,8 +6,10 @@ import {
   SettingsAppInfo,
   SettingsBackup,
   SettingsCheckBoxes,
+  SettingsColorThemeSelector,
   SettingsDataManagement,
   SettingsVersion,
+  SettingsVoiceCommands,
 } from '@components/settings';
 import { useAppThemeSync } from '@hooks/useAppThemeSync';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
@@ -33,6 +34,8 @@ const Settings = () => {
           keyboardShouldPersistTaps="handled"
         >
           <SettingsCheckBoxes />
+          <SettingsColorThemeSelector />
+          <SettingsVoiceCommands />
 
           <SettingsBackup />
 
@@ -40,7 +43,7 @@ const Settings = () => {
 
           <SettingsAppInfo />
 
-          <SettingsVersion version="1.5.0-internal.3" />
+          <SettingsVersion version="1.5.0-internal.16" />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

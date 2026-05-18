@@ -1,9 +1,10 @@
 import React, { useCallback, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import { ConfirmModal } from '@components/common/modals';
 import { clearAllProjectData } from '@storage/storage';
 import IconBox from './IconBox';
+import SettingsSectionHeader from './SettingsSectionHeader';
 import { appTheme } from '@styles/appTheme';
 
 interface SettingsDataManagementProps {}
@@ -59,9 +60,10 @@ const SettingsDataManagement: React.FC<SettingsDataManagementProps> = () => {
   return (
     <>
       <View className="mb-8">
-        <Text className={`mb-3 px-1 text-sm font-semibold ${appTheme.tw.text.emphasisRed}`}>
-          데이터 관리
-        </Text>
+        <SettingsSectionHeader
+          title="데이터 관리"
+          titleClassName={appTheme.tw.text.emphasisRed}
+        />
         <IconBox
           title="초기화하기"
           iconName="trash-2"

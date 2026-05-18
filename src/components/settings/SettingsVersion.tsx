@@ -1,6 +1,6 @@
 // src/components/settings/SettingsVersion.tsx
 import React from 'react';
-import { View, Text } from 'react-native';
+import { Text, View } from 'react-native';
 
 interface SettingsVersionProps {
   version?: string;
@@ -13,7 +13,9 @@ const SettingsVersion: React.FC<SettingsVersionProps> = ({
   version,
 }) => {
   return (
-    <View className="items-center mt-4">
+    <View
+      className="items-center mt-4"
+    >
       <Text className="text-s text-darkgray">Ver {version}</Text>
     </View>
   );

@@ -13,6 +13,7 @@ import ProjectDetail from '@screens/ProjectDetail';
 import Setting from '@screens/Setting';
 import InfoScreen from '@screens/InfoScreen';
 import WaySetting from '@screens/WaySetting';
+import PremiumPurchase from '@screens/PremiumPurchase';
 
 // 네비게이션 파라미터 타입 정의
 export type RootStackParamList = {
@@ -20,6 +21,7 @@ export type RootStackParamList = {
   Home: undefined;
   Main: undefined;
   Setting: undefined;
+  PremiumPurchase: undefined;
   ProjectDetail: { projectId: string };
   CounterDetail: { counterId: string };
   InfoScreen: { itemId: string };
@@ -81,6 +83,18 @@ const AppNavigator = () => (
         options={({ navigation, route: _route }) => ({
           ...getDefaultHeaderLeft(navigation),
           ...getDefaultTitle('설정'),
+        })}
+      />
+
+      {/* 프리미엄 구매 */}
+      <Stack.Screen
+        name="PremiumPurchase"
+        component={PremiumPurchase}
+        options={({ navigation, route: _route }) => ({
+          ...getDefaultHeaderLeft(navigation),
+          ...getDefaultTitle('프리미엄 버전'),
+          headerStyle: { backgroundColor: appTheme.colors.white },
+          headerShadowVisible: true,
         })}
       />
 

@@ -1,7 +1,12 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Star } from 'lucide-react-native';
+
 import { ConfirmModal } from '@components/common/modals';
+import type { RootStackParamList } from '@navigation/AppNavigator';
+import { appTheme } from '@styles/appTheme';
 import {
   exportBackupToTemporaryFile,
   getBackupSummary,
@@ -10,12 +15,21 @@ import {
   shareBackupFile,
   type BackupDocument,
 } from '@storage/backup';
+import { useIapContext } from '@provider/IapProvider';
 import IconBox from './IconBox';
+import SettingsSectionHeader from './SettingsSectionHeader';
+
+// 설정: 백업 파일 내보내기·불러오기, 프리미엄 잠금 및 복원 후 안내 모달.
+
+// 설정 백업 블록용 프롭(필요 시 확장).
 
 interface SettingsBackupProps {}
 
 const SettingsBackup: React.FC<SettingsBackupProps> = () => {
-  const navigation = useNavigation();
+  // 네비게이션, 프리미엄 여부, 공지 확인 콜백 ref, 불러오기·모달·처리 중 상태.
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
+  const { premiumUnlocked } = useIapContext();
   const onNoticeConfirmRef = useRef<(() => void) | null>(null);
 
   const [pendingImportDocument, setPendingImportDocument] = useState<BackupDocument | null>(
@@ -29,6 +43,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
   const [noticeMessage, setNoticeMessage] = useState('');
   const [isBusy, setIsBusy] = useState(false);
 
+  // 복원 완료 등 이후 메인 화면으로 스택을 초기화.
   const resetToMain = useCallback(() => {
     navigation.dispatch(
       CommonActions.reset({
@@ -38,6 +53,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     );
   }, [navigation]);
 
+  // 오류·안내 모달 표시와 사용자에게 보여줄 에러 문구 정리.
   const showErrorModal = useCallback((message: string) => {
     setErrorMessage(message);
     setErrorModalVisible(true);
@@ -62,6 +78,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     return '처리 중 오류가 발생했습니다.';
   }, []);
 
+  // 임시 백업 파일 생성 후 OS 공유 시트로 내보내기.
   const handleExportPress = useCallback(async () => {
     if (isBusy) {
       return;
@@ -79,6 +96,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     }
   }, [getReadableErrorMessage, isBusy, showErrorModal]);
 
+  // 백업 파일 선택 후 덮어쓰기 확인 모달을 띄울 데이터만 준비.
   const handleImportPress = useCallback(async () => {
     if (isBusy) {
       return;
@@ -102,6 +120,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     }
   }, [getReadableErrorMessage, isBusy, showErrorModal]);
 
+  // 확인 시 스토리지 복원 → 완료 공지(확인 시 메인으로 이동).
   const handleImportConfirm = useCallback(async () => {
     if (!pendingImportDocument) {
       return;
@@ -110,7 +129,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     setIsBusy(true);
 
     try {
-      restoreBackupDocument(pendingImportDocument);
+      await restoreBackupDocument(pendingImportDocument);
       setPendingImportDocument(null);
       showNoticeModal(
         '불러오기 완료',
@@ -118,6 +137,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
         resetToMain
       );
     } catch (error) {
+      console.error('SettingsBackup: restore backup failed', error);
       showErrorModal(getReadableErrorMessage(error));
     } finally {
       setIsBusy(false);
@@ -130,12 +150,14 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     showNoticeModal,
   ]);
 
+  // 안내 모달에서 확인을 누르면 ref에 넣어 둔 후속 동작(예: resetToMain) 실행.
   const handleNoticeConfirm = useCallback(() => {
     const callback = onNoticeConfirmRef.current;
     onNoticeConfirmRef.current = null;
     callback?.();
   }, []);
 
+  // 불러오기 확인 모달 본문: 경고 문구 + 선택한 백업의 요약(시각·개수 등).
   const importDescription = pendingImportDocument
     ? (() => {
       const summary = getBackupSummary(pendingImportDocument);
@@ -153,26 +175,71 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
 
   return (
     <>
+      {/* 백업 섹션: 제목·안내 문구·내보내기/불러오기(및 미구독 시 잠금 UI). */}
       <View className="mb-8">
-        <Text className="mb-3 px-1 text-sm font-semibold text-darkgray">
-          백업 및 복원
+        <SettingsSectionHeader title="백업 및 복원" />
+        <Text className="mb-4 pl-6 pr-1 text-xs font-normal leading-5 text-darkgray">
+          앱 데이터는 이 기기에만 저장됩니다. 앱을 삭제하거나 기기를 바꾸면 데이터가
+          사라질 수 있으니, 파일로 내보내 두었다가 필요할 때 불러와 복구할 수 있습니다.
         </Text>
-        <IconBox
-          title={isBusy ? '처리 중...' : '데이터 내보내기'}
-          iconName="download"
-          onPress={async () => {
-            await handleExportPress();
-          }}
-        />
-        <IconBox
-          title={isBusy ? '처리 중...' : '데이터 불러오기'}
-          iconName="upload"
-          onPress={async () => {
-            await handleImportPress();
-          }}
-        />
+        {/* IconBox 두 줄과, 미구독일 때만 씌우는 multiply·구매 진입·별 표시. */}
+        <View className="relative">
+          <IconBox
+            title={isBusy ? '처리 중...' : '데이터 내보내기'}
+            iconName="download"
+            disabled={!premiumUnlocked}
+            onPress={async () => {
+              await handleExportPress();
+            }}
+          />
+          <IconBox
+            title={isBusy ? '처리 중...' : '데이터 불러오기'}
+            iconName="upload"
+            disabled={!premiumUnlocked}
+            onPress={async () => {
+              await handleImportPress();
+            }}
+          />
+          {!premiumUnlocked ? (
+            <>
+              <View
+                className="pointer-events-none absolute -inset-2 z-[5] rounded-2xl bg-mediumgray overflow-hidden"
+                style={{ mixBlendMode: 'multiply' }}
+              />
+              <TouchableOpacity
+                activeOpacity={1}
+                className="absolute -inset-2 z-[10] rounded-2xl"
+                onPress={() => navigation.navigate('PremiumPurchase')}
+                accessibilityRole="button"
+                accessibilityLabel="백업 및 복원, 프리미엄 전용"
+                accessibilityHint="탭하면 프리미엄 구매 화면으로 이동합니다."
+              />
+              <View
+                className="pointer-events-none absolute right-4 top-0 z-[20] w-6 items-center justify-center"
+                style={{ height: '50%' }}
+              >
+                <Star
+                  size={22}
+                  color={appTheme.colors.premiumGold}
+                  fill={appTheme.colors.premiumGold}
+                />
+              </View>
+              <View
+                className="pointer-events-none absolute bottom-0 right-4 z-[20] w-6 items-center justify-center"
+                style={{ height: '50%' }}
+              >
+                <Star
+                  size={22}
+                  color={appTheme.colors.premiumGold}
+                  fill={appTheme.colors.premiumGold}
+                />
+              </View>
+            </>
+          ) : null}
+        </View>
       </View>
 
+      {/* 불러오기 확인, 완료 안내, 오류 각각 전용 ConfirmModal. */}
       <ConfirmModal
         visible={importConfirmVisible}
         onClose={() => {

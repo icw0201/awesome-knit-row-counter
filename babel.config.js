@@ -11,6 +11,7 @@ module.exports = {
         root: ['./'],
         extensions: ['.ts', '.tsx', '.js', '.jsx', '.json'],
         alias: {
+          '@': './src',
           '@screens': './src/screens',
           '@assets': './src/assets',
           '@components': './src/components',
@@ -19,6 +20,7 @@ module.exports = {
           '@hooks': './src/hooks',
           '@storage': './src/storage',
           '@navigation': './src/navigation',
+          '@provider': './src/providers',
           '@styles': './src/styles',
           '@utils': './src/utils',
         },

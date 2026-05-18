@@ -1,8 +1,8 @@
 // Android 전체 서브프로젝트가 공통으로 쓰는 최상위 Gradle 설정 파일입니다.
 // 이 브랜치에서는 Expo 기반 React Native 구성을 쓰도록 저장소/플러그인 해석 방식을 바꿔
 // node_modules 안의 React Native/Expo Gradle 플러그인을 안정적으로 찾게 했습니다.
-// develop에 있던 ext 버전 상수 블록은 Expo 루트 플러그인이 같은 값을 제공하게 되면서
-// 중복 관리 지점이 되었고, 그대로 두면 Expo가 맞춰 주는 버전과 어긋날 수 있어 삭제
+// OpenIAP(react-native-iap)는 Kotlin 2.2.x가 필요합니다. ExpoRootProject의 KSPLookup에는 2.2가 없어
+// 아래 ext에 kotlinVersion·kspVersion을 함께 두고, buildscript의 kotlin-gradle-plugin 버전과 맞춥니다.
 
 buildscript {
   repositories {
@@ -12,8 +12,15 @@ buildscript {
   dependencies {
     classpath('com.android.tools.build:gradle')
     classpath('com.facebook.react:react-native-gradle-plugin')
-    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin')
+    // Kotlin 플러그인 버전은 아래 ext.kotlinVersion과 동일하게 유지 (OpenIAP / billing-ktx 2.2 메타데이터 대응)
+    classpath('org.jetbrains.kotlin:kotlin-gradle-plugin:2.2.10')
   }
+}
+
+// ExpoRootProjectPlugin은 kspVersion을 KSPLookup으로만 맞추는데, 맵에 2.2.x가 없어 둘 다 명시해야 합니다.
+ext {
+  kotlinVersion = "2.2.10"
+  kspVersion = "2.2.10-2.0.2"
 }
 
 def reactNativeAndroidDir = new File(

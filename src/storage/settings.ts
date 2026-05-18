@@ -23,6 +23,7 @@ const KEY_CUSTOM_VOICE_COMMAND_INPUTS = 'settings.customVoiceCommandInputs';
 const KEY_SUB_SLIDE_MODALS_ENABLED = 'settings.subSlideModalsEnabled';
 const KEY_VOICE_RECOGNITION_PERMISSION_STATUS =
   'settings.voiceRecognitionPermissionStatus';
+const KEY_PREMIUM_UNLOCKED = 'settings.premiumUnlocked';
 
 // 기본값 상수 정의
 const DEFAULT_SOUND = true;
@@ -38,6 +39,7 @@ const DEFAULT_VOICE_COMMANDS_ENABLED = false;
 const DEFAULT_SELECTED_VOICE_COMMAND_MODE: VoiceCommandSettingMode = 'default';
 const DEFAULT_SELECTED_COLOR_THEME: ColorThemeSetting = 'awesomeRed';
 const DEFAULT_SUB_SLIDE_MODALS_ENABLED = true;
+const DEFAULT_PREMIUM_UNLOCKED = false;
 
 export type VoiceCommandSettingMode = 'default' | 'custom';
 export type ColorThemeSetting =
@@ -545,4 +547,35 @@ export const getVoiceRecognitionPermissionStatusSetting =
 
     return 'undetermined';
   };
+
+/**
+ * 프리미엄(일회성 구매) 잠금 해제 여부를 저장합니다.
+ */
+export const setPremiumUnlocked = (value: boolean) => {
+  storage.set(KEY_PREMIUM_UNLOCKED, JSON.stringify(value));
+};
+
+/**
+ * 프리미엄 잠금 해제 여부를 가져옵니다.
+ */
+export const getPremiumUnlocked = (): boolean => {
+  const value = storage.getString(KEY_PREMIUM_UNLOCKED);
+  return value ? JSON.parse(value) : DEFAULT_PREMIUM_UNLOCKED;
+};
+
+/**
+ * 프리미엄 잠금 해제 플래그 변경을 구독합니다.
+ * @returns unsubscribe 함수
+ */
+export const subscribePremiumUnlockedChange = (callback: () => void) => {
+  const listener = storage.addOnValueChangedListener((changedKey) => {
+    if (changedKey === KEY_PREMIUM_UNLOCKED) {
+      callback();
+    }
+  });
+
+  return () => {
+    listener.remove();
+  };
+};
 
