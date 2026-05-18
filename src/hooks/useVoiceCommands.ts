@@ -608,9 +608,7 @@ export function useVoiceCommands(
         if (transcript) {
           touchActivity(event.isFinal ? 'result-final' : 'result-partial');
           onErrorRef.current?.('');
-          const forDisplay = collapseConsecutiveDuplicateWords(
-            normalizeTranscriptWords(transcript)
-          ).join(' ');
+          const forDisplay = normalizeTranscriptWords(transcript).join(' ');
           onRecognizedRef.current?.(forDisplay);
           runActionsFromTranscript(transcript);
         }

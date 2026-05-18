@@ -51,7 +51,7 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
   return (
     // 부모가 준 voice banner 영역 전체 안에서 세로/가로 중앙 정렬한다.
     <View className="w-full flex-1 items-center justify-center" pointerEvents="none">
-      {/* 실제 배너 박스: 에러는 폭 제한 없이, 일반 인식 텍스트만 전달받은 maxWidth를 적용한다. */}
+        {/* 실제 배너 박스: 에러는 폭 제한 없이, 일반 인식 텍스트만 전달받은 maxWidth를 적용한다. */}
       <View className="rounded bg-lightgray px-2 py-1.5">
         {/* 아이콘 + 텍스트를 한 줄로 배치한다. */}
         <View className="flex-row items-center gap-1.5">
@@ -73,15 +73,16 @@ const VoiceRecognitionBanner: React.FC<VoiceRecognitionBannerProps> = ({
               </Text>
             </View>
           ) : (
-            // 일반 인식 텍스트는 maxWidth 안에서 줄바꿈되면 부모가 감지해 다음 내용부터 다시 보여준다.
-            <View style={{ maxHeight: oneLineHeight, overflow: 'hidden' }}>
+            // 일반 인식 텍스트는 최신 뒷부분이 보이도록 한 줄 말줄임으로 처리한다.
+            <View style={{ maxWidth }}>
               <Text
                 allowFontScaling={false}
                 className="text-black"
+                numberOfLines={1}
+                ellipsizeMode="head"
                 style={{
                   fontSize: recognizedTextFontSize,
                   lineHeight: oneLineHeight,
-                  maxWidth,
                 }}
                 onTextLayout={onRecognizedTextLayout}
               >
