@@ -113,6 +113,7 @@ const CounterDetail = () => {
     handleEditOpen,
     handleEditConfirm,
     handleResetConfirm,
+    handleVoiceMainReset,
     handleClose,
     handleTargetCountOpen,
     handleTargetCountConfirm,
@@ -133,6 +134,7 @@ const CounterDetail = () => {
     handleSubEdit,
     handleSubRule,
     handleSubResetConfirm,
+    handleVoiceSubReset,
     handleSubEditConfirm,
     handleSubRuleConfirm,
     handleSubModalToggle,
@@ -257,6 +259,13 @@ const CounterDetail = () => {
     handleSubtract(commandWord);
   }, [flashTouchAreaHighlight, handleSubtract, isInputBlocked]);
 
+  const runVoiceMainReset = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
+    handleVoiceMainReset(commandWord);
+  }, [handleVoiceMainReset, isInputBlocked]);
+
   /**
    * 보조 카운터 공통 진입점.
    * 터치/보이스 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
@@ -284,6 +293,16 @@ const CounterDetail = () => {
     handleSubSubtract(commandWord);
   }, [flashSubTouchAreaHighlight, handleSubSubtract, isInputBlocked, subModalIsOpen, subSlideModalsEnabled]);
 
+  const runVoiceSubReset = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
+    if (!subSlideModalsEnabled || !subModalIsOpen) {
+      return;
+    }
+    handleVoiceSubReset(commandWord);
+  }, [handleVoiceSubReset, isInputBlocked, subModalIsOpen, subSlideModalsEnabled]);
+
   /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
   useVoiceCommands(
     !!counter && effectiveVoiceCommandsActive,
@@ -292,6 +311,8 @@ const CounterDetail = () => {
     runHighlightedSubtract,
     runHighlightedSubAdd,
     runHighlightedSubSubtract,
+    runVoiceMainReset,
+    runVoiceSubReset,
     handleVoiceRecognizedTextChange,
     setVoiceRecognitionError
   );
