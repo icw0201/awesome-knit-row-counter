@@ -7,7 +7,6 @@ import { appTheme } from '@styles/appTheme';
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 const DIGIT_WIDTH_RATIO = 0.6;
 const DIGIT_HORIZONTAL_PADDING_RATIO = 0.04;
-const DIGIT_COLUMN_DEBUG_BACKGROUND = appTheme.tw.bg.primary['100'];
 
 const springConfig = {
   damping: 18,
@@ -74,7 +73,6 @@ function DigitColumn({ digit, fontSize, lineHeight, textClass }: DigitColumnProp
 
   return (
     <View
-      className={DIGIT_COLUMN_DEBUG_BACKGROUND}
       style={{
         height: lineHeight,
         width: columnWidth,
