@@ -68,14 +68,15 @@ function DigitColumn({ digit, fontSize, lineHeight, textClass }: DigitColumnProp
   }));
 
   const digitWidth = fontSize * DIGIT_WIDTH_RATIO;
-  const horizontalPadding = fontSize * DIGIT_HORIZONTAL_PADDING_RATIO;
-  const columnWidth = digitWidth + horizontalPadding * 2;
+  const sideBearingPadding = fontSize * DIGIT_HORIZONTAL_PADDING_RATIO;
+  const columnWidth = digitWidth + sideBearingPadding * 2;
 
   return (
     <View
       style={{
         height: lineHeight,
         width: columnWidth,
+        marginHorizontal: -sideBearingPadding,
         overflow: 'hidden',
       }}
     >
@@ -115,10 +116,12 @@ function AnimatedCounterDigits({ value, fontSize, lineHeight, textClass }: Anima
   const absTrunc = Math.abs(Math.trunc(value));
   const digitChars =
     absTrunc === 0 ? [0] : String(absTrunc).split('').map((c) => Number.parseInt(c, 10));
+  const textAreaHorizontalPadding = fontSize * DIGIT_HORIZONTAL_PADDING_RATIO;
 
   return (
     <View
-      className="flex-row items-center justify-center"
+      className={`flex-row items-center justify-center`}
+      style={{ paddingHorizontal: textAreaHorizontalPadding }}
       accessibilityRole="text"
       accessibilityLabel={String(value)}
       accessibilityLiveRegion="polite"
