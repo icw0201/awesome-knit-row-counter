@@ -120,7 +120,7 @@ function AnimatedCounterDigits({ value, fontSize, lineHeight, textClass }: Anima
 
   return (
     <View
-      className={`flex-row items-center justify-center`}
+      className="flex-row items-center justify-center"
       style={{ paddingHorizontal: textAreaHorizontalPadding }}
       accessibilityRole="text"
       accessibilityLabel={String(value)}
