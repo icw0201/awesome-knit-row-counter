@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useFocusEffect, useIsFocused } from '@react-navigation/native';
-import { Image, Platform, Vibration, AppState } from 'react-native';
+import { Platform, Vibration, AppState } from 'react-native';
 import HapticFeedback from 'react-native-haptic-feedback';
 import Sound from 'react-native-sound';
 
@@ -12,7 +12,6 @@ import { getSoundSetting, getVibrationSetting, getAutoPlayElapsedTimeSetting } f
 import { getCurrentDate, getCurrentTime } from '@utils/timeUtils';
 
 const MAX_SECTION_RECORDS = 30;
-const RESET_SOUND_ASSET = require('../assets/sounds/mixkit-bell-notification-933.wav');
 
 interface UseCounterProps {
   counterId: string;
@@ -291,21 +290,15 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
       clickSoundRef.current = sound;
     });
 
-    const resetSoundUri = Image.resolveAssetSource(RESET_SOUND_ASSET)?.uri;
-    if (!resetSoundUri) {
-      setErrorMessage('초기화 사운드 로드 실패:\n사운드 파일 경로를 찾을 수 없습니다.');
-      setErrorModalVisible(true);
-    } else {
-      const resetSound = new Sound(resetSoundUri, (error) => {
-        if (error) {
-          setErrorMessage('초기화 사운드 로드 실패:\n' + error.message);
-          setErrorModalVisible(true);
-          return;
-        }
-        resetSound.setVolume(1.0);
-        resetSoundRef.current = resetSound;
-      });
-    }
+    const resetSound = new Sound('src_assets_sounds_mixkit_bell_notification_933.wav', Sound.MAIN_BUNDLE, (error) => {
+      if (error) {
+        setErrorMessage('초기화 사운드 로드 실패:\n' + error.message);
+        setErrorModalVisible(true);
+        return;
+      }
+      resetSound.setVolume(1.0);
+      resetSoundRef.current = resetSound;
+    });
 
     return () => {
       clickSoundRef.current?.release();
