@@ -295,18 +295,17 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     if (!resetSoundUri) {
       setErrorMessage('초기화 사운드 로드 실패:\n사운드 파일 경로를 찾을 수 없습니다.');
       setErrorModalVisible(true);
-      return;
+    } else {
+      const resetSound = new Sound(resetSoundUri, (error) => {
+        if (error) {
+          setErrorMessage('초기화 사운드 로드 실패:\n' + error.message);
+          setErrorModalVisible(true);
+          return;
+        }
+        resetSound.setVolume(1.0);
+        resetSoundRef.current = resetSound;
+      });
     }
-
-    const resetSound = new Sound(resetSoundUri, (error) => {
-      if (error) {
-        setErrorMessage('초기화 사운드 로드 실패:\n' + error.message);
-        setErrorModalVisible(true);
-        return;
-      }
-      resetSound.setVolume(1.0);
-      resetSoundRef.current = resetSound;
-    });
 
     return () => {
       clickSoundRef.current?.release();
