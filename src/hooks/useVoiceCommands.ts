@@ -20,6 +20,18 @@ const IDLE_RESTART_DELAY_MS = 1500;
 const START_WATCHDOG_MS = 5000;
 // 세션 경계·지연 final 등으로 같은 키워드가 짧은 간격에 두 번 오는 경우 1회만 실행한다.
 const KEYWORD_ACTION_DEDUP_MS = 400;
+const KOREAN_NUMBER_COMMAND_WORDS = new Set([
+  '하나',
+  '둘',
+  '셋',
+  '넷',
+  '다섯',
+  '여섯',
+  '일곱',
+  '여덟',
+  '아홉',
+  '열',
+]);
 export const VOICE_LISTENING_TEXT = '듣는 중...';
 const MODEL_NOT_DOWNLOADED_MESSAGE_FRAGMENT =
   'requested language is supported, but not yet downloaded';
@@ -306,8 +318,9 @@ export function useVoiceCommands(
     // 같은 슬롯에서 "군지" → "건지"처럼 유사어 교정만 일어난 경우는
     // 동작이 같은 키워드면 접두어 길이에 포함해 한 번만 실행되게 한다.
     const runActionsFromTranscript = (text: string) => {
+      const previousWords = lastTranscriptWords;
       const nextWords = normalizeTranscriptWords(text);
-      const prevCanonical = lastTranscriptWords.map((word) =>
+      const prevCanonical = previousWords.map((word) =>
         canonicalizeKeywordForTranscriptDiff(word, keywordSets)
       );
       const nextCanonical = nextWords.map((word) =>
@@ -316,11 +329,19 @@ export function useVoiceCommands(
       const commonPrefixLength = getCommonPrefixLength(prevCanonical, nextCanonical);
       let newWords = nextWords.slice(commonPrefixLength);
 
-      const prevTail = lastTranscriptWords[lastTranscriptWords.length - 1];
-      if (
+      const prevTail = previousWords[previousWords.length - 1];
+      const shouldSkipRepeatedTail =
         prevTail !== undefined &&
         newWords.length > 0 &&
-        newWords.every((w) => w === prevTail)
+        newWords.every((w) => w === prevTail);
+      const isRepeatedKoreanNumberCommand =
+        prevTail !== undefined &&
+        KOREAN_NUMBER_COMMAND_WORDS.has(prevTail) &&
+        getWordAction(prevTail, keywordSets) !== null;
+
+      if (
+        shouldSkipRepeatedTail &&
+        !isRepeatedKoreanNumberCommand
       ) {
         lastTranscriptWords = nextWords;
         return;
@@ -330,42 +351,48 @@ export function useVoiceCommands(
       newWords.forEach((word) => {
         const action = getWordAction(word, keywordSets);
         if (action === 'add') {
-          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
             onAddRef.current(word);
           }
           return;
         }
 
         if (action === 'subtract') {
-          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
             onSubtractRef.current(word);
           }
           return;
         }
 
         if (action === 'subAdd') {
-          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
             onSubAddRef.current?.(word);
           }
           return;
         }
 
         if (action === 'subSubtract') {
-          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
             onSubSubtractRef.current?.(word);
           }
           return;
         }
 
         if (action === 'mainReset') {
-          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
             onMainResetRef.current?.(word);
           }
           return;
         }
 
         if (action === 'subReset') {
-          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
             onSubResetRef.current?.(word);
           }
         }
