@@ -2,7 +2,11 @@ import { useEffect, useRef } from 'react';
 import { View, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
+import { appTheme } from '@styles/appTheme';
+
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
+const DIGIT_WIDTH_RATIO = 0.6;
+const DIGIT_HORIZONTAL_PADDING_RATIO = 0.04;
 
 const springConfig = {
   damping: 18,
@@ -63,22 +67,26 @@ function DigitColumn({ digit, fontSize, lineHeight, textClass }: DigitColumnProp
     transform: [{ translateY: translateY.value }],
   }));
 
-  const columnWidth = fontSize * 0.6;
+  const digitWidth = fontSize * DIGIT_WIDTH_RATIO;
+  const sideBearingPadding = fontSize * DIGIT_HORIZONTAL_PADDING_RATIO;
+  const columnWidth = digitWidth + sideBearingPadding * 2;
 
   return (
     <View
       style={{
         height: lineHeight,
         width: columnWidth,
+        marginHorizontal: -sideBearingPadding,
         overflow: 'hidden',
       }}
     >
-      <Animated.View style={animatedStyle}>
+      <Animated.View style={[animatedStyle, { width: columnWidth }]}>
         {DIGITS.map((d) => (
           <Text
             key={d}
             className={`${textClass} font-bold text-black`}
             style={{
+              width: columnWidth,
               fontSize,
               lineHeight,
               height: lineHeight,
@@ -108,10 +116,12 @@ function AnimatedCounterDigits({ value, fontSize, lineHeight, textClass }: Anima
   const absTrunc = Math.abs(Math.trunc(value));
   const digitChars =
     absTrunc === 0 ? [0] : String(absTrunc).split('').map((c) => Number.parseInt(c, 10));
+  const textAreaHorizontalPadding = fontSize * DIGIT_HORIZONTAL_PADDING_RATIO;
 
   return (
     <View
       className="flex-row items-center justify-center"
+      style={{ paddingHorizontal: textAreaHorizontalPadding }}
       accessibilityRole="text"
       accessibilityLabel={String(value)}
       accessibilityLiveRegion="polite"
