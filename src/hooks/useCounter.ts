@@ -41,6 +41,7 @@ interface UseCounterReturn {
   handleEditOpen: () => void;
   handleEditConfirm: (value: string) => void;
   handleResetConfirm: () => void;
+  handleVoiceMainReset: (voiceCommand?: string) => void;
   handleClose: () => void;
   handleTargetCountOpen: () => void;
   handleTargetCountConfirm: (value: string) => void;
@@ -60,6 +61,7 @@ interface UseCounterReturn {
   handleSubEdit: () => void;
   handleSubRule: () => void;
   handleSubResetConfirm: () => void;
+  handleVoiceSubReset: (voiceCommand?: string) => void;
   handleSubEditConfirm: (value: string) => void;
   handleSubRuleConfirm: (rule: number, isRuleActive: boolean) => void;
   handleSubModalToggle: () => void;
@@ -98,6 +100,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
 
   // 사운드 관련
   const clickSoundRef = useRef<Sound | null>(null);
+  const resetSoundRef = useRef<Sound | null>(null);
 
   // 설정 상태
   const [soundSetting, setSoundSettingState] = useState(true);
@@ -287,8 +290,19 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
       clickSoundRef.current = sound;
     });
 
+    const resetSound = new Sound('src_assets_sounds_mixkit_bell_notification_933.wav', Sound.MAIN_BUNDLE, (error) => {
+      if (error) {
+        setErrorMessage('초기화 사운드 로드 실패:\n' + error.message);
+        setErrorModalVisible(true);
+        return;
+      }
+      resetSound.setVolume(1.0);
+      resetSoundRef.current = resetSound;
+    });
+
     return () => {
       clickSoundRef.current?.release();
+      resetSoundRef.current?.release();
     };
   }, []);
 
@@ -349,12 +363,11 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
   /**
    * 클릭 사운드 재생
    */
-  const playSound = useCallback(() => {
+  const playLoadedSound = useCallback((sound: Sound | null) => {
     if (!soundSetting) {
       return;
     }
 
-    const sound = clickSoundRef.current;
     if (!sound) {
       return;
     }
@@ -366,6 +379,14 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
       }
     });
   }, [soundSetting, showErrorModal]);
+
+  const playSound = useCallback(() => {
+    playLoadedSound(clickSoundRef.current);
+  }, [playLoadedSound]);
+
+  const playResetSound = useCallback(() => {
+    playLoadedSound(resetSoundRef.current);
+  }, [playLoadedSound]);
 
   /**
    * 햅틱 피드백 트리거
@@ -610,21 +631,20 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     handleClose();
   }, [counter, wayIsChange, way, addSectionRecord, handleClose]);
 
-  /**
-   * 초기화 모달에서 확인 시 카운트를 0으로 리셋
-   */
-  const handleResetConfirm = useCallback(() => {
+  const resetMainCounter = useCallback((voiceCommand?: string, closeAfterReset = false) => {
     if (!counter) {
       return;
     }
 
     // 이미 0인 경우 구간 기록 저장하지 않음
     if (counter.count === 0) {
-      handleClose();
+      if (closeAfterReset) {
+        handleClose();
+      }
       return;
     }
 
-    const updatedSectionRecords = addSectionRecord('count_reset', counter.subCount, 0);
+    const updatedSectionRecords = addSectionRecord('count_reset', counter.subCount, 0, voiceCommand);
     const diff = Math.abs(counter.count - 0);
     const newWay = wayIsChange && diff % 2 === 1
       ? way === 'front' ? 'back' : 'front'
@@ -632,8 +652,22 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
 
     updateItem(counter.id, { count: 0, way: newWay as Way, sectionRecords: updatedSectionRecords });
     setCounter({ ...counter, count: 0, way: newWay as Way, sectionRecords: updatedSectionRecords });
-    handleClose();
-  }, [counter, wayIsChange, way, addSectionRecord, handleClose]);
+    playResetSound();
+    if (closeAfterReset) {
+      handleClose();
+    }
+  }, [counter, wayIsChange, way, addSectionRecord, playResetSound, handleClose]);
+
+  /**
+   * 초기화 모달에서 확인 시 카운트를 0으로 리셋
+   */
+  const handleResetConfirm = useCallback(() => {
+    resetMainCounter(undefined, true);
+  }, [resetMainCounter]);
+
+  const handleVoiceMainReset = useCallback((voiceCommand?: string) => {
+    resetMainCounter(voiceCommand);
+  }, [resetMainCounter]);
 
   /**
    * 목표 단수 편집 모달 열기
@@ -746,19 +780,20 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     setActiveModal('rule');
   }, []);
 
-  // 보조 카운터 초기화 확인
-  const handleSubResetConfirm = useCallback(() => {
+  const resetSubCounter = useCallback((voiceCommand?: string, closeAfterReset = false) => {
     if (!counter) {
       return;
     }
 
     // 이미 0인 경우 구간 기록 저장하지 않음
     if (counter.subCount === 0) {
-      handleClose();
+      if (closeAfterReset) {
+        handleClose();
+      }
       return;
     }
 
-    const updatedSectionRecords = addSectionRecord('sub_count_reset', 0, counter.count);
+    const updatedSectionRecords = addSectionRecord('sub_count_reset', 0, counter.count, voiceCommand);
     const updatedCounter = {
       ...counter,
       subCount: 0,
@@ -767,8 +802,20 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
 
     updateItem(counter.id, updatedCounter);
     setCounter(updatedCounter);
-    handleClose();
-  }, [counter, handleClose, addSectionRecord]);
+    playResetSound();
+    if (closeAfterReset) {
+      handleClose();
+    }
+  }, [counter, handleClose, addSectionRecord, playResetSound]);
+
+  // 보조 카운터 초기화 확인
+  const handleSubResetConfirm = useCallback(() => {
+    resetSubCounter(undefined, true);
+  }, [resetSubCounter]);
+
+  const handleVoiceSubReset = useCallback((voiceCommand?: string) => {
+    resetSubCounter(voiceCommand);
+  }, [resetSubCounter]);
 
   // 보조 카운터 편집 확인
   const handleSubEditConfirm = useCallback((value: string) => {
@@ -963,6 +1010,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     handleEditOpen,
     handleEditConfirm,
     handleResetConfirm,
+    handleVoiceMainReset,
     handleClose,
     handleTargetCountOpen,
     handleTargetCountConfirm,
@@ -982,6 +1030,7 @@ export const useCounter = ({ counterId }: UseCounterProps): UseCounterReturn => 
     handleSubEdit,
     handleSubRule,
     handleSubResetConfirm,
+    handleVoiceSubReset,
     handleSubEditConfirm,
     handleSubRuleConfirm,
     handleSubModalToggle,

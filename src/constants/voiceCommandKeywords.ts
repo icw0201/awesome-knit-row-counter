@@ -8,3 +8,8 @@ export const DEFAULT_VOICE_COMMAND_KEYWORDS = {
   subAdd: ['홍실', '홍신', '동실', '통실', '봉실', '뽕실', '통신', '공실', '홍시', '화실'],
   subSubtract: ['청실', '청신', '창실', '정신', '정실'],
 } as const;
+
+export const VOICE_RESET_COMMAND_KEYWORDS = {
+  main: ['메인', '매일', '매인'],
+  sub: ['서브'],
+} as const;
