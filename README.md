@@ -114,17 +114,16 @@
 
 ## 화면 구성
 
-<div align="center">
-  <img width="50%" alt="상세 1" src="https://github.com/user-attachments/assets/5a3d5cb1-4194-4f67-ae8d-92cbc79700e6" />
-</div>
+
 <p float="left">
-  <img width="32%" alt="상세 2" src="https://github.com/user-attachments/assets/408a8e8a-6ded-4e63-94c8-a4699692f5d8" />
-  <img width="32%" alt="상세 3" src="https://github.com/user-attachments/assets/c2aed512-726c-46a1-b528-30b4207e19f7" />
-  <img width="32%" alt="상세 4 x1" src="https://github.com/user-attachments/assets/5ea94d48-b7e6-4c91-b6c4-11db5800afab" />
+  <img width="24%" alt="상세 1" src="https://github.com/user-attachments/assets/5a3d5cb1-4194-4f67-ae8d-92cbc79700e6" />
+  <img width="24%" alt="상세 2" src="https://github.com/user-attachments/assets/408a8e8a-6ded-4e63-94c8-a4699692f5d8" />
+  <img width="24%" alt="상세 3" src="https://github.com/user-attachments/assets/c2aed512-726c-46a1-b528-30b4207e19f7" />
+  <img width="24%" alt="상세 4 x1" src="https://github.com/user-attachments/assets/5ea94d48-b7e6-4c91-b6c4-11db5800afab" />
 </p>
 <p float="left">
-  <img width="32%" alt="상세 5" src="https://github.com/user-attachments/assets/6dcaaef6-02e3-49e4-9c42-7b30c85f2076" />
-  <img width="32%" height="960" alt="상세 6" src="https://github.com/user-attachments/assets/2f6ead79-e8f4-487b-bf93-330f90ee028c" />
-  <img width="32%" alt="상세 7" src="https://github.com/user-attachments/assets/48ccf8fd-8ab8-49bd-a13a-dc7771495aac" />
-
+  <img width="24%" alt="상세 5" src="https://github.com/user-attachments/assets/6dcaaef6-02e3-49e4-9c42-7b30c85f2076" />
+  <img width="24%" alt="상세 6" src="https://github.com/user-attachments/assets/2f6ead79-e8f4-487b-bf93-330f90ee028c" />
+  <img width="24%" alt="상세 7" src="https://github.com/user-attachments/assets/48ccf8fd-8ab8-49bd-a13a-dc7771495aac" />
+  <img width="24%" alt="상세 8" src="https://github.com/user-attachments/assets/137e7977-5cbc-40db-be1a-c0a63fa80316" />
 </p>
