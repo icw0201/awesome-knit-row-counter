@@ -1,7 +1,7 @@
 // src/screens/CounterDetail.tsx
 
 import { useLayoutEffect, useCallback, useState, useRef, useEffect } from 'react';
-import { View, Text, useWindowDimensions, Animated, LayoutChangeEvent, Platform } from 'react-native';
+import { View, useWindowDimensions, Animated, LayoutChangeEvent, Platform } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets, Edge } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -10,7 +10,7 @@ import KeyEvent from 'react-native-keyevent';
 
 import { getHeaderRightWithActivateInfoSettings } from '@navigation/HeaderOptions';
 
-import { CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal, VoiceRecognitionBanner } from '@components/counter';
+import { AnimatedCounterDigits, CounterTouchArea, CounterDirection, CounterActions, CounterModals, SubCounterModal, ProgressBar, TimeDisplay, SegmentRecordModal, VoiceRecognitionBanner } from '@components/counter';
 import Tooltip from '@components/common/Tooltip';
 import {
   ADD_KEY_CODES,
@@ -20,6 +20,7 @@ import {
 } from '@constants/hardwareKeyCodes';
 import { getScreenSize, getIconSize, getProgressBarHeightPx, getTextClass, ScreenSize } from '@constants/screenSizeConfig';
 import {
+  getEffectiveVoiceCommandSetting,
   getTooltipEnabledSetting,
   getSubSlideModalsEnabledSetting,
   setSubSlideModalsEnabledSetting,
@@ -112,10 +113,10 @@ const CounterDetail = () => {
     handleEditOpen,
     handleEditConfirm,
     handleResetConfirm,
+    handleVoiceMainReset,
     handleClose,
     handleTargetCountOpen,
     handleTargetCountConfirm,
-    toggleMascotIsActive,
     toggleWay,
     toggleTimerIsActive,
     toggleTimerIsPlaying,
@@ -133,6 +134,7 @@ const CounterDetail = () => {
     handleSubEdit,
     handleSubRule,
     handleSubResetConfirm,
+    handleVoiceSubReset,
     handleSubEditConfirm,
     handleSubRuleConfirm,
     handleSubModalToggle,
@@ -144,6 +146,9 @@ const CounterDetail = () => {
   const [tooltipEnabled, setTooltipEnabled] = useState(true);
   const [subSlideModalsEnabled, setSubSlideModalsEnabled] = useState(
     () => getSubSlideModalsEnabledSetting()
+  );
+  const [voiceCommandSetting, setVoiceCommandSetting] = useState(() =>
+    getEffectiveVoiceCommandSetting()
   );
   const [voiceRecognitionError, setVoiceRecognitionError] = useState<string>('');
   const {
@@ -254,6 +259,13 @@ const CounterDetail = () => {
     handleSubtract(commandWord);
   }, [flashTouchAreaHighlight, handleSubtract, isInputBlocked]);
 
+  const runVoiceMainReset = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
+    handleVoiceMainReset(commandWord);
+  }, [handleVoiceMainReset, isInputBlocked]);
+
   /**
    * 보조 카운터 공통 진입점.
    * 터치/보이스 모두 같은 함수로 들어와 하이라이트와 실제 비즈니스 로직을 함께 실행한다.
@@ -281,24 +293,38 @@ const CounterDetail = () => {
     handleSubSubtract(commandWord);
   }, [flashSubTouchAreaHighlight, handleSubSubtract, isInputBlocked, subModalIsOpen, subSlideModalsEnabled]);
 
+  const runVoiceSubReset = useCallback((commandWord?: string) => {
+    if (isInputBlocked) {
+      return;
+    }
+    if (!subSlideModalsEnabled || !subModalIsOpen) {
+      return;
+    }
+    handleVoiceSubReset(commandWord);
+  }, [handleVoiceSubReset, isInputBlocked, subModalIsOpen, subSlideModalsEnabled]);
+
   /** 화면 포커스 중일 때만 계속 듣고, "연지" 계열 → 감소, "곤지" 계열 → 증가 */
   useVoiceCommands(
     !!counter && effectiveVoiceCommandsActive,
+    voiceCommandSetting,
     runHighlightedAdd,
     runHighlightedSubtract,
     runHighlightedSubAdd,
     runHighlightedSubSubtract,
+    runVoiceMainReset,
+    runVoiceSubReset,
     handleVoiceRecognizedTextChange,
     setVoiceRecognitionError
   );
 
   /**
    * 화면 포커스 시 실행되는 효과
-   * 툴팁 설정만 다시 반영한다.
+   * 툴팁/음성 명령어 설정을 다시 반영한다.
    */
   useFocusEffect(
     useCallback(() => {
       setTooltipEnabled(getTooltipEnabledSetting());
+      setVoiceCommandSetting(getEffectiveVoiceCommandSetting());
     }, [])
   );
 
@@ -385,7 +411,6 @@ const CounterDetail = () => {
         getHeaderRightWithActivateInfoSettings(
           navigation,
           mascotIsActive,
-          toggleMascotIsActive,
           counter.timerIsActive,
           toggleTimerIsActive,
           isVoiceCommandsEnabled,
@@ -403,7 +428,6 @@ const CounterDetail = () => {
     mascotIsActive,
     screenSize,
     subSlideModalsEnabled,
-    toggleMascotIsActive,
     toggleSubSlideModalsEnabled,
     toggleTimerIsActive,
     toggleVoiceCommands,
@@ -430,6 +454,8 @@ const CounterDetail = () => {
         onSubtract={runHighlightedSubtract}
         highlightedAction={touchAreaHighlight}
         showVoiceCommandHints={effectiveVoiceCommandsActive}
+        addVoiceHint={voiceCommandSetting.addHint}
+        subtractVoiceHint={voiceCommandSetting.subtractHint}
         disabled={isInputBlocked}
       />
 
@@ -450,15 +476,6 @@ const CounterDetail = () => {
           screenSize={screenSize}
           onPress={handleTargetCountOpen}
         />
-
-        {/* 헤더 활성 아이콘 안내 툴팁 (헤더 대신 화면 위층에 표시) */}
-        {screenSize !== ScreenSize.COMPACT && tooltipEnabled && (
-          <Tooltip
-            text="길게 눌러 어쩌미 알림 단 설정하기"
-            containerClassName="absolute right-3 top-2 z-50"
-            targetAnchorX={resolvedWidth - 106}
-          />
-        )}
 
         <View
           className="absolute left-0 right-0 bottom-0 w-full items-center justify-start"
@@ -500,6 +517,7 @@ const CounterDetail = () => {
                     imageWidth={imageWidth}
                     imageHeight={imageHeight}
                     onToggleWay={toggleWay}
+                    onLongPress={() => navigation.navigate('WaySetting', { counterId: counter.id })}
                   />
                 </View>
               )}
@@ -524,12 +542,12 @@ const CounterDetail = () => {
                 style={{ flex: countSectionFlex }}
                 pointerEvents="none"
               >
-                <Text
-                  className={`${textClass} font-bold text-black`}
-                  style={{ fontSize: countTextFontSizePx, lineHeight: countTextFontSizePx }}
-                >
-                  {counter.count}
-                </Text>
+                <AnimatedCounterDigits
+                  value={counter.count}
+                  fontSize={countTextFontSizePx}
+                  lineHeight={countTextFontSizePx}
+                  textClass={textClass}
+                />
               </View>
               {showCounterActions && (
                 <View
@@ -584,6 +602,8 @@ const CounterDetail = () => {
           onAdd={runHighlightedSubAdd}
           onSubtract={runHighlightedSubSubtract}
           showVoiceCommandHints={effectiveVoiceCommandsActive}
+          addVoiceHint={voiceCommandSetting.subAddHint}
+          subtractVoiceHint={voiceCommandSetting.subSubtractHint}
           highlightedAction={subTouchAreaHighlight}
           inputDisabled={isInputBlocked}
           onReset={handleSubReset}

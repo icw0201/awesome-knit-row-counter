@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, DimensionValue } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import { appTheme } from '@styles/appTheme';
 
 // ===== 타입 정의 =====
 interface ModalHandleProps {
@@ -168,7 +169,7 @@ export const ModalHandle: React.FC<ModalHandleProps> = ({
         // 열려있을 때: 투명한 핸들 + 흰색 바
         <View className="w-full h-full items-center justify-center">
           <View
-            className="w-1 bg-red-orange-100 rounded-sm"
+            className={`w-1 ${appTheme.tw.bg.primary['100']} rounded-sm`}
             style={{ height: height * 0.4 }}
           />
         </View>
@@ -182,7 +183,7 @@ export const ModalHandle: React.FC<ModalHandleProps> = ({
           }}
         >
           <LinearGradient
-            colors={['#ff6b67', '#ffc7c6']} // 400, 200
+            colors={[appTheme.colors.primary['400'], appTheme.colors.primary['200']]}
             start={{ x: 1, y: 0 }}
             end={{ x: 0, y: 0 }}
             className="flex-1"

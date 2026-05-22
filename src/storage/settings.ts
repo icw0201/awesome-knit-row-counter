@@ -1,5 +1,6 @@
 // src/storage/settings.ts
 import { MMKV } from 'react-native-mmkv';
+import { DEFAULT_VOICE_COMMAND_KEYWORDS } from '@constants/voiceCommandKeywords';
 import { SortCriteria, SortOrder } from './types';
 
 // MMKV 스토리지 인스턴스 생성
@@ -16,9 +17,13 @@ const KEY_AUTO_PLAY_ELAPSED_TIME = 'settings.autoPlayElapsedTime';
 const KEY_TOOLTIP_ENABLED = 'settings.tooltipEnabled';
 const KEY_SHOW_ELAPSED_TIME_IN_LIST = 'settings.showElapsedTimeInList';
 const KEY_VOICE_COMMANDS_ENABLED = 'settings.voiceCommandsEnabled';
+const KEY_SELECTED_VOICE_COMMAND_MODE = 'settings.selectedVoiceCommandMode';
+const KEY_SELECTED_COLOR_THEME = 'settings.selectedColorTheme';
+const KEY_CUSTOM_VOICE_COMMAND_INPUTS = 'settings.customVoiceCommandInputs';
 const KEY_SUB_SLIDE_MODALS_ENABLED = 'settings.subSlideModalsEnabled';
 const KEY_VOICE_RECOGNITION_PERMISSION_STATUS =
   'settings.voiceRecognitionPermissionStatus';
+const KEY_PREMIUM_UNLOCKED = 'settings.premiumUnlocked';
 
 // 기본값 상수 정의
 const DEFAULT_SOUND = true;
@@ -31,12 +36,135 @@ const DEFAULT_AUTO_PLAY_ELAPSED_TIME = true;
 const DEFAULT_TOOLTIP_ENABLED = true;
 const DEFAULT_SHOW_ELAPSED_TIME_IN_LIST = false;
 const DEFAULT_VOICE_COMMANDS_ENABLED = false;
+const DEFAULT_SELECTED_VOICE_COMMAND_MODE: VoiceCommandSettingMode = 'default';
+const DEFAULT_SELECTED_COLOR_THEME: ColorThemeSetting = 'awesomeRed';
 const DEFAULT_SUB_SLIDE_MODALS_ENABLED = true;
+const DEFAULT_PREMIUM_UNLOCKED = false;
+
+export type VoiceCommandSettingMode = 'default' | 'custom';
+export type ColorThemeSetting =
+  | 'awesomeRed'
+  | 'anyBlue'
+  | 'honeyBanana'
+  | 'lavender'
+  | 'olive'
+  | 'gray';
+
+export interface CustomVoiceCommandInputsSetting {
+  mainDecrease: [string, string, string];
+  mainIncrease: [string, string, string];
+  subDecrease: [string, string, string];
+  subIncrease: [string, string, string];
+}
+
+export interface EffectiveVoiceCommandSetting {
+  mode: VoiceCommandSettingMode;
+  customInputs: CustomVoiceCommandInputsSetting;
+  addKeywords: string[];
+  subtractKeywords: string[];
+  subAddKeywords: string[];
+  subSubtractKeywords: string[];
+  addHint: string;
+  subtractHint: string;
+  subAddHint: string;
+  subSubtractHint: string;
+}
+
+const DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS: CustomVoiceCommandInputsSetting = {
+  mainDecrease: ['', '', ''],
+  mainIncrease: ['', '', ''],
+  subDecrease: ['', '', ''],
+  subIncrease: ['', '', ''],
+};
+const STORED_CUSTOM_VOICE_COMMAND_MAX_LENGTH = 2;
 
 export type VoiceRecognitionPermissionStatus =
   | 'undetermined'
   | 'granted'
   | 'denied';
+
+export const isColorThemeSetting = (
+  value: unknown
+): value is ColorThemeSetting => {
+  return value === 'awesomeRed'
+    || value === 'anyBlue'
+    || value === 'honeyBanana'
+    || value === 'lavender'
+    || value === 'olive'
+    || value === 'gray';
+};
+
+export const normalizeColorThemeSetting = (
+  value: unknown
+): ColorThemeSetting | null => {
+  return isColorThemeSetting(value) ? value : null;
+};
+
+const isThreeStringTuple = (value: unknown): value is [string, string, string] => {
+  return Array.isArray(value)
+    && value.length === 3
+    && value.every((item) => typeof item === 'string');
+};
+
+const sanitizeStoredVoiceCommandInput = (value: string): string => {
+  return Array.from(value).slice(0, STORED_CUSTOM_VOICE_COMMAND_MAX_LENGTH).join('');
+};
+
+const sanitizeStoredVoiceCommandTuple = (
+  value: [string, string, string]
+): [string, string, string] => {
+  return [
+    sanitizeStoredVoiceCommandInput(value[0]),
+    sanitizeStoredVoiceCommandInput(value[1]),
+    sanitizeStoredVoiceCommandInput(value[2]),
+  ];
+};
+
+const sanitizeStoredCustomVoiceCommandInputs = (
+  value: CustomVoiceCommandInputsSetting
+): CustomVoiceCommandInputsSetting => {
+  return {
+    mainDecrease: sanitizeStoredVoiceCommandTuple(value.mainDecrease),
+    mainIncrease: sanitizeStoredVoiceCommandTuple(value.mainIncrease),
+    subDecrease: sanitizeStoredVoiceCommandTuple(value.subDecrease),
+    subIncrease: sanitizeStoredVoiceCommandTuple(value.subIncrease),
+  };
+};
+
+const normalizeCustomVoiceCommandInputs = (
+  value: unknown
+): CustomVoiceCommandInputsSetting => {
+  if (typeof value !== 'object' || value == null) {
+    return DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS;
+  }
+
+  const candidate = value as Partial<Record<keyof CustomVoiceCommandInputsSetting, unknown>>;
+
+  return {
+    mainDecrease: isThreeStringTuple(candidate.mainDecrease)
+      ? sanitizeStoredVoiceCommandTuple(candidate.mainDecrease)
+      : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.mainDecrease,
+    mainIncrease: isThreeStringTuple(candidate.mainIncrease)
+      ? sanitizeStoredVoiceCommandTuple(candidate.mainIncrease)
+      : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.mainIncrease,
+    subDecrease: isThreeStringTuple(candidate.subDecrease)
+      ? sanitizeStoredVoiceCommandTuple(candidate.subDecrease)
+      : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.subDecrease,
+    subIncrease: isThreeStringTuple(candidate.subIncrease)
+      ? sanitizeStoredVoiceCommandTuple(candidate.subIncrease)
+      : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.subIncrease,
+  };
+};
+
+const normalizeVoiceCommandKeywordList = (values: readonly string[]): string[] => {
+  return Array.from(
+    new Set(
+      values
+        .map((value) => value.trim())
+        .filter((value) => value.length > 0)
+    )
+  );
+};
 
 /**
  * 사운드 설정을 저장합니다.
@@ -226,6 +354,141 @@ export const getVoiceCommandsEnabledSetting = (): boolean => {
 };
 
 /**
+ * 음성 명령어 설정 모드를 저장합니다.
+ * @param value 음성 명령어 설정 모드
+ */
+export const setSelectedVoiceCommandModeSetting = (
+  value: VoiceCommandSettingMode
+) => {
+  storage.set(KEY_SELECTED_VOICE_COMMAND_MODE, value);
+};
+
+/**
+ * 음성 명령어 설정 모드를 가져옵니다.
+ * @returns 음성 명령어 설정 모드 (기본값: 'default')
+ */
+export const getSelectedVoiceCommandModeSetting = (): VoiceCommandSettingMode => {
+  const value = storage.getString(KEY_SELECTED_VOICE_COMMAND_MODE);
+
+  return value === 'custom' || value === 'default'
+    ? value
+    : DEFAULT_SELECTED_VOICE_COMMAND_MODE;
+};
+
+/**
+ * 선택된 색상 테마를 저장합니다.
+ * @param value 선택된 색상 테마
+ */
+export const setSelectedColorThemeSetting = (
+  value: ColorThemeSetting
+) => {
+  storage.set(KEY_SELECTED_COLOR_THEME, value);
+};
+
+/**
+ * 선택된 색상 테마를 가져옵니다.
+ * @returns 선택된 색상 테마 (기본값: 'awesomeRed')
+ */
+export const getSelectedColorThemeSetting = (): ColorThemeSetting => {
+  const value = storage.getString(KEY_SELECTED_COLOR_THEME);
+
+  return normalizeColorThemeSetting(value) ?? DEFAULT_SELECTED_COLOR_THEME;
+};
+
+/**
+ * 색상 테마 설정 변경을 구독합니다.
+ * @returns unsubscribe 함수
+ */
+export const subscribeSelectedColorThemeSettingChange = (
+  callback: () => void
+) => {
+  const listener = storage.addOnValueChangedListener((changedKey) => {
+    if (changedKey === KEY_SELECTED_COLOR_THEME) {
+      callback();
+    }
+  });
+
+  return () => {
+    listener.remove();
+  };
+};
+
+/**
+ * 사용자 지정 음성 명령어 입력값을 저장합니다.
+ * @param value 사용자 지정 음성 명령어 입력값
+ */
+export const setCustomVoiceCommandInputsSetting = (
+  value: CustomVoiceCommandInputsSetting
+) => {
+  storage.set(
+    KEY_CUSTOM_VOICE_COMMAND_INPUTS,
+    JSON.stringify(sanitizeStoredCustomVoiceCommandInputs(value))
+  );
+};
+
+/**
+ * 사용자 지정 음성 명령어 입력값을 가져옵니다.
+ * @returns 사용자 지정 음성 명령어 입력값
+ */
+export const getCustomVoiceCommandInputsSetting =
+  (): CustomVoiceCommandInputsSetting => {
+    const value = storage.getString(KEY_CUSTOM_VOICE_COMMAND_INPUTS);
+
+    if (!value) {
+      return DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS;
+    }
+
+    try {
+      return normalizeCustomVoiceCommandInputs(JSON.parse(value));
+    } catch {
+      return DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS;
+    }
+  };
+
+/**
+ * 현재 적용 중인 음성 명령어 설정을 가져옵니다.
+ * - 기본 설정 선택 시: 기본 키워드/표시 문구 반환
+ * - 사용자 설정 선택 시: 사용자 입력값 기반 키워드/표시 문구 반환
+ */
+export const getEffectiveVoiceCommandSetting = (): EffectiveVoiceCommandSetting => {
+  const mode = getSelectedVoiceCommandModeSetting();
+  const customInputs = getCustomVoiceCommandInputsSetting();
+
+  if (mode === 'custom') {
+    const addKeywords = normalizeVoiceCommandKeywordList(customInputs.mainIncrease);
+    const subtractKeywords = normalizeVoiceCommandKeywordList(customInputs.mainDecrease);
+    const subAddKeywords = normalizeVoiceCommandKeywordList(customInputs.subIncrease);
+    const subSubtractKeywords = normalizeVoiceCommandKeywordList(customInputs.subDecrease);
+
+    return {
+      mode,
+      customInputs,
+      addKeywords,
+      subtractKeywords,
+      subAddKeywords,
+      subSubtractKeywords,
+      addHint: customInputs.mainIncrease[0] ?? '',
+      subtractHint: customInputs.mainDecrease[0] ?? '',
+      subAddHint: customInputs.subIncrease[0] ?? '',
+      subSubtractHint: customInputs.subDecrease[0] ?? '',
+    };
+  }
+
+  return {
+    mode,
+    customInputs,
+    addKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.add],
+    subtractKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.subtract],
+    subAddKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.subAdd],
+    subSubtractKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.subSubtract],
+    addHint: DEFAULT_VOICE_COMMAND_KEYWORDS.add[0],
+    subtractHint: DEFAULT_VOICE_COMMAND_KEYWORDS.subtract[0],
+    subAddHint: DEFAULT_VOICE_COMMAND_KEYWORDS.subAdd[0],
+    subSubtractHint: DEFAULT_VOICE_COMMAND_KEYWORDS.subSubtract[0],
+  };
+};
+
+/**
  * CounterDetail의 슬라이드 모달 표시 설정을 저장합니다.
  * @param value 슬라이드 모달 표시 여부
  */
@@ -284,4 +547,35 @@ export const getVoiceRecognitionPermissionStatusSetting =
 
     return 'undetermined';
   };
+
+/**
+ * 프리미엄(일회성 구매) 잠금 해제 여부를 저장합니다.
+ */
+export const setPremiumUnlocked = (value: boolean) => {
+  storage.set(KEY_PREMIUM_UNLOCKED, JSON.stringify(value));
+};
+
+/**
+ * 프리미엄 잠금 해제 여부를 가져옵니다.
+ */
+export const getPremiumUnlocked = (): boolean => {
+  const value = storage.getString(KEY_PREMIUM_UNLOCKED);
+  return value ? JSON.parse(value) : DEFAULT_PREMIUM_UNLOCKED;
+};
+
+/**
+ * 프리미엄 잠금 해제 플래그 변경을 구독합니다.
+ * @returns unsubscribe 함수
+ */
+export const subscribePremiumUnlockedChange = (callback: () => void) => {
+  const listener = storage.addOnValueChangedListener((changedKey) => {
+    if (changedKey === KEY_PREMIUM_UNLOCKED) {
+      callback();
+    }
+  });
+
+  return () => {
+    listener.remove();
+  };
+};
 

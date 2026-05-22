@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { NativeSyntheticEvent, TextLayoutEventData } from 'react-native';
 
 type UseVoiceBannerTextParams = {
@@ -14,73 +14,31 @@ type UseVoiceBannerTextReturn = {
 
 /**
  * 음성 transcript를 배너용 1줄 텍스트로 관리한다.
- * 줄이 넘치면 이미 보인 prefix를 숨기고, 남은 suffix부터 이어서 표시한다.
+ * 실제 한 줄 표시는 Text의 numberOfLines/ellipsizeMode에 맡긴다.
+ * 레이아웃 이벤트에서 문자열을 직접 잘라내면 Android STT partial 갱신 중
+ * 글자가 생겼다가 사라지는 깜빡임이 생길 수 있다.
  */
 export const useVoiceBannerText = ({
   isVoiceCommandsActive,
 }: UseVoiceBannerTextParams): UseVoiceBannerTextReturn => {
   const [voiceRecognizedText, setVoiceRecognizedText] = useState('');
   const [isVoiceTextResetPending, setIsVoiceTextResetPending] = useState(false);
-  const lastVoiceTranscriptRef = useRef('');
-  const resetVoiceTextBaseRef = useRef('');
 
   useEffect(() => {
     if (!isVoiceCommandsActive) {
       setVoiceRecognizedText('');
-      lastVoiceTranscriptRef.current = '';
-      resetVoiceTextBaseRef.current = '';
       setIsVoiceTextResetPending(false);
     }
   }, [isVoiceCommandsActive]);
 
   const handleVoiceRecognizedTextChange = useCallback((nextText: string) => {
-    lastVoiceTranscriptRef.current = nextText;
-    const hiddenPrefix = resetVoiceTextBaseRef.current;
-
-    if (
-      hiddenPrefix &&
-      nextText.startsWith(hiddenPrefix)
-    ) {
-      const remainingText = nextText
-        .slice(hiddenPrefix.length)
-        .trimStart();
-
-      setVoiceRecognizedText(remainingText);
-      setIsVoiceTextResetPending(remainingText.length === 0);
-      return;
-    }
-
-    resetVoiceTextBaseRef.current = '';
     setIsVoiceTextResetPending(false);
     setVoiceRecognizedText(nextText);
   }, []);
 
-  const handleVoiceTextLayout = useCallback(
-    (event: NativeSyntheticEvent<TextLayoutEventData>) => {
-      const { lines } = event.nativeEvent;
-
-      if (lines.length > 1 && voiceRecognizedText) {
-        const visibleLineText = lines[0]?.text ?? '';
-
-        if (!visibleLineText || !voiceRecognizedText.startsWith(visibleLineText)) {
-          resetVoiceTextBaseRef.current = lastVoiceTranscriptRef.current;
-          setVoiceRecognizedText('');
-          setIsVoiceTextResetPending(true);
-          return;
-        }
-
-        const remainingTextRaw = voiceRecognizedText.slice(visibleLineText.length);
-        const remainingText = remainingTextRaw.trimStart();
-        const consumedLength = voiceRecognizedText.length - remainingText.length;
-
-        resetVoiceTextBaseRef.current += voiceRecognizedText.slice(0, consumedLength);
-
-        setVoiceRecognizedText(remainingText);
-        setIsVoiceTextResetPending(remainingText.length === 0);
-      }
-    },
-    [voiceRecognizedText]
-  );
+  const handleVoiceTextLayout = useCallback((_event: NativeSyntheticEvent<TextLayoutEventData>) => {
+    // Text 레이아웃 결과는 표시 상태를 바꾸지 않는다.
+  }, []);
 
   return {
     voiceRecognizedText,

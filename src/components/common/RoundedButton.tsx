@@ -2,6 +2,7 @@ import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 import clsx from 'clsx';
 import { colorStyles, ColorStyleKey } from '@styles/colorStyles';
+import { appTheme } from '@styles/appTheme';
 
 /**
  * RoundedButton 컴포넌트의 Props 인터페이스
@@ -15,20 +16,21 @@ interface RoundedButtonProps {
   title: string;
   colorStyle?: ColorStyleKey;
   containerClassName?: string;
+  disabled?: boolean;
 }
 
 /**
  * 기본 레이아웃: 중앙 정렬된 제목 표시
  */
-const renderDefaultLayout = (title: string, textColor: string) => (
+const renderDefaultLayout = (title: string, textClassName: string) => (
   <View className="items-center justify-center min-h-16">
-    <Text className={clsx('text-base font-semibold', textColor)}>{title}</Text>
+    <Text className={clsx('text-base font-semibold', textClassName)}>{title}</Text>
   </View>
 );
 
 /**
  * 둥근 모서리를 가진 버튼 컴포넌트
- * 중앙 정렬된 제목을 표시하며, 항상 터치 가능한 버튼으로 동작합니다.
+ * 중앙 정렬된 제목을 표시합니다. disabled일 때는 회색 스타일이며 터치되지 않습니다.
  * rounded는 full로 고정되어 있습니다.
  */
 const RoundedButton: React.FC<RoundedButtonProps> = ({
@@ -36,20 +38,36 @@ const RoundedButton: React.FC<RoundedButtonProps> = ({
   title,
   colorStyle = 'default',
   containerClassName = '',
+  disabled = false,
 }) => {
   // 선택된 색상 테마에서 색상 값들을 가져오기
-  const { container, text } = colorStyles[colorStyle];
+  const {
+    containerClassName: themeContainerClassName,
+    textClassName,
+  } = colorStyles[colorStyle];
+
+  const resolvedContainerClassName = disabled
+    ? clsx(appTheme.tw.bg.lightgray, `border ${appTheme.tw.border.lightgray}`)
+    : themeContainerClassName;
+  const resolvedTextClassName = disabled
+    ? appTheme.tw.text.black
+    : textClassName;
 
   // 박스 뷰 생성 (rounded는 full로 고정)
   const boxView = (
-    <View className={clsx('mx-1 py-3 px-8 rounded-full', container, containerClassName)}>
-      {renderDefaultLayout(title, text)}
+    <View
+      className={clsx(
+        'mx-1 py-3 px-8 rounded-full',
+        resolvedContainerClassName,
+        !disabled && containerClassName
+      )}
+    >
+      {renderDefaultLayout(title, resolvedTextClassName)}
     </View>
   );
 
-  // 항상 TouchableOpacity로 감싸서 버튼으로 동작
   return (
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity onPress={onPress} disabled={disabled} activeOpacity={disabled ? 1 : 0.2}>
       {boxView}
     </TouchableOpacity>
   );

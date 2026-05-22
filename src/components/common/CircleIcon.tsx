@@ -40,13 +40,16 @@ const CircleIcon: React.FC<CircleIconProps> = ({
   containerClassName = '',
 }) => {
   // 선택된 색상 테마에서 컨테이너와 아이콘 색상 가져오기
-  const { container, icon } = colorStyles[colorStyle];
+  const {
+    containerClassName: themeContainerClassName,
+    iconColor: themeIconColor,
+  } = colorStyles[colorStyle];
 
   // iconColor가 직접 지정된 경우 우선 사용, 없으면 테마의 아이콘 색상 사용
-  const resolvedColor = iconColor ?? icon;
+  const resolvedColor = iconColor ?? themeIconColor;
 
   // 컨테이너의 클래스명 조합 (기본 스타일 + 테마 색상 + 추가 스타일)
-  const classNames = clsx('items-center justify-center rounded-full', container, containerClassName);
+  const classNames = clsx('items-center justify-center rounded-full', themeContainerClassName, containerClassName);
 
   // 아이콘 크기는 컨테이너 크기의 절반으로 설정
   const iconSize = size * 0.5;

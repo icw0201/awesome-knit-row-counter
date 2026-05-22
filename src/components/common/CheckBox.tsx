@@ -2,8 +2,9 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { Check } from 'lucide-react-native';
-import { colorStyles } from '@styles/colorStyles';
 import clsx from 'clsx';
+import { colorStyles } from '@styles/colorStyles';
+import { appTheme } from '@styles/appTheme';
 
 /**
  * CheckBox 컴포넌트의 Props 인터페이스
@@ -38,8 +39,8 @@ const CheckBox: React.FC<CheckBoxProps> = ({
   children,
   accessibilityLabel: accessibilityLabelProp,
 }) => {
-  const activeColor = colorStyles.vivid.container;
-  const inactiveColor = 'bg-red-orange-100';
+  const activeColor = colorStyles.vivid.containerClassName;
+  const inactiveColor = appTheme.tw.bg.primary['100'];
 
   const isXs = size === 'xs';
   const checkboxSizeClass = isXs ? 'w-4 h-4' : 'w-6 h-6';
@@ -71,7 +72,7 @@ const CheckBox: React.FC<CheckBoxProps> = ({
     >
       {/* 체크박스 라벨 텍스트 - label이 있을 때만 표시 */}
       {label && (
-        <Text className={`${textSizeClass} text-black shrink flex-1`} numberOfLines={2}>{label}</Text>
+        <Text className={`${textSizeClass} ${appTheme.tw.text.black} shrink flex-1`} numberOfLines={2}>{label}</Text>
       )}
 
       {/* children이 있으면 라벨과 체크박스 사이에 배치 (label이 있을 때만) */}
@@ -83,7 +84,7 @@ const CheckBox: React.FC<CheckBoxProps> = ({
 
       <View className={checkboxClass}>
         {checked && isChunky && <View className={clsx('bg-black', innerSquareClass)} />}
-        {checked && !isChunky && <Check size={iconSize} color="white" />}
+        {checked && !isChunky && <Check size={iconSize} color={appTheme.colors.white} />}
       </View>
     </TouchableOpacity>
   );

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { View, Dimensions, DimensionValue } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { ModalHandle } from './ModalHandle';
+import { appTheme } from '@styles/appTheme';
 
 // ===== 타입 정의 =====
 interface SlideModalProps {
@@ -90,7 +91,7 @@ export const SlideModal: React.FC<SlideModalProps> = ({
           borderTopRightRadius: 16,
           borderBottomRightRadius: 16,
           // iOS용 그림자 (위쪽 그림자 제거)
-          shadowColor: '#000',
+          shadowColor: appTheme.colors.shadow,
           shadowOffset: { width: 2, height: 2 },
           shadowOpacity: 0.25,
           shadowRadius: 3.84,
@@ -103,7 +104,7 @@ export const SlideModal: React.FC<SlideModalProps> = ({
         }}
       >
         <LinearGradient
-          colors={['#ffc7c6', '#ffe1e0', '#ffffff']} // red-orange-200, red-orange-100, white
+          colors={[appTheme.colors.primary['200'], appTheme.colors.primary['100'], appTheme.colors.white]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           locations={[0, 0.2, 0.6]} // 그라데이션 비율

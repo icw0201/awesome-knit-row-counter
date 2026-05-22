@@ -5,6 +5,7 @@
   "compilerOptions": {
     "baseUrl": "./",
     "paths": {
+      "@/*": ["src/*"],
       "@assets/*": ["src/assets/*"],
       "@components/*": ["src/components/*"],
       "@constants/*": ["src/constants/*"],
@@ -12,6 +13,7 @@
       "@hooks/*": ["src/hooks/*"],
       "@storage/*": ["src/storage/*"],
       "@navigation/*": ["src/navigation/*"],
+      "@provider/*": ["src/providers/*"],
       "@screens/*": ["src/screens/*"],
       "@styles/*": ["src/styles/*"],
       "@utils/*": ["src/utils/*"]

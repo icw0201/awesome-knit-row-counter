@@ -3,16 +3,10 @@
 import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
+import { VOICE_RESET_COMMAND_KEYWORDS } from '@constants/voiceCommandKeywords';
+import type { EffectiveVoiceCommandSetting } from '@storage/settings';
 
 const LOCALE = 'ko-KR';
-const KEYWORDS_ADD = ['곤지', '군지', '건지', '본지'];
-const KEYWORDS_SUBTRACT = ['연지', '현지', '연기'];
-const KEYWORDS_SUB_ADD = ['홍실', '홍신', '동실', '통실', '봉실', '뽕실', '통신', '공실'];
-const KEYWORDS_SUB_SUBTRACT = ['청실', '청신', '창실', '정신', '정실'];
-const KEYWORD_SET_ADD = new Set(KEYWORDS_ADD);
-const KEYWORD_SET_SUBTRACT = new Set(KEYWORDS_SUBTRACT);
-const KEYWORD_SET_SUB_ADD = new Set(KEYWORDS_SUB_ADD);
-const KEYWORD_SET_SUB_SUBTRACT = new Set(KEYWORDS_SUB_SUBTRACT);
 const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
 // 일반적인 end/error 이후 recognition을 다시 시작할 때 기본 대기 시간.
 const DEFAULT_RESTART_DELAY_MS = 1200;
@@ -26,11 +20,44 @@ const IDLE_RESTART_DELAY_MS = 1500;
 const START_WATCHDOG_MS = 5000;
 // 세션 경계·지연 final 등으로 같은 키워드가 짧은 간격에 두 번 오는 경우 1회만 실행한다.
 const KEYWORD_ACTION_DEDUP_MS = 400;
+const KOREAN_NUMBER_COMMAND_WORDS = new Set([
+  '하나',
+  '둘',
+  '셋',
+  '넷',
+  '다섯',
+  '여섯',
+  '일곱',
+  '여덟',
+  '아홉',
+  '열',
+]);
 export const VOICE_LISTENING_TEXT = '듣는 중...';
 const MODEL_NOT_DOWNLOADED_MESSAGE_FRAGMENT =
   'requested language is supported, but not yet downloaded';
 const OFFLINE_MODEL_REQUIRED_MESSAGE =
   '한국어 온디바이스 음성 모델 다운로드가 필요합니다. 시스템 안내를 완료한 뒤 다시 시도해 주세요.';
+
+type VoiceCommandKeywordConfig = Pick<
+  EffectiveVoiceCommandSetting,
+  'addKeywords' | 'subtractKeywords' | 'subAddKeywords' | 'subSubtractKeywords'
+>;
+type VoiceCommandAction =
+  | 'add'
+  | 'subtract'
+  | 'subAdd'
+  | 'subSubtract'
+  | 'mainReset'
+  | 'subReset';
+
+type VoiceCommandKeywordSets = {
+  add: Set<string>;
+  subtract: Set<string>;
+  subAdd: Set<string>;
+  subSubtract: Set<string>;
+  mainReset: Set<string>;
+  subReset: Set<string>;
+};
 
 const ERROR_MESSAGES: Record<string, string> = {
   aborted: '음성 인식이 중단되었습니다',
@@ -123,11 +150,6 @@ function normalizeTranscriptWords(text: string): string[] {
     .filter(Boolean);
 }
 
-/** STT가 같은 토큰을 연속으로 넣을 때 1번만 남긴다(배너·newWords 처리용). */
-function collapseConsecutiveDuplicateWords(words: string[]): string[] {
-  return words.filter((w, i) => i === 0 || w !== words[i - 1]);
-}
-
 function getCommonPrefixLength(previousWords: string[], nextWords: string[]): number {
   const maxLength = Math.min(previousWords.length, nextWords.length);
   let index = 0;
@@ -139,21 +161,32 @@ function getCommonPrefixLength(previousWords: string[], nextWords: string[]): nu
   return index;
 }
 
-function getWordAction(word: string): 'add' | 'subtract' | 'subAdd' | 'subSubtract' | null {
-  if (KEYWORD_SET_ADD.has(word)) {
+function getWordAction(
+  word: string,
+  keywordSets: VoiceCommandKeywordSets
+): VoiceCommandAction | null {
+  if (keywordSets.add.has(word)) {
     return 'add';
   }
 
-  if (KEYWORD_SET_SUBTRACT.has(word)) {
+  if (keywordSets.subtract.has(word)) {
     return 'subtract';
   }
 
-  if (KEYWORD_SET_SUB_ADD.has(word)) {
+  if (keywordSets.subAdd.has(word)) {
     return 'subAdd';
   }
 
-  if (KEYWORD_SET_SUB_SUBTRACT.has(word)) {
+  if (keywordSets.subSubtract.has(word)) {
     return 'subSubtract';
+  }
+
+  if (keywordSets.mainReset.has(word)) {
+    return 'mainReset';
+  }
+
+  if (keywordSets.subReset.has(word)) {
+    return 'subReset';
   }
 
   return null;
@@ -163,8 +196,11 @@ function getWordAction(word: string): 'add' | 'subtract' | 'subAdd' | 'subSubtra
  * 같은 인덱스에서 STT가 "군지" → "건지"처럼 교정만 해도 접두어가 같다고 보기 위해,
  * 키워드 동작별로 하나의 토큰으로 치환한다. (실제 콜백에는 원문 단어를 그대로 넘긴다.)
  */
-function canonicalizeKeywordForTranscriptDiff(word: string): string {
-  const action = getWordAction(word);
+function canonicalizeKeywordForTranscriptDiff(
+  word: string,
+  keywordSets: VoiceCommandKeywordSets
+): string {
+  const action = getWordAction(word, keywordSets);
   if (action === 'add') {
     return '\0__kw_add__';
   }
@@ -177,6 +213,12 @@ function canonicalizeKeywordForTranscriptDiff(word: string): string {
   if (action === 'subSubtract') {
     return '\0__kw_subsubtract__';
   }
+  if (action === 'mainReset') {
+    return '\0__kw_main_reset__';
+  }
+  if (action === 'subReset') {
+    return '\0__kw_sub_reset__';
+  }
   return word;
 }
 
@@ -186,10 +228,13 @@ function canonicalizeKeywordForTranscriptDiff(word: string): string {
  */
 export function useVoiceCommands(
   enabled: boolean,
+  keywordConfig: VoiceCommandKeywordConfig,
   onAdd: (commandWord?: string) => void,
   onSubtract: (commandWord?: string) => void,
   onSubAdd?: (commandWord?: string) => void,
   onSubSubtract?: (commandWord?: string) => void,
+  onMainReset?: (commandWord?: string) => void,
+  onSubReset?: (commandWord?: string) => void,
   onRecognized?: (text: string) => void,
   onError?: (message: string) => void
 ) {
@@ -197,6 +242,8 @@ export function useVoiceCommands(
   const onSubtractRef = useRef(onSubtract);
   const onSubAddRef = useRef(onSubAdd);
   const onSubSubtractRef = useRef(onSubSubtract);
+  const onMainResetRef = useRef(onMainReset);
+  const onSubResetRef = useRef(onSubReset);
   const onRecognizedRef = useRef(onRecognized);
   const onErrorRef = useRef(onError);
   const enabledRef = useRef(enabled);
@@ -205,6 +252,8 @@ export function useVoiceCommands(
   onSubtractRef.current = onSubtract;
   onSubAddRef.current = onSubAdd;
   onSubSubtractRef.current = onSubSubtract;
+  onMainResetRef.current = onMainReset;
+  onSubResetRef.current = onSubReset;
   onRecognizedRef.current = onRecognized;
   onErrorRef.current = onError;
   enabledRef.current = enabled;
@@ -213,6 +262,15 @@ export function useVoiceCommands(
     if (!enabled) {
       return;
     }
+
+    const keywordSets = {
+      add: new Set(keywordConfig.addKeywords),
+      subtract: new Set(keywordConfig.subtractKeywords),
+      subAdd: new Set(keywordConfig.subAddKeywords),
+      subSubtract: new Set(keywordConfig.subSubtractKeywords),
+      mainReset: new Set(VOICE_RESET_COMMAND_KEYWORDS.main),
+      subReset: new Set(VOICE_RESET_COMMAND_KEYWORDS.sub),
+    };
 
     // recognition session의 로컬 런타임 상태.
     // React state로 두지 않고 effect 내부 변수로 관리해 네이티브 이벤트/타이머에서 즉시 읽는다.
@@ -260,51 +318,82 @@ export function useVoiceCommands(
     // 같은 슬롯에서 "군지" → "건지"처럼 유사어 교정만 일어난 경우는
     // 동작이 같은 키워드면 접두어 길이에 포함해 한 번만 실행되게 한다.
     const runActionsFromTranscript = (text: string) => {
+      const previousWords = lastTranscriptWords;
       const nextWords = normalizeTranscriptWords(text);
-      const prevCanonical = lastTranscriptWords.map(canonicalizeKeywordForTranscriptDiff);
-      const nextCanonical = nextWords.map(canonicalizeKeywordForTranscriptDiff);
+      const prevCanonical = previousWords.map((word) =>
+        canonicalizeKeywordForTranscriptDiff(word, keywordSets)
+      );
+      const nextCanonical = nextWords.map((word) =>
+        canonicalizeKeywordForTranscriptDiff(word, keywordSets)
+      );
       const commonPrefixLength = getCommonPrefixLength(prevCanonical, nextCanonical);
       let newWords = nextWords.slice(commonPrefixLength);
 
-      const prevTail = lastTranscriptWords[lastTranscriptWords.length - 1];
-      if (
+      const prevTail = previousWords[previousWords.length - 1];
+      const shouldSkipRepeatedTail =
         prevTail !== undefined &&
         newWords.length > 0 &&
-        newWords.every((w) => w === prevTail)
+        newWords.every((w) => w === prevTail);
+      const isRepeatedKoreanNumberCommand =
+        prevTail !== undefined &&
+        KOREAN_NUMBER_COMMAND_WORDS.has(prevTail) &&
+        getWordAction(prevTail, keywordSets) !== null;
+
+      if (
+        shouldSkipRepeatedTail &&
+        !isRepeatedKoreanNumberCommand
       ) {
         lastTranscriptWords = nextWords;
         return;
       }
 
-      newWords = collapseConsecutiveDuplicateWords(newWords);
-
       lastTranscriptWords = nextWords;
       newWords.forEach((word) => {
-        const action = getWordAction(word);
+        const action = getWordAction(word, keywordSets);
         if (action === 'add') {
-          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
             onAddRef.current(word);
           }
           return;
         }
 
         if (action === 'subtract') {
-          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
             onSubtractRef.current(word);
           }
           return;
         }
 
         if (action === 'subAdd') {
-          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
             onSubAddRef.current?.(word);
           }
           return;
         }
 
         if (action === 'subSubtract') {
-          if (!shouldSkipDuplicateKeywordAction(action, word)) {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
             onSubSubtractRef.current?.(word);
+          }
+          return;
+        }
+
+        if (action === 'mainReset') {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
+            onMainResetRef.current?.(word);
+          }
+          return;
+        }
+
+        if (action === 'subReset') {
+          const shouldSkipDedup = shouldSkipDuplicateKeywordAction(action, word);
+          if (!shouldSkipDedup) {
+            onSubResetRef.current?.(word);
           }
         }
       });
@@ -505,10 +594,12 @@ export function useVoiceCommands(
           requiresOnDeviceRecognition: true,
           androidRecognitionServicePackage: ANDROID_ON_DEVICE_SERVICE,
           contextualStrings: [
-            ...KEYWORDS_ADD,
-            ...KEYWORDS_SUBTRACT,
-            ...KEYWORDS_SUB_ADD,
-            ...KEYWORDS_SUB_SUBTRACT,
+            ...keywordConfig.addKeywords,
+            ...keywordConfig.subtractKeywords,
+            ...keywordConfig.subAddKeywords,
+            ...keywordConfig.subSubtractKeywords,
+            ...VOICE_RESET_COMMAND_KEYWORDS.main,
+            ...VOICE_RESET_COMMAND_KEYWORDS.sub,
           ],
           androidIntentOptions: {
             EXTRA_LANGUAGE_MODEL: 'web_search',
@@ -582,9 +673,7 @@ export function useVoiceCommands(
         if (transcript) {
           touchActivity(event.isFinal ? 'result-final' : 'result-partial');
           onErrorRef.current?.('');
-          const forDisplay = collapseConsecutiveDuplicateWords(
-            normalizeTranscriptWords(transcript)
-          ).join(' ');
+          const forDisplay = normalizeTranscriptWords(transcript).join(' ');
           onRecognizedRef.current?.(forDisplay);
           runActionsFromTranscript(transcript);
         }
@@ -711,5 +800,11 @@ export function useVoiceCommands(
       appStateSubscription.remove();
       ExpoSpeechRecognitionModule.abort();
     };
-  }, [enabled]);
+  }, [
+    enabled,
+    keywordConfig.addKeywords,
+    keywordConfig.subtractKeywords,
+    keywordConfig.subAddKeywords,
+    keywordConfig.subSubtractKeywords,
+  ]);
 }

@@ -14,10 +14,12 @@
       <category android:name="android.intent.category.BROWSABLE"/>
       <data android:scheme="https"/>
     </intent>
-  </queries>
-  <queries>
     <!-- Google 음성 인식 서비스 존재 여부를 조회해야 지원 기기/미설치 상태를 구분할 수 있습니다. -->
     <package android:name="com.google.android.googlequicksearchbox"/>
+    <!-- 온디바이스 음성 인식에 사용하는 com.google.android.as 패키지 가시성(Android 11+ 패키지 쿼리) -->
+    <package android:name="com.google.android.as"/>
+    <!-- Android 13+ 기본 음성 인식 서비스가 Speech Recognition & Synthesis(com.google.android.tts)인 기기가 있습니다. -->
+    <package android:name="com.google.android.tts"/>
     <intent>
       <action android:name="android.speech.RecognitionService"/>
     </intent>

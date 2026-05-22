@@ -5,7 +5,6 @@ import { activateIcons } from '@assets/images';
 interface ActivateToggleProps {
   mascotIsActive: boolean;
   onToggle: () => void;
-  onLongPress?: () => void;
   size?: number;
 }
 
@@ -16,11 +15,10 @@ interface ActivateToggleProps {
 const ActivateToggle: React.FC<ActivateToggleProps> = ({
   mascotIsActive,
   onToggle,
-  onLongPress,
   size = 23,
 }) => {
   return (
-    <TouchableOpacity onPress={onToggle} onLongPress={onLongPress}>
+    <TouchableOpacity onPress={onToggle}>
       <Image
         source={activateIcons[mascotIsActive ? 'active' : 'inactive']}
         style={{ width: size, height: size }}

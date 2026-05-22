@@ -3,7 +3,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { BaseModal } from '../BaseModal';
 import RoundedButton from '@components/common/RoundedButton';
-import { modalStyles } from '@styles/modalStyle';
+import { createModalStyles } from '@styles/modalStyle';
 
 /**
  * ConfirmModal 컴포넌트의 Props 인터페이스
@@ -38,6 +38,8 @@ const ConfirmModal: React.FC<ConfirmModalProps> = ({
   confirmText = '확인',
   cancelText = '취소',
 }) => {
+  const modalStyles = createModalStyles();
+
   const handleConfirm = () => {
     onConfirm();
     onClose();

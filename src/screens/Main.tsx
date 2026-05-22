@@ -5,6 +5,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { ItemRow, FloatingListActionButton, ItemModals, SortDropdown } from '@components/list';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
+import { appTheme } from '@styles/appTheme';
 import { useMain } from '@hooks/useMain';
 
 const Main = () => {
@@ -44,7 +45,7 @@ const Main = () => {
   } = useMain();
 
   return (
-    <SafeAreaView style={screenStyles.flex1} className={isEditMode ? 'bg-red-orange-400' : undefined} edges={safeAreaEdges}>
+    <SafeAreaView style={screenStyles.flex1} className={isEditMode ? appTheme.tw.bg.primary['400'] : undefined} edges={safeAreaEdges}>
       <ScrollView contentContainerStyle={screenStyles.scrollViewContent}>
         {items.map((item) => (
           <ItemRow

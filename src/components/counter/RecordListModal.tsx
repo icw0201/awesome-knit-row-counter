@@ -5,6 +5,7 @@ import { ScrollModal } from '@components/common/modals';
 import { SectionRecord } from '@storage/types';
 import { getEditContentText } from '@utils/sectionRecordUtils';
 import { formatCompactDate } from '@utils/timeUtils';
+import { appTheme } from '@styles/appTheme';
 
 interface RecordListModalProps {
   visible: boolean;
@@ -52,7 +53,7 @@ const RecordListModal: React.FC<RecordListModalProps> = ({
                 {record.voiceCommand && (
                   // 음성 명령은 줄바꿈 없이 우측 보조 정보로 붙여서 표시
                   <View className="ml-1 flex-row items-center">
-                    <Mic size={12} color="#767676" strokeWidth={2} />
+                    <Mic size={12} color={appTheme.colors.darkgray} strokeWidth={2} />
                     <Text
                       className="ml-1 text-sm text-darkgray"
                       allowFontScaling={false}
@@ -68,11 +69,11 @@ const RecordListModal: React.FC<RecordListModalProps> = ({
             {records.length > 3 && index === 2 && (
               // 요약 3개와 그 이후 기록의 시각적 경계를 위한 구분선
               <View className="my-1.5 w-full flex-row items-center justify-center">
-                <View className="h-px w-20 bg-red-orange-400" />
+                <View className={`h-px w-20 ${appTheme.tw.bg.primary['400']}`} />
                 <View className="mx-2">
-                  <ChevronDown size={14} color="#fc3e39" />
+                  <ChevronDown size={14} color={appTheme.colors.primary['500']} />
                 </View>
-                <View className="h-px w-20 bg-red-orange-400" />
+                <View className={`h-px w-20 ${appTheme.tw.bg.primary['400']}`} />
               </View>
             )}
           </Fragment>

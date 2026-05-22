@@ -2,7 +2,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Modal, Text, Pressable, View, StyleSheet } from 'react-native';
 import { usePreferReducedMotion } from '@hooks/usePreferReducedMotion';
-import { modalStyles } from '@styles/modalStyle';
+import { createModalStyles } from '@styles/modalStyle';
 
 /**
  * BaseModal 컴포넌트의 Props 인터페이스
@@ -29,6 +29,7 @@ const BaseModal: React.FC<BaseModalProps> = ({
   children,
 }) => {
   const preferReducedMotion = usePreferReducedMotion();
+  const modalStyles = createModalStyles();
   const [contentReady, setContentReady] = useState(false);
   const gatesRef = useRef({ show: false, innerLayout: false });
   const rafRef = useRef<number | undefined>(undefined);

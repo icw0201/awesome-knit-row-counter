@@ -42,3 +42,14 @@ expoAutolinking.useExpoVersionCatalog()
 
 include ':app'
 includeBuild(expoAutolinking.reactNativeGradlePlugin)
+
+// ExpoRootProject의 setIfNotExist('kotlinVersion')보다 먼저 루트 ext를 채워야 OpenIAP와 Kotlin 메타데이터가 맞습니다.
+// (루트 build.gradle 본문의 ext만으로는 타이밍에 따라 2.0.21이 잡히는 경우가 있었습니다.)
+gradle.beforeProject { project ->
+  if (project.parent == null) {
+    def kv = project.findProperty('kotlinVersion') ?: '2.2.10'
+    def kspv = project.findProperty('kspVersion') ?: '2.2.10-2.0.2'
+    project.ext.kotlinVersion = kv.toString()
+    project.ext.kspVersion = kspv.toString()
+  }
+}
