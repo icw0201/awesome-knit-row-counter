@@ -8,7 +8,7 @@
   
   📱 **플레이스토어** : https://play.google.com/store/apps/details?id=com.simpleknitcounter
   
-  📱 **원스토어** : https://onesto.re/0001001132
+  📱 **원스토어** : https://onesto.re/0001001132 (v1.4.3 이후 업데이트 중단)
   
   👾 **개발 기간** : 2025.04 ~
   
@@ -18,30 +18,59 @@
 ## 함께 만드는 사람들
 
 
-<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
-<tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;"><a href="https://github.com/icw0201">임채원</a></td>
-<td rowspan="3" style="border-left: 1px solid #000;">제작하며 성장 중인 개발자 임채원입니다. 초기 계획보다 기능이 많아져서 디자인이 가장 큰 고민이었는데, 감사하게도 중간부터 디자이너분이 합류해주셨습니다. 앞으로도 뜨개인들이 필요한 기능 모두 담아낼 수 있도록, 간편함과 직관성도 잃지 않도록 힘써서 개발하겠습니다. 디자이너님과 파이팅!<br/>
-📧 <b>contact</b> : Gaebal0201@gmail.com</td>
-</tr>
-<tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;"><img src="https://avatars.githubusercontent.com/u/218532127?v=4" width="120" /></td>
-</tr>
-<tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;">이것저것 다 합니다</td>
-</tr>
-<tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;"><a href="https://x.com/tu_mooner">뜨문어</a></td>
-<td rowspan="3" style="border-left: 1px solid #000;">개발자님께 공예과는 시각디자인과와 다르다는 사실을 설득하는 데에 실패해서 잡혀왔습니다. 힘낼게요.<br/>
-📧 <b>contact</b> : schmucki@naver.com<br/>
-🕊️ <b>Twitter(X)</b>: <a href="https://x.com/tu_mooner">@Tu_mooner</a> </td>
-</tr>
-<tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;"><img src="https://pbs.twimg.com/profile_images/1944051589326786560/Y47_ofUL_400x400.jpg"/></td>
-</tr>
-<tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;">디자이너</td>
-</tr>
+<table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse; width: 100%; max-width: 640px; margin: 0 auto;">
+  <tr>
+    <td width="160" style="border-right: 1px solid #000; vertical-align: middle;">
+      <div align="center">
+        <a href="https://github.com/icw0201">임채원</a>
+      </div>
+    </td>
+    <td rowspan="3" style="border-left: 1px solid #000;">
+      제작하며 성장 중인 개발자 임채원입니다. 초기 계획보다 기능이 많아져서 디자인이 가장 큰 고민이었는데, 감사하게도 중간부터 디자이너분이 합류해주셨습니다. 앞으로도 뜨개인들이 필요한 기능 모두 담아낼 수 있도록, 간편함과 직관성도 잃지 않도록 힘써서 개발하겠습니다. 디자이너님과 파이팅!<br/>
+      📧 <b>contact</b> : Gaebal0201@gmail.com
+    </td>
+  </tr>
+  <tr>
+    <td width="160" style="border-right: 1px solid #000; vertical-align: middle;">
+      <div align="center">
+        <img src="https://avatars.githubusercontent.com/u/218532127?v=4" width="120"/>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td width="160" style="border-right: 1px solid #000; vertical-align: middle;">
+      <div align="center">
+        이것저것 다 합니다
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td width="160" style="border-right: 1px solid #000; vertical-align: middle;">
+      <div align="center">
+        <a href="https://x.com/tu_mooner">뜨문어</a>
+      </div>
+    </td>
+    <td rowspan="3" style="border-left: 1px solid #000;">
+      개발자님께 공예과는 시각디자인과와 다르다는 사실을 설득하는 데에 실패해서 잡혀왔습니다. 힘낼게요.<br/>
+      📧 <b>contact</b> : schmucki@naver.com<br/>
+      🕊️ <b>Twitter(X)</b>: <a href="https://x.com/tu_mooner">@Tu_mooner</a>
+    </td>
+  </tr>
+  <tr>
+    <td width="160" style="border-right: 1px solid #000; vertical-align: middle;">
+      <div align="center">
+        <img src="https://pbs.twimg.com/profile_images/1944051589326786560/Y47_ofUL_400x400.jpg" width="120"/>
+      </div>
+    </td>
+  </tr>
+  <tr>
+    <td width="160" style="border-right: 1px solid #000; vertical-align: middle;">
+      <div align="center">
+        <b>디자이너</b><br/>
+        UI/UX 디자인, 뜨개 자문, 기획, 교정교열, 카피라이팅, 마케팅 자문, 테스트, 각종 심부름
+      </div>
+    </td>
+  </tr>
 </table>
 
 ## 기술 스택
@@ -76,7 +105,7 @@
 - 타이머 : 카운터별 소요 시간을 측정할 수 있습니다.  
 - 활동 기록 : 카운터를 조작한 활동 기록을 확인할 수 있습니다. 방금 눌렀던가? 깜빡할 걱정은 이제 그만!  
 - 편물 앞뒤 체크 : 앞뒤 표시 마스코트 '방향이'로 편물의 앞 뒤를 설정할 수 있고, 이후 카운터 증감에 따라 자동으로 앞 뒷면을 알려줍니다. 더불어 도안 읽을 방향도 표시됩니다.  
-- 알림 단 : 카운터 상단 어쩌미 활성 아이콘을 길게 눌러 알림 단 규칙을 설정할 수 있습니다. 잊으면 안되는 늘림과 줄임 단, 꽈배기 단 등에 활용해 보세요!  
+- 알림 단 : 카운터 상단 어쩌미 활성 아이콘을 눌러 알림 단 규칙을 설정할 수 있습니다. 잊으면 안되는 늘림과 줄임 단, 꽈배기 단 등에 활용해 보세요!  
 - 작은 화면 대응 : 분할 화면이나 팝업화면에도 최적화되어 그래픽 깨짐 없이 모든 기능을 사용할 수 있습니다. 영상을 시청하거나 도안을 보면서도 이용해 보세요.  
 - 진행도와 완료 카운터 표시 : 목록에서 진행도, 완성한 편물을 한눈에 확인할 수 있습니다.  
 - 물리 키보드 입력 지원 : 상하좌우 키로도 카운터를 조작할 수 있습니다.  
@@ -85,17 +114,16 @@
 
 ## 화면 구성
 
-<div align="center">
-  <img width="50%" alt="상세 1" src="https://github.com/user-attachments/assets/5a3d5cb1-4194-4f67-ae8d-92cbc79700e6" />
-</div>
+
 <p float="left">
-  <img width="32%" alt="상세 2" src="https://github.com/user-attachments/assets/408a8e8a-6ded-4e63-94c8-a4699692f5d8" />
-  <img width="32%" alt="상세 3" src="https://github.com/user-attachments/assets/c2aed512-726c-46a1-b528-30b4207e19f7" />
-  <img width="32%" alt="상세 4 x1" src="https://github.com/user-attachments/assets/5ea94d48-b7e6-4c91-b6c4-11db5800afab" />
+  <img width="24%" alt="상세 1" src="https://github.com/user-attachments/assets/5a3d5cb1-4194-4f67-ae8d-92cbc79700e6" />
+  <img width="24%" alt="상세 2" src="https://github.com/user-attachments/assets/408a8e8a-6ded-4e63-94c8-a4699692f5d8" />
+  <img width="24%" alt="상세 3" src="https://github.com/user-attachments/assets/c2aed512-726c-46a1-b528-30b4207e19f7" />
+  <img width="24%" alt="상세 4 x1" src="https://github.com/user-attachments/assets/5ea94d48-b7e6-4c91-b6c4-11db5800afab" />
 </p>
 <p float="left">
-  <img width="32%" alt="상세 5" src="https://github.com/user-attachments/assets/6dcaaef6-02e3-49e4-9c42-7b30c85f2076" />
-  <img width="32%" height="960" alt="상세 6" src="https://github.com/user-attachments/assets/2f6ead79-e8f4-487b-bf93-330f90ee028c" />
-  <img width="32%" alt="상세 7" src="https://github.com/user-attachments/assets/48ccf8fd-8ab8-49bd-a13a-dc7771495aac" />
-
+  <img width="24%" alt="상세 5" src="https://github.com/user-attachments/assets/6dcaaef6-02e3-49e4-9c42-7b30c85f2076" />
+  <img width="24%" alt="상세 6" src="https://github.com/user-attachments/assets/2f6ead79-e8f4-487b-bf93-330f90ee028c" />
+  <img width="24%" alt="상세 7" src="https://github.com/user-attachments/assets/48ccf8fd-8ab8-49bd-a13a-dc7771495aac" />
+  <img width="24%" alt="상세 8" src="https://github.com/user-attachments/assets/137e7977-5cbc-40db-be1a-c0a63fa80316" />
 </p>
