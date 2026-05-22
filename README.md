@@ -8,7 +8,7 @@
   
   📱 **플레이스토어** : https://play.google.com/store/apps/details?id=com.simpleknitcounter
   
-  📱 **원스토어** : https://onesto.re/0001001132
+  📱 **원스토어** : https://onesto.re/0001001132 (v1.4.3 이후 업데이트 중단)
   
   👾 **개발 기간** : 2025.04 ~
   
@@ -20,27 +20,31 @@
 
 <table border="1" cellpadding="5" cellspacing="0" style="border-collapse: collapse;">
 <tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;"><a href="https://github.com/icw0201">임채원</a></td>
+<td width="140" style="border-right: 1px solid #000; text-align: center; vertical-align: middle;"><a href="https://github.com/icw0201" style="display:block; text-align:center;">임채원</a></td>
 <td rowspan="3" style="border-left: 1px solid #000;">제작하며 성장 중인 개발자 임채원입니다. 초기 계획보다 기능이 많아져서 디자인이 가장 큰 고민이었는데, 감사하게도 중간부터 디자이너분이 합류해주셨습니다. 앞으로도 뜨개인들이 필요한 기능 모두 담아낼 수 있도록, 간편함과 직관성도 잃지 않도록 힘써서 개발하겠습니다. 디자이너님과 파이팅!<br/>
 📧 <b>contact</b> : Gaebal0201@gmail.com</td>
 </tr>
 <tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;"><img src="https://avatars.githubusercontent.com/u/218532127?v=4" width="120" /></td>
+<td width="140" style="border-right: 1px solid #000; text-align: center; vertical-align: middle;"><img src="https://avatars.githubusercontent.com/u/218532127?v=4" width="120" /></td>
 </tr>
 <tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;">이것저것 다 합니다</td>
+<td width="140" style="border-right: 1px solid #000; text-align: center; vertical-align: middle;">이것저것 다 합니다</td>
 </tr>
 <tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;"><a href="https://x.com/tu_mooner">뜨문어</a></td>
+<td width="140" style="border-right: 1px solid #000; text-align: center; vertical-align: middle;"><a href="https://x.com/tu_mooner" style="display:block; text-align:center;">뜨문어</a></td>
 <td rowspan="3" style="border-left: 1px solid #000;">개발자님께 공예과는 시각디자인과와 다르다는 사실을 설득하는 데에 실패해서 잡혀왔습니다. 힘낼게요.<br/>
 📧 <b>contact</b> : schmucki@naver.com<br/>
 🕊️ <b>Twitter(X)</b>: <a href="https://x.com/tu_mooner">@Tu_mooner</a> </td>
 </tr>
 <tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;"><img src="https://pbs.twimg.com/profile_images/1944051589326786560/Y47_ofUL_400x400.jpg"/></td>
+<td width="140" style="border-right: 1px solid #000; text-align: center; vertical-align: middle;"><img src="https://pbs.twimg.com/profile_images/1944051589326786560/Y47_ofUL_400x400.jpg"/></td>
 </tr>
 <tr>
-<td width="100" style="border-right: 1px solid #000; text-align: center;">디자이너</td>
+<td width="140" style="border-right: 1px solid #000; text-align: center; vertical-align: middle;">
+  <div style="text-align:center;">
+    <b>디자이너</b><br/>
+    UI/UX 디자인, 뜨개 자문, 기획, 교정교열, 카피라이팅, 마케팅 자문, 테스트, 각종 심부름
+</td>
 </tr>
 </table>
 
