@@ -330,9 +330,9 @@ const isEditLogType = (value: unknown): boolean => {
     || value === 'way_change_back';
 };
 
-/** 반복 규칙 색상이 #RRGGBB 형식인지 확인한다. */
+/** 반복 규칙 색상이 #RRGGBB 이거나, 불투명 alpha(#RRGGBBff)를 붙인 형식인지 확인한다. */
 const isHexColor = (value: unknown): value is string => {
-  return typeof value === 'string' && /^#[0-9A-Fa-f]{6}$/.test(value);
+  return typeof value === 'string' && /^#[0-9A-Fa-f]{6}(?:ff)?$/i.test(value);
 };
 
 /** info 객체 전체가 설정 화면에서 저장 가능한 형태인지 확인한다. */
