@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { Text, TouchableOpacity, View } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Star } from 'lucide-react-native';
@@ -177,11 +177,10 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     <>
       {/* 백업 섹션: 제목·안내 문구·내보내기/불러오기(및 미구독 시 잠금 UI). */}
       <View className="mb-8">
-        <SettingsSectionHeader title="백업 및 복원" />
-        <Text className="mb-4 pl-6 pr-1 text-xs font-normal leading-5 text-darkgray">
-          앱 데이터는 이 기기에만 저장됩니다. 앱을 삭제하거나 기기를 바꾸면 데이터가
-          사라질 수 있으니, 파일로 내보내 두었다가 필요할 때 불러와 복구할 수 있습니다.
-        </Text>
+        <SettingsSectionHeader
+          title="백업 및 복원"
+          tooltipText="앱 데이터는 이 기기에만 저장됩니다. 앱을 삭제하거나 기기를 바꾸면 데이터가 사라질 수 있으니, 파일로 내보내 두었다가 필요할 때 불러와 복구할 수 있습니다."
+        />
         {/* IconBox 두 줄과, 미구독일 때만 씌우는 multiply·구매 진입·별 표시. */}
         <View className="relative">
           <IconBox
