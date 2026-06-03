@@ -62,7 +62,7 @@
             "repeatCount": 1,
             "endMode": "repeatCount",
             "ruleNumber": 1,
-            "color": "#f2a922ff"
+            "color": "#f2a922"
           },
           {
             "message": "sc around",
@@ -116,7 +116,7 @@
             "repeatCount": 1,
             "endMode": "repeatCount",
             "ruleNumber": 1,
-            "color": "#d4e157ff"
+            "color": "#d4e157"
           },
           {
             "message": "(12)",
