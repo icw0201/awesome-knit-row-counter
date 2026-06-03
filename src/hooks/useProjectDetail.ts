@@ -14,6 +14,7 @@ import {
 } from '@storage/settings';
 import { sortItems } from '@utils/sortUtils';
 import { suggestDuplicateTitle, cloneCounterForReplication } from '@utils/replicationUtils';
+import { createUniqueItemId } from '@utils/itemIdUtils';
 import { useItemList } from './useItemList';
 
 /**
@@ -74,9 +75,9 @@ export const useProjectDetail = () => {
    * 새 카운터 생성 함수
    */
   const createNewCounter = useCallback((title: string): Counter => {
-    const timestamp = Date.now();
+    const reservedIds = new Set(getStoredItems().map((item) => item.id));
     return {
-      id: `counter_${timestamp}`,
+      id: createUniqueItemId('counter', reservedIds),
       type: 'counter',
       title,
       count: 0,
@@ -199,7 +200,8 @@ export const useProjectDetail = () => {
         return false;
       }
 
-      const newId = `counter_${Date.now()}`;
+      const reservedIds = new Set(getStoredItems().map((item) => item.id));
+      const newId = createUniqueItemId('counter', reservedIds);
       const cloned = cloneCounterForReplication(
         counterToReplicate,
         trimmed,

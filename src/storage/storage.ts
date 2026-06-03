@@ -31,6 +31,21 @@ const setStoredItems = (items: Item[]) => {
 };
 
 /**
+ * 여러 항목을 한 번에 뒤에 추가합니다.
+ * 프로젝트 불러오기는 기존 데이터를 유지한 채 append 해야 하므로
+ * addItem 반복 대신 한 번에 저장하는 전용 경로를 둡니다.
+ * @param newItems 추가할 Item 배열
+ */
+export const appendImportedItems = (newItems: Item[]) => {
+  if (newItems.length === 0) {
+    return;
+  }
+
+  const existing = getStoredItems();
+  setStoredItems([...existing, ...newItems]);
+};
+
+/**
  * 새로운 항목을 추가합니다.
  * @param newItem 추가할 새로운 Item
  */

@@ -18,6 +18,7 @@ import {
   buildReplicatedProjectBundle,
   ReplicatedProjectBundle,
 } from '@utils/replicationUtils';
+import { createUniqueItemId } from '@utils/itemIdUtils';
 import { useItemList } from './useItemList';
 
 /**
@@ -76,11 +77,11 @@ export const useMain = () => {
    * 아이템 생성 함수
    */
   const createNewItem = useCallback((type: string, title: string): Item => {
-    const timestamp = Date.now();
+    const reservedIds = new Set(getStoredItems().map((item) => item.id));
 
     if (type === 'project') {
       return {
-        id: `proj_${timestamp}`,
+        id: createUniqueItemId('proj', reservedIds),
         type: 'project',
         title,
         counterIds: [],
@@ -88,7 +89,7 @@ export const useMain = () => {
     }
 
     return {
-      id: `counter_${timestamp}`,
+      id: createUniqueItemId('counter', reservedIds),
       type: 'counter',
       title,
       count: 0,
@@ -193,7 +194,8 @@ export const useMain = () => {
       }
 
       if (itemToReplicate.type === 'counter') {
-        const newId = `counter_${Date.now()}`;
+        const reservedIds = new Set(getStoredItems().map((item) => item.id));
+        const newId = createUniqueItemId('counter', reservedIds);
         const cloned = cloneCounterForReplication(itemToReplicate, trimmed, newId, null);
         if (checkDuplicateName(cloned)) {
           setPendingItem(cloned);

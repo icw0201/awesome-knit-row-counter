@@ -1,38 +1,38 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Star } from 'lucide-react-native';
 
 import { ConfirmModal } from '@components/common/modals';
 import type { RootStackParamList } from '@navigation/AppNavigator';
-import { appTheme } from '@styles/appTheme';
-import {
-  exportBackupToTemporaryFile,
-  getBackupSummary,
-  pickBackupDocument,
-  restoreBackupDocument,
-  shareBackupFile,
-  type BackupDocument,
-} from '@storage/backup';
 import { useIapContext } from '@provider/IapProvider';
+import { appTheme } from '@styles/appTheme';
+import { colorStyles } from '@styles/colorStyles';
+import {
+  getBundledItemImportDocument,
+  getItemImportSummary,
+  importItemImportDocument,
+  pickItemImportDocument,
+} from '@storage/backup';
+import type { ItemImportDocument } from '@storage/types';
 import IconBox from './IconBox';
 import SettingsSectionHeader from './SettingsSectionHeader';
 
-// 설정: 백업 파일 내보내기·불러오기, 프리미엄 잠금 및 복원 후 안내 모달.
+interface SettingsItemImportProps {}
 
-// 설정 백업 블록용 프롭(필요 시 확장).
+const PREMIUM_OVERLAY_STYLE = { mixBlendMode: 'multiply' } as const;
 
-interface SettingsBackupProps {}
-
-const SettingsBackup: React.FC<SettingsBackupProps> = () => {
-  // 네비게이션, 프리미엄 여부, 공지 확인 콜백 ref, 불러오기·모달·처리 중 상태.
+const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { premiumUnlocked } = useIapContext();
+  const { containerClassName, textClassName } = colorStyles.light;
+  // 완료 모달에서 확인을 눌렀을 때 실행할 후속 동작(예: Main으로 이동)을 보관한다.
   const onNoticeConfirmRef = useRef<(() => void) | null>(null);
 
-  const [pendingImportDocument, setPendingImportDocument] = useState<BackupDocument | null>(
+  // 파일 선택 → 확인 모달 → 실제 import 실행 단계가 공유하는 상태들.
+  const [pendingImportDocument, setPendingImportDocument] = useState<ItemImportDocument | null>(
     null
   );
   const [importConfirmVisible, setImportConfirmVisible] = useState(false);
@@ -43,7 +43,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
   const [noticeMessage, setNoticeMessage] = useState('');
   const [isBusy, setIsBusy] = useState(false);
 
-  // 복원 완료 등 이후 메인 화면으로 스택을 초기화.
+  // import 직후 목록 갱신 결과를 바로 보게 하려고 Main 스택으로 되돌린다.
   const resetToMain = useCallback(() => {
     navigation.dispatch(
       CommonActions.reset({
@@ -53,7 +53,6 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     );
   }, [navigation]);
 
-  // 오류·안내 모달 표시와 사용자에게 보여줄 에러 문구 정리.
   const showErrorModal = useCallback((message: string) => {
     setErrorMessage(message);
     setErrorModalVisible(true);
@@ -78,8 +77,14 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     return '처리 중 오류가 발생했습니다.';
   }, []);
 
-  // 임시 백업 파일 생성 후 OS 공유 시트로 내보내기.
-  const handleExportPress = useCallback(async () => {
+  // 샘플 import/파일 import 모두 "검증된 문서를 모달에 올리는" 단계는 동일하다.
+  const prepareImportDocument = useCallback((document: ItemImportDocument) => {
+    setPendingImportDocument(document);
+    setImportConfirmVisible(true);
+  }, []);
+
+  // 무료 맛보기는 앱에 포함된 샘플 JSON을 동일한 import 파이프라인으로 태운다.
+  const handleSampleItemImportPress = useCallback(async () => {
     if (isBusy) {
       return;
     }
@@ -87,40 +92,38 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     setIsBusy(true);
 
     try {
-      const { fileUri } = await exportBackupToTemporaryFile();
-      await shareBackupFile(fileUri);
+      const document = getBundledItemImportDocument();
+      prepareImportDocument(document);
     } catch (error) {
       showErrorModal(getReadableErrorMessage(error));
     } finally {
       setIsBusy(false);
     }
-  }, [getReadableErrorMessage, isBusy, showErrorModal]);
+  }, [getReadableErrorMessage, isBusy, prepareImportDocument, showErrorModal]);
 
-  // 백업 파일 선택 후 덮어쓰기 확인 모달을 띄울 데이터만 준비.
-  const handleImportPress = useCallback(async () => {
+  // 유료 import는 사용자가 고른 JSON을 파싱/검증한 뒤 확인 모달로 넘긴다.
+  const handleItemImportPress = useCallback(async () => {
     if (isBusy) {
       return;
     }
 
     setIsBusy(true);
-
     try {
-      const document = await pickBackupDocument();
+      const document = await pickItemImportDocument();
 
       if (!document) {
         return;
       }
 
-      setPendingImportDocument(document);
-      setImportConfirmVisible(true);
+      prepareImportDocument(document);
     } catch (error) {
       showErrorModal(getReadableErrorMessage(error));
     } finally {
       setIsBusy(false);
     }
-  }, [getReadableErrorMessage, isBusy, showErrorModal]);
+  }, [getReadableErrorMessage, isBusy, prepareImportDocument, showErrorModal]);
 
-  // 확인 시 스토리지 복원 → 완료 공지(확인 시 메인으로 이동).
+  // 확인 모달 승인 후에만 실제 스토리지 병합을 수행한다.
   const handleImportConfirm = useCallback(async () => {
     if (!pendingImportDocument) {
       return;
@@ -129,15 +132,15 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     setIsBusy(true);
 
     try {
-      await restoreBackupDocument(pendingImportDocument);
+      await importItemImportDocument(pendingImportDocument);
       setPendingImportDocument(null);
       showNoticeModal(
-        '불러오기 완료',
-        '백업 데이터를 불러왔습니다.\n확인을 누르면 메인 화면으로 돌아갑니다.',
+        '프로젝트 불러오기 완료',
+        '프로젝트 데이터를 불러왔습니다.\n확인을 누르면 메인 화면으로 돌아갑니다.',
         resetToMain
       );
     } catch (error) {
-      console.error('SettingsBackup: restore backup failed', error);
+      console.error('SettingsItemImport: import item document failed', error);
       showErrorModal(getReadableErrorMessage(error));
     } finally {
       setIsBusy(false);
@@ -150,22 +153,21 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
     showNoticeModal,
   ]);
 
-  // 안내 모달에서 확인을 누르면 ref에 넣어 둔 후속 동작(예: resetToMain) 실행.
+  // 완료 모달은 상황에 따라 서로 다른 후속 동작을 실행할 수 있어 ref 기반 콜백을 사용한다.
   const handleNoticeConfirm = useCallback(() => {
     const callback = onNoticeConfirmRef.current;
     onNoticeConfirmRef.current = null;
     callback?.();
   }, []);
 
-  // 불러오기 확인 모달 본문: 경고 문구 + 선택한 백업의 요약(시각·개수 등).
+  // append 방식 import라는 점을 사용자가 이해할 수 있도록 대상 개수만 간단히 요약한다.
   const importDescription = pendingImportDocument
     ? (() => {
-      const summary = getBackupSummary(pendingImportDocument);
+      const summary = getItemImportSummary(pendingImportDocument);
 
       return [
-        '불러오기를 진행하면 현재 기기의 데이터가 백업 내용으로 덮어써집니다.',
+        '불러오기를 진행하면 현재 기기의 데이터에 프로젝트가 추가됩니다.',
         '',
-        `백업 시각: ${summary.exportedAtLabel}`,
         `프로젝트: ${summary.projectCount}개`,
         `카운터: ${summary.counterCount}개`,
         `전체 항목: ${summary.totalItems}개`,
@@ -175,58 +177,63 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
 
   return (
     <>
-      {/* 백업 섹션: 제목·안내 문구·내보내기/불러오기(및 미구독 시 잠금 UI). */}
       <View className="mb-8">
         <SettingsSectionHeader
-          title="백업 및 복원"
-          tooltipText="앱 데이터는 이 기기에만 저장됩니다. 앱을 삭제하거나 기기를 바꾸면 데이터가 사라질 수 있으니, 파일로 내보내 두었다가 필요할 때 불러와 복구할 수 있습니다."
+          title="프로젝트 불러오기"
+          tooltipText={
+            [
+              '어쩜 전용 파일을 제공하는 도안을 구매하셨다면, 미리 세팅된 프로젝트 파일을 불러와 사용하세요!',
+              '',
+              '불러오기 전용 json 파일을 제작하고 싶은 도아너라면, 문의하기를 통해 연락 주세요. 협업해주시는 도아너님께 프리미엄 앱 코드를 발송해드립니다.',
+            ].join('\n')
+          }
         />
-        {/* IconBox 두 줄과, 미구독일 때만 씌우는 multiply·구매 진입·별 표시. */}
+        <Text className={`px-2 pb-2 text-xs ${appTheme.tw.text.darkgray}`}>
+          목표단수, 알림설정이 미리 세팅된 프로젝트 파일을{'\n'}
+          불러올 수 있습니다.
+        </Text>
+        <TouchableOpacity
+          onPress={async () => {
+            await handleSampleItemImportPress();
+          }}
+          activeOpacity={0.7}
+          disabled={isBusy}
+        >
+          <View className={`m-1.5 rounded-2xl p-4 ${containerClassName}`}>
+            <View className="flex-row items-center justify-between py-3">
+              <Text className={`text-base font-semibold ${textClassName}`}>
+                {isBusy ? '처리 중...' : '맛보기 프로젝트 불러오기'}
+              </Text>
+              <Text className={`text-sm font-bold ${appTheme.tw.text.primary['500']}`}>
+                try it!
+              </Text>
+            </View>
+          </View>
+        </TouchableOpacity>
         <View className="relative">
           <IconBox
-            title={isBusy ? '처리 중...' : '전체 데이터 내보내기'}
-            iconName="download"
-            disabled={!premiumUnlocked}
-            onPress={async () => {
-              await handleExportPress();
-            }}
-          />
-          <IconBox
-            title={isBusy ? '처리 중...' : '전체 데이터 불러오기'}
+            title={isBusy ? '처리 중...' : '프로젝트 불러오기'}
             iconName="upload"
-            disabled={!premiumUnlocked}
+            disabled={!premiumUnlocked || isBusy}
             onPress={async () => {
-              await handleImportPress();
+              await handleItemImportPress();
             }}
           />
           {!premiumUnlocked ? (
             <>
               <View
                 className="pointer-events-none absolute -inset-2 z-[5] rounded-2xl bg-mediumgray overflow-hidden"
-                style={{ mixBlendMode: 'multiply' }}
+                style={PREMIUM_OVERLAY_STYLE}
               />
               <TouchableOpacity
                 activeOpacity={1}
                 className="absolute -inset-2 z-[10] rounded-2xl"
                 onPress={() => navigation.navigate('PremiumPurchase')}
                 accessibilityRole="button"
-                accessibilityLabel="백업 및 복원, 프리미엄 전용"
+                accessibilityLabel="프로젝트 불러오기"
                 accessibilityHint="탭하면 프리미엄 구매 화면으로 이동합니다."
               />
-              <View
-                className="pointer-events-none absolute right-4 top-0 z-[20] w-6 items-center justify-center"
-                style={{ height: '50%' }}
-              >
-                <Star
-                  size={22}
-                  color={appTheme.colors.premiumGold}
-                  fill={appTheme.colors.premiumGold}
-                />
-              </View>
-              <View
-                className="pointer-events-none absolute bottom-0 right-4 z-[20] w-6 items-center justify-center"
-                style={{ height: '50%' }}
-              >
+              <View className="pointer-events-none absolute inset-y-0 right-4 z-[20] w-6 items-center justify-center">
                 <Star
                   size={22}
                   color={appTheme.colors.premiumGold}
@@ -238,14 +245,13 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
         </View>
       </View>
 
-      {/* 불러오기 확인, 완료 안내, 오류 각각 전용 ConfirmModal. */}
       <ConfirmModal
         visible={importConfirmVisible}
         onClose={() => {
           setImportConfirmVisible(false);
           setPendingImportDocument(null);
         }}
-        title="전체 데이터 불러오기"
+        title="프로젝트 불러오기"
         description={importDescription}
         onConfirm={async () => {
           await handleImportConfirm();
@@ -280,4 +286,4 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
   );
 };
 
-export default SettingsBackup;
+export default SettingsItemImport;
