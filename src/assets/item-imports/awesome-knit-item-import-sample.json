@@ -1,0 +1,196 @@
+{
+  "formatVersion": 1,
+  "appId": "awesome-knit-row-counter",
+  "importType": "item-import",
+  "dataVersion": 5,
+  "payload": {
+    "knitItems": [
+      {
+        "id": "counter_template_bangulbread_keyring",
+        "type": "counter",
+        "title": "방울빵 키링",
+        "count": 0,
+        "targetCount": 10,
+        "parentProjectId": null,
+        "subCount": 0,
+        "subRule": 0,
+        "subRuleIsActive": false,
+        "subModalIsOpen": false,
+        "mascotIsActive": true,
+        "wayIsChange": false,
+        "repeatRules": [
+          {
+            "message": "사슬3, 빼뜨, 사슬4,빼뜨",
+            "startNumber": 0,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#EF5777"
+          },
+          {
+            "message": "짧뜨7 (7)",
+            "startNumber": 1,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#574559"
+          },
+          {
+            "message": "늘리기7 (14)",
+            "startNumber": 2,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#04BFAD"
+          },
+          {
+            "message": "짧뜨1, 늘리기1",
+            "startNumber": 3,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#F2A922"
+          },
+          {
+            "message": "(21)",
+            "startNumber": 3,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#f2a922ff"
+          },
+          {
+            "message": "sc around",
+            "startNumber": 4,
+            "endNumber": 7,
+            "repeatCount": 0,
+            "endMode": "endNumber",
+            "ruleNumber": 1,
+            "color": "#D9B391"
+          },
+          {
+            "message": "(21)",
+            "startNumber": 4,
+            "endNumber": 7,
+            "repeatCount": 0,
+            "endMode": "endNumber",
+            "ruleNumber": 1,
+            "color": "#d9b391ff"
+          },
+          {
+            "message": "실 색 변경",
+            "startNumber": 7,
+            "endNumber": 1,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#A9CBD9"
+          },
+          {
+            "message": "짧뜨2, 줄이기",
+            "startNumber": 8,
+            "endNumber": 0,
+            "repeatCount": 2,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#D4E157"
+          },
+          {
+            "message": "줄이기 (6)",
+            "startNumber": 10,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#DAC6E8"
+          },
+          {
+            "message": "(16)",
+            "startNumber": 8,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#d4e157ff"
+          },
+          {
+            "message": "(12)",
+            "startNumber": 9,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#FFA685"
+          }
+        ],
+        "sectionModalIsOpen": false,
+        "info": {
+          "startDate": "",
+          "endDate": "",
+          "gauge": "",
+          "yarn": "원작 : 얀메이크 착하면",
+          "needle": "원작 : 튤립 에티모 모사용 4/0호 코바늘",
+          "notes": "원작 :\n셋업 단에서 만든 3사슬 고리를 매직링처럼 사용합니다. 1단에서 해당 고리에 짧은 뜨기를 합니다.\n완성한 뒤, 셋업 단에서 만든 4사슬 고리에 군번줄을 달아 마무리합니다. 고리가 필요하지 않다면 4사슬 고리는 생략해도 괜찮습니다.\n\n원작에서는 매 단 빼뜨기와 기둥코를 세웠지만, 빼뜨기 없이 나선형으로 떠도 무방합니다."
+        }
+      },
+      {
+        "id": "proj_template_leaf_cuff",
+        "type": "project",
+        "title": "leaf cuff",
+        "counterIds": [
+          "counter_template_leaf_cuff_a",
+          "counter_template_leaf_cuff_b"
+        ]
+      },
+      {
+        "id": "counter_template_leaf_cuff_a",
+        "type": "counter",
+        "title": "ㄱ",
+        "count": 4,
+        "targetCount": 20,
+        "parentProjectId": "proj_template_leaf_cuff",
+        "subCount": 0,
+        "subRule": 0,
+        "subRuleIsActive": false,
+        "subModalIsOpen": false,
+        "mascotIsActive": true,
+        "wayIsChange": true,
+        "repeatRules": [],
+        "sectionModalIsOpen": true,
+        "way": "front"
+      },
+      {
+        "id": "counter_template_leaf_cuff_b",
+        "type": "counter",
+        "title": "ㄴ",
+        "count": 10,
+        "targetCount": 0,
+        "parentProjectId": "proj_template_leaf_cuff",
+        "subCount": 0,
+        "subRule": 0,
+        "subRuleIsActive": false,
+        "subModalIsOpen": false,
+        "mascotIsActive": true,
+        "wayIsChange": true,
+        "repeatRules": [
+          {
+            "message": "늘림 단",
+            "startNumber": 10,
+            "endNumber": 0,
+            "repeatCount": 5,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#EF5777"
+          }
+        ],
+        "sectionModalIsOpen": false,
+        "way": "front"
+      }
+    ]
+  }
+}

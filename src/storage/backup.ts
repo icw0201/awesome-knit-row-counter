@@ -1,8 +1,17 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
-import type { Item, SortCriteria, SortOrder } from './types';
-import { getStoredItems } from './storage';
+import type {
+  Item,
+  ItemImportCounter,
+  ItemImportDocument,
+  ItemImportItem,
+  ItemImportPayload,
+  ItemImportSummary,
+  SortCriteria,
+  SortOrder,
+} from './types';
+import { appendImportedItems, getStoredItems } from './storage';
 import {
   getAutoPlayElapsedTimeSetting,
   getSelectedColorThemeSetting,
@@ -53,6 +62,7 @@ import {
 
 const APP_ID = 'awesome-knit-row-counter';
 const BACKUP_FORMAT_VERSION = 1;
+const ITEM_IMPORT_TYPE = 'item-import';
 const MAX_COUNTER_VALUE = 9999;
 const MAX_ELAPSED_TIME_SECONDS = 35999999;
 const MAX_TITLE_LENGTH = 15;
@@ -71,6 +81,7 @@ const KEY_DISMISSED_ONESTORE_APP_VERSION = 'updatePrompt.dismissedOnestoreAppVer
 const BACKUP_DIRECTORY_NAME = 'backups';
 const BACKUP_FILE_PREFIX = 'awesome-knit-row-counter-backup';
 const BACKUP_FILE_EXTENSION = '.json';
+const BUNDLED_ITEM_IMPORT_DOCUMENT = require('../assets/item-imports/awesome-knit-item-import-sample.json') as ItemImportDocument;
 
 type Nullable<T> = T | null;
 
@@ -137,6 +148,14 @@ const isStringArray = (value: unknown): value is string[] => {
 /** 앱이 생성하는 아이템 ID 형식(proj_/counter_ + timestamp)인지 확인한다. */
 const isGeneratedItemId = (value: unknown): value is string => {
   return typeof value === 'string' && /^(proj|counter)_\d+$/.test(value);
+};
+
+/** item-import 문서에서 임시 템플릿 ID를 포함한 문자열 ID를 허용한다. */
+const isImportItemId = (value: unknown): value is string => {
+  return typeof value === 'string'
+    && isTrimmedString(value)
+    && value.length > 0
+    && getCharacterLength(value) <= MAX_LONG_TEXT_LENGTH;
 };
 
 /** 사용자 지정 음성 명령어 3칸 입력 구조인지 확인한다. */
@@ -544,6 +563,85 @@ const hasUniqueIds = (items: Item[]): boolean => {
   return true;
 };
 
+type ItemReferenceShape = {
+  id: string;
+  type: 'project' | 'counter';
+  title: string;
+  counterIds?: string[];
+  parentProjectId?: string | null;
+};
+
+const hasUniqueReferenceIds = <T extends Pick<ItemReferenceShape, 'id'>>(
+  items: T[]
+): boolean => {
+  const ids = new Set<string>();
+
+  for (const item of items) {
+    if (ids.has(item.id)) {
+      return false;
+    }
+
+    ids.add(item.id);
+  }
+
+  return true;
+};
+
+const hasValidReferenceTitles = <T extends Pick<ItemReferenceShape, 'title'>>(
+  items: T[]
+): boolean => {
+  return items.every((item) => isTrimmedNonEmptyStringWithinLength(item.title, MAX_TITLE_LENGTH));
+};
+
+const hasValidReferenceProjectCounterReferences = <T extends ItemReferenceShape>(
+  items: T[]
+): boolean => {
+  const projects = items.filter((item) => item.type === 'project');
+  const counters = items.filter((item) => item.type === 'counter');
+  const projectMap = new Map(projects.map((project) => [project.id, project]));
+  const counterMap = new Map(counters.map((counter) => [counter.id, counter]));
+
+  for (const project of projects) {
+    const counterIdSet = new Set<string>();
+
+    for (const counterId of project.counterIds ?? []) {
+      if (counterIdSet.has(counterId)) {
+        return false;
+      }
+
+      counterIdSet.add(counterId);
+
+      const counter = counterMap.get(counterId);
+      if (!counter || counter.parentProjectId !== project.id) {
+        return false;
+      }
+    }
+  }
+
+  for (const counter of counters) {
+    if (counter.parentProjectId == null) {
+      continue;
+    }
+
+    const parentProject = projectMap.get(counter.parentProjectId);
+    if (!parentProject) {
+      return false;
+    }
+
+    if (!(parentProject.counterIds ?? []).includes(counter.id)) {
+      return false;
+    }
+  }
+
+  return true;
+};
+
+const hasValidReferenceSemantics = <T extends ItemReferenceShape>(items: T[]): boolean => {
+  return hasUniqueReferenceIds(items)
+    && hasValidReferenceTitles(items)
+    && hasValidReferenceProjectCounterReferences(items);
+};
+
 // 제목 중복은 앱에서 경고 후 허용할 수 있으므로, 백업 검증에서는 길이/trim만 강제한다.
 // 대신 복원 후 구조가 깨지지 않도록 프로젝트-카운터 참조 무결성은 엄격하게 본다.
 const hasValidTitleConstraints = (items: Item[]): boolean => {
@@ -671,6 +769,87 @@ const isItemArray = (value: unknown, dataVersion: number): value is Item[] => {
   });
 
   return allItemsAreValid && hasValidItemSemantics(value);
+};
+
+const hasForbiddenItemImportProjectFields = (value: Record<string, unknown>): boolean => {
+  return 'updatedAt' in value;
+};
+
+const hasForbiddenItemImportCounterFields = (value: Record<string, unknown>): boolean => {
+  return 'elapsedTime' in value
+    || 'timerIsActive' in value
+    || 'timerIsPlaying' in value
+    || 'sectionRecords' in value
+    || 'updatedAt' in value;
+};
+
+const isItemImportProjectItem = (value: Record<string, unknown>): boolean => {
+  return !hasForbiddenItemImportProjectFields(value)
+    && isStringArray(value.counterIds)
+    && isInfo(value.info);
+};
+
+const isItemImportCounterItem = (
+  value: Record<string, unknown>,
+  dataVersion: number
+): value is ItemImportCounter => {
+  if (
+    hasForbiddenItemImportCounterFields(value)
+    || !isCounterValue(value.count)
+    || !isCounterValue(value.targetCount)
+    || !(value.parentProjectId === undefined || value.parentProjectId === null || typeof value.parentProjectId === 'string')
+    || !isInfo(value.info)
+    || !isOptionalWay(value.way)
+    || !isCounterValue(value.subCount)
+    || !isNonNegativeInteger(value.subRule)
+    || typeof value.subRuleIsActive !== 'boolean'
+    || typeof value.subModalIsOpen !== 'boolean'
+    || typeof value.mascotIsActive !== 'boolean'
+    || typeof value.wayIsChange !== 'boolean'
+    || !Array.isArray(value.repeatRules)
+    || typeof value.sectionModalIsOpen !== 'boolean'
+  ) {
+    return false;
+  }
+
+  return value.repeatRules.every((rule) => isRepeatRule(rule, dataVersion));
+};
+
+const isItemImportArray = (value: unknown, dataVersion: number): value is ItemImportItem[] => {
+  if (!Array.isArray(value)) {
+    return false;
+  }
+
+  const allItemsAreValid = value.every((item) => {
+    if (!isRecord(item) || !isImportItemId(item.id) || typeof item.title !== 'string') {
+      return false;
+    }
+
+    if (item.type === 'project') {
+      return isItemImportProjectItem(item);
+    }
+
+    if (item.type === 'counter') {
+      return isItemImportCounterItem(item, dataVersion);
+    }
+
+    return false;
+  });
+
+  return allItemsAreValid && hasValidReferenceSemantics(value as ItemReferenceShape[]);
+};
+
+const assertValidItemImportPayload = (
+  value: unknown,
+  dataVersion: number
+): ItemImportPayload => {
+  if (!isRecord(value) || !isItemImportArray(value.knitItems, dataVersion)) {
+    throw new Error('프로젝트 데이터 형식이 올바르지 않습니다.');
+  }
+
+  return {
+    knitItems: value.knitItems,
+  };
 };
 
 /** settings payload 전체가 앱이 저장하는 설정 구조와 일치하는지 검증한다. */
@@ -896,6 +1075,162 @@ export const parseBackupDocument = (json: string): BackupDocument => {
   };
 };
 
+const remapImportedItems = (items: ItemImportItem[]): Item[] => {
+  const baseTimestamp = Date.now();
+  const oldIdToNewId = new Map<string, string>();
+
+  items.forEach((item, index) => {
+    const nextTimestamp = baseTimestamp + index;
+    const prefix = item.type === 'project' ? 'proj' : 'counter';
+    oldIdToNewId.set(item.id, `${prefix}_${nextTimestamp}`);
+  });
+
+  const normalizedItems = items.map((item, index): Item => {
+    const mappedId = oldIdToNewId.get(item.id);
+    const nextTimestamp = baseTimestamp + index;
+
+    if (!mappedId) {
+      throw new Error('프로젝트 불러오기 ID를 생성하지 못했습니다.');
+    }
+
+    if (item.type === 'project') {
+      return {
+        id: mappedId,
+        type: 'project',
+        title: item.title,
+        counterIds: item.counterIds.map((counterId) => {
+          const mappedCounterId = oldIdToNewId.get(counterId);
+
+          if (!mappedCounterId) {
+            throw new Error('프로젝트-카운터 연결 정보가 올바르지 않습니다.');
+          }
+
+          return mappedCounterId;
+        }),
+        info: item.info ? { ...item.info } : undefined,
+        updatedAt: nextTimestamp,
+      };
+    }
+
+    const mappedParentProjectId = item.parentProjectId == null
+      ? null
+      : oldIdToNewId.get(item.parentProjectId);
+
+    if (item.parentProjectId != null && !mappedParentProjectId) {
+      throw new Error('카운터의 부모 프로젝트 연결 정보가 올바르지 않습니다.');
+    }
+
+    return {
+      id: mappedId,
+      type: 'counter',
+      title: item.title,
+      count: item.count,
+      targetCount: item.targetCount,
+      elapsedTime: 0,
+      timerIsActive: false,
+      timerIsPlaying: false,
+      parentProjectId: mappedParentProjectId,
+      info: item.info ? { ...item.info } : undefined,
+      way: item.way,
+      subCount: item.subCount,
+      subRule: item.subRule,
+      subRuleIsActive: item.subRuleIsActive,
+      subModalIsOpen: item.subModalIsOpen,
+      mascotIsActive: item.mascotIsActive,
+      wayIsChange: item.wayIsChange,
+      repeatRules: item.repeatRules.map((rule) => ({ ...rule })),
+      sectionRecords: [],
+      sectionModalIsOpen: item.sectionModalIsOpen,
+      updatedAt: nextTimestamp,
+    };
+  });
+
+  if (!hasValidItemSemantics(normalizedItems)) {
+    throw new Error('프로젝트 불러오기 데이터 연결 구조가 올바르지 않습니다.');
+  }
+
+  return normalizedItems;
+};
+
+const pickJsonDocumentContents = async (): Promise<string | null> => {
+  const result = await DocumentPicker.getDocumentAsync({
+    type: 'application/json',
+    copyToCacheDirectory: true,
+    multiple: false,
+  });
+
+  if (result.canceled || !result.assets?.[0]) {
+    return null;
+  }
+
+  const [asset] = result.assets;
+  return FileSystem.readAsStringAsync(asset.uri, {
+    encoding: FileSystem.EncodingType.UTF8,
+  });
+};
+
+export const parseItemImportDocument = (json: string): ItemImportDocument => {
+  let parsed: unknown;
+
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    throw new Error('프로젝트 불러오기 파일을 읽지 못했습니다. JSON 형식을 확인해 주세요.');
+  }
+
+  if (!isRecord(parsed)) {
+    throw new Error('프로젝트 불러오기 파일 형식이 올바르지 않습니다.');
+  }
+
+  if (parsed.formatVersion !== BACKUP_FORMAT_VERSION) {
+    throw new Error('지원하지 않는 프로젝트 불러오기 파일 버전입니다.');
+  }
+
+  if (parsed.appId !== APP_ID) {
+    throw new Error('이 앱에서 생성한 프로젝트 불러오기 파일이 아닙니다.');
+  }
+
+  if (parsed.importType !== ITEM_IMPORT_TYPE) {
+    throw new Error('프로젝트 불러오기 파일 타입이 올바르지 않습니다.');
+  }
+
+  if (
+    typeof parsed.dataVersion !== 'number'
+    || !Number.isFinite(parsed.dataVersion)
+    || parsed.dataVersion < 0
+  ) {
+    throw new Error('프로젝트 데이터 버전 정보가 올바르지 않습니다.');
+  }
+
+  return {
+    formatVersion: BACKUP_FORMAT_VERSION,
+    appId: APP_ID,
+    importType: ITEM_IMPORT_TYPE,
+    dataVersion: parsed.dataVersion,
+    payload: assertValidItemImportPayload(parsed.payload, parsed.dataVersion),
+  };
+};
+
+export const pickItemImportDocument = async (): Promise<ItemImportDocument | null> => {
+  const contents = await pickJsonDocumentContents();
+
+  if (!contents) {
+    return null;
+  }
+
+  return parseItemImportDocument(contents);
+};
+
+export const getBundledItemImportDocument = (): ItemImportDocument => {
+  return parseItemImportDocument(JSON.stringify(BUNDLED_ITEM_IMPORT_DOCUMENT));
+};
+
+export const importItemImportDocument = async (document: ItemImportDocument): Promise<void> => {
+  const remappedItems = remapImportedItems(document.payload.knitItems);
+  appendImportedItems(remappedItems);
+  ensureDataMigration();
+};
+
 /** 선택 문자열 값을 저장하고, 비어 있으면 해당 키를 제거한다. */
 const setOptionalStringValue = (key: string, value: Nullable<string>) => {
   if (typeof value === 'string' && value.length > 0) {
@@ -1001,20 +1336,11 @@ export const shareBackupFile = async (fileUri: string) => {
 
 /** 문서 선택기에서 JSON 백업 파일을 고른 뒤 파싱된 문서를 반환한다. */
 export const pickBackupDocument = async (): Promise<BackupDocument | null> => {
-  const result = await DocumentPicker.getDocumentAsync({
-    type: 'application/json',
-    copyToCacheDirectory: true,
-    multiple: false,
-  });
+  const contents = await pickJsonDocumentContents();
 
-  if (result.canceled || !result.assets?.[0]) {
+  if (!contents) {
     return null;
   }
-
-  const [asset] = result.assets;
-  const contents = await FileSystem.readAsStringAsync(asset.uri, {
-    encoding: FileSystem.EncodingType.UTF8,
-  });
 
   return parseBackupDocument(contents);
 };
@@ -1031,6 +1357,24 @@ export const getBackupSummary = (document: BackupDocument): BackupSummary => {
 
   return {
     exportedAtLabel: new Date(document.exportedAt).toLocaleString('ko-KR'),
+    totalItems,
+    projectCount,
+    counterCount,
+  };
+};
+
+export const getItemImportSummary = (
+  document: ItemImportDocument
+): ItemImportSummary => {
+  const totalItems = document.payload.knitItems.length;
+  const projectCount = document.payload.knitItems.filter(
+    (item) => item.type === 'project'
+  ).length;
+  const counterCount = document.payload.knitItems.filter(
+    (item) => item.type === 'counter'
+  ).length;
+
+  return {
     totalItems,
     projectCount,
     counterCount,

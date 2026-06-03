@@ -112,3 +112,32 @@ export type Project = {
 
 // 모든 아이템의 공통 타입 (프로젝트 또는 카운터)
 export type Item = Project | Counter;
+
+// ===== 프로젝트 불러오기 타입 =====
+
+export type ItemImportProject = Omit<Project, 'updatedAt'>;
+
+export type ItemImportCounter = Omit<
+  Counter,
+  'elapsedTime' | 'timerIsActive' | 'timerIsPlaying' | 'sectionRecords' | 'updatedAt'
+>;
+
+export type ItemImportItem = ItemImportProject | ItemImportCounter;
+
+export type ItemImportPayload = {
+  knitItems: ItemImportItem[];
+};
+
+export type ItemImportDocument = {
+  formatVersion: 1;
+  appId: 'awesome-knit-row-counter';
+  importType: 'item-import';
+  dataVersion: number;
+  payload: ItemImportPayload;
+};
+
+export type ItemImportSummary = {
+  totalItems: number;
+  projectCount: number;
+  counterCount: number;
+};

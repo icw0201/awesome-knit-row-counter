@@ -31,6 +31,19 @@ const setStoredItems = (items: Item[]) => {
 };
 
 /**
+ * 여러 항목을 한 번에 뒤에 추가합니다.
+ * @param newItems 추가할 Item 배열
+ */
+export const appendImportedItems = (newItems: Item[]) => {
+  if (newItems.length === 0) {
+    return;
+  }
+
+  const existing = getStoredItems();
+  setStoredItems([...existing, ...newItems]);
+};
+
+/**
  * 새로운 항목을 추가합니다.
  * @param newItem 추가할 새로운 Item
  */
