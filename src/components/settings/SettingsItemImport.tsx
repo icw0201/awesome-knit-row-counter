@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Star } from 'lucide-react-native';
@@ -37,6 +37,10 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
           ].join('\n')
         }
       />
+      <Text className={`px-2 pb-2 text-xs ${appTheme.tw.text.darkgray}`}>
+        목표단수, 알림설정이 미리 세팅된 프로젝트 파일을{'\n'}
+        불러올 수 있습니다.
+      </Text>
       <View className="relative">
         <IconBox
           title="프로젝트 불러오기"
