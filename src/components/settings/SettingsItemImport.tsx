@@ -32,8 +32,10 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { premiumUnlocked } = useIapContext();
   const { containerClassName, textClassName } = colorStyles.light;
+  // 완료 모달에서 확인을 눌렀을 때 실행할 후속 동작(예: Main으로 이동)을 보관한다.
   const onNoticeConfirmRef = useRef<(() => void) | null>(null);
 
+  // 파일 선택 → 확인 모달 → 실제 import 실행 단계가 공유하는 상태들.
   const [pendingImportDocument, setPendingImportDocument] = useState<ItemImportDocument | null>(
     null
   );
@@ -45,6 +47,7 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
   const [noticeMessage, setNoticeMessage] = useState('');
   const [isBusy, setIsBusy] = useState(false);
 
+  // import 직후 목록 갱신 결과를 바로 보게 하려고 Main 스택으로 되돌린다.
   const resetToMain = useCallback(() => {
     navigation.dispatch(
       CommonActions.reset({
@@ -78,11 +81,13 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
     return '처리 중 오류가 발생했습니다.';
   }, []);
 
+  // 샘플 import/파일 import 모두 "검증된 문서를 모달에 올리는" 단계는 동일하다.
   const prepareImportDocument = useCallback((document: ItemImportDocument) => {
     setPendingImportDocument(document);
     setImportConfirmVisible(true);
   }, []);
 
+  // 무료 맛보기는 앱에 포함된 샘플 JSON을 동일한 import 파이프라인으로 태운다.
   const handleSampleItemImportPress = useCallback(async () => {
     if (isBusy) {
       return;
@@ -100,6 +105,7 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
     }
   }, [getReadableErrorMessage, isBusy, prepareImportDocument, showErrorModal]);
 
+  // 유료 import는 사용자가 고른 JSON을 파싱/검증한 뒤 확인 모달로 넘긴다.
   const handleItemImportPress = useCallback(async () => {
     if (isBusy) {
       return;
@@ -122,6 +128,7 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
     }
   }, [getReadableErrorMessage, isBusy, prepareImportDocument, showErrorModal]);
 
+  // 확인 모달 승인 후에만 실제 스토리지 병합을 수행한다.
   const handleImportConfirm = useCallback(async () => {
     if (!pendingImportDocument) {
       return;
@@ -151,12 +158,14 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
     showNoticeModal,
   ]);
 
+  // 완료 모달은 상황에 따라 서로 다른 후속 동작을 실행할 수 있어 ref 기반 콜백을 사용한다.
   const handleNoticeConfirm = useCallback(() => {
     const callback = onNoticeConfirmRef.current;
     onNoticeConfirmRef.current = null;
     callback?.();
   }, []);
 
+  // append 방식 import라는 점을 사용자가 이해할 수 있도록 대상 개수만 간단히 요약한다.
   const importDescription = pendingImportDocument
     ? (() => {
       const summary = getItemImportSummary(pendingImportDocument);

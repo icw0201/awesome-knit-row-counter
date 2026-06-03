@@ -771,10 +771,12 @@ const isItemArray = (value: unknown, dataVersion: number): value is Item[] => {
   return allItemsAreValid && hasValidItemSemantics(value);
 };
 
+// item-import는 템플릿 문서이므로 저장 시각 같은 앱 로컬 전용 필드는 받지 않는다.
 const hasForbiddenItemImportProjectFields = (value: Record<string, unknown>): boolean => {
   return 'updatedAt' in value;
 };
 
+// 실행 중 상태나 기록성 필드는 import 대상이 아니므로 문서에 섞여 있으면 거부한다.
 const hasForbiddenItemImportCounterFields = (value: Record<string, unknown>): boolean => {
   return 'elapsedTime' in value
     || 'timerIsActive' in value
@@ -783,12 +785,15 @@ const hasForbiddenItemImportCounterFields = (value: Record<string, unknown>): bo
     || 'updatedAt' in value;
 };
 
+// project는 구조가 단순하므로 참조 정보(counterIds)와 info만 확인한다.
 const isItemImportProjectItem = (value: Record<string, unknown>): boolean => {
   return !hasForbiddenItemImportProjectFields(value)
     && isStringArray(value.counterIds)
     && isInfo(value.info);
 };
 
+// counter는 import 후 즉시 사용할 세팅값만 받는다.
+// 경과 시간/기록은 문서에서 제외하고, repeatRules 등 설정성 필드는 그대로 유지한다.
 const isItemImportCounterItem = (
   value: Record<string, unknown>,
   dataVersion: number
@@ -815,6 +820,7 @@ const isItemImportCounterItem = (
   return value.repeatRules.every((rule) => isRepeatRule(rule, dataVersion));
 };
 
+// item-import는 템플릿 ID를 허용하지만, 프로젝트-카운터 참조 무결성은 여기서 먼저 점검한다.
 const isItemImportArray = (value: unknown, dataVersion: number): value is ItemImportItem[] => {
   if (!Array.isArray(value)) {
     return false;
@@ -839,6 +845,7 @@ const isItemImportArray = (value: unknown, dataVersion: number): value is ItemIm
   return allItemsAreValid && hasValidReferenceSemantics(value as ItemReferenceShape[]);
 };
 
+/** item-import payload는 knitItems만 포함하며, 검증 실패 시 사용자에게 바로 보여줄 에러를 던진다. */
 const assertValidItemImportPayload = (
   value: unknown,
   dataVersion: number
@@ -1075,10 +1082,15 @@ export const parseBackupDocument = (json: string): BackupDocument => {
   };
 };
 
+/**
+ * 템플릿 문서의 ID를 현재 기기 전용 ID로 재발급하고,
+ * import 대상에 없는 실행 상태 필드는 앱 기본값으로 보정한다.
+ */
 const remapImportedItems = (items: ItemImportItem[]): Item[] => {
   const baseTimestamp = Date.now();
   const oldIdToNewId = new Map<string, string>();
 
+  // project/counter 모두 먼저 새 ID를 배정해 둬야 이후 참조 치환(counterIds/parentProjectId)이 단순해진다.
   items.forEach((item, index) => {
     const nextTimestamp = baseTimestamp + index;
     const prefix = item.type === 'project' ? 'proj' : 'counter';
@@ -1098,6 +1110,7 @@ const remapImportedItems = (items: ItemImportItem[]): Item[] => {
         id: mappedId,
         type: 'project',
         title: item.title,
+        // 프로젝트는 자식 카운터 순서를 유지한 채 새 counter ID 목록으로 치환한다.
         counterIds: item.counterIds.map((counterId) => {
           const mappedCounterId = oldIdToNewId.get(counterId);
 
@@ -1126,6 +1139,7 @@ const remapImportedItems = (items: ItemImportItem[]): Item[] => {
       title: item.title,
       count: item.count,
       targetCount: item.targetCount,
+      // item-import 문서는 "세팅된 프로젝트"만 전달하므로 실행 상태는 항상 초기화한다.
       elapsedTime: 0,
       timerIsActive: false,
       timerIsPlaying: false,
@@ -1152,6 +1166,7 @@ const remapImportedItems = (items: ItemImportItem[]): Item[] => {
   return normalizedItems;
 };
 
+// 백업 import와 item-import가 공통으로 쓰는 "JSON 파일 선택 후 문자열 읽기" 단계.
 const pickJsonDocumentContents = async (): Promise<string | null> => {
   const result = await DocumentPicker.getDocumentAsync({
     type: 'application/json',
@@ -1169,6 +1184,7 @@ const pickJsonDocumentContents = async (): Promise<string | null> => {
   });
 };
 
+/** 프로젝트 불러오기 전용 문서를 파싱하고, 앱이 신뢰할 수 있는 최소 형식인지 검증한다. */
 export const parseItemImportDocument = (json: string): ItemImportDocument => {
   let parsed: unknown;
 
@@ -1211,6 +1227,7 @@ export const parseItemImportDocument = (json: string): ItemImportDocument => {
   };
 };
 
+/** 사용자가 고른 JSON 파일을 item-import 문서로 읽는다. 취소 시 null을 반환한다. */
 export const pickItemImportDocument = async (): Promise<ItemImportDocument | null> => {
   const contents = await pickJsonDocumentContents();
 
@@ -1221,10 +1238,12 @@ export const pickItemImportDocument = async (): Promise<ItemImportDocument | nul
   return parseItemImportDocument(contents);
 };
 
+/** 무료 맛보기 버튼이 사용하는 앱 내장 샘플 문서를 동일한 파서 경로로 읽는다. */
 export const getBundledItemImportDocument = (): ItemImportDocument => {
   return parseItemImportDocument(JSON.stringify(BUNDLED_ITEM_IMPORT_DOCUMENT));
 };
 
+/** 검증된 item-import 문서를 현재 MMKV 데이터 뒤에 병합한다. 전체 복원이 아니라 append 방식이다. */
 export const importItemImportDocument = async (document: ItemImportDocument): Promise<void> => {
   const remappedItems = remapImportedItems(document.payload.knitItems);
   appendImportedItems(remappedItems);
