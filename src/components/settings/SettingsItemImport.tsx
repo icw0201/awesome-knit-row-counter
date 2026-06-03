@@ -28,12 +28,18 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
   return (
     <View className="mb-8">
       <SettingsSectionHeader
-        title="도안 불러오기"
-        tooltipText="어쩜 전용 파일을 제공하는 도안을 구매하셨다면, 도안 파일을 불러와 미리 설정된 카운터를 사용하세요!"
+        title="프로젝트 불러오기"
+        tooltipText={
+          [
+            '어쩜 전용 파일을 제공하는 도안을 구매하셨다면, 미리 세팅된 프로젝트 파일을 불러와 사용하세요!',
+            '',
+            '불러오기 전용 json 파일을 제작하고 싶은 도아너라면, 문의하기를 통해 연락 주세요. 협업해주시는 도아너님께 프리미엄 앱 코드를 발송해드립니다.',
+          ].join('\n')
+        }
       />
       <View className="relative">
         <IconBox
-          title="도안 불러오기"
+          title="프로젝트 불러오기"
           iconName="upload"
           disabled={!premiumUnlocked}
           onPress={handleItemImportPress}
