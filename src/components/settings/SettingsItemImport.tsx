@@ -222,12 +222,12 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
           {!premiumUnlocked ? (
             <>
               <View
-                className="pointer-events-none absolute -inset-2 z-[5] rounded-2xl bg-mediumgray overflow-hidden"
+                className="pointer-events-none absolute inset-y-0 -inset-x-2 z-[5] rounded-2xl overflow-hidden bg-mediumgray"
                 style={PREMIUM_OVERLAY_STYLE}
               />
               <TouchableOpacity
                 activeOpacity={1}
-                className="absolute -inset-2 z-[10] rounded-2xl"
+                className="absolute inset-y-0 -inset-x-2 z-[10] rounded-2xl"
                 onPress={() => navigation.navigate('PremiumPurchase')}
                 accessibilityRole="button"
                 accessibilityLabel="프로젝트 불러오기"
