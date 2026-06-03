@@ -22,8 +22,10 @@ import SettingsSectionHeader from './SettingsSectionHeader';
 type VoiceCommandGroupKey =
   | 'mainDecrease'
   | 'mainIncrease'
+  | 'mainReset'
   | 'subDecrease'
-  | 'subIncrease';
+  | 'subIncrease'
+  | 'subReset';
 
 interface VoiceCommandRowConfig {
   key: VoiceCommandGroupKey;
@@ -35,11 +37,19 @@ interface VoiceCommandRowConfig {
 const DEFAULT_VOICE_COMMAND_SECTIONS = [
   {
     title: '본 카운터',
-    description: '연지(현지, 연기) / 곤지(군지, 건지)',
+    descriptions: [
+      '카운트 감소: 연지(현지, 연기)',
+      '카운트 증가: 곤지(군지, 건지)',
+      '초기화: 메인(매일, 매인)',
+    ],
   },
   {
     title: '보조 카운터',
-    description: '청실(청신, 창신) / 홍실(홍신, 동실)',
+    descriptions: [
+      '카운트 감소: 청실(청신, 창신)',
+      '카운트 증가: 홍실(홍신, 동실)',
+      '초기화: 서브',
+    ],
   },
 ] as const;
 
@@ -57,6 +67,12 @@ const VOICE_COMMAND_ROW_CONFIGS: VoiceCommandRowConfig[] = [
     placeholders: ['사과', '사와', '서과'],
   },
   {
+    key: 'mainReset',
+    sectionTitle: '본 카운터',
+    label: '초기화',
+    placeholders: ['콜라', '콜러', '콘라'],
+  },
+  {
     key: 'subDecrease',
     sectionTitle: '보조 카운터',
     label: '카운트 감소',
@@ -67,6 +83,12 @@ const VOICE_COMMAND_ROW_CONFIGS: VoiceCommandRowConfig[] = [
     sectionTitle: '보조 카운터',
     label: '카운트 증가',
     placeholders: ['제이', '체이', '데이'],
+  },
+  {
+    key: 'subReset',
+    sectionTitle: '보조 카운터',
+    label: '초기화',
+    placeholders: ['중독', '준독', '정독'],
   },
 ];
 
@@ -94,8 +116,10 @@ const SettingsVoiceCommands: React.FC = () => {
     useState<CustomVoiceCommandInputsSetting>({
       mainDecrease: ['', '', ''],
       mainIncrease: ['', '', ''],
+      mainReset: ['', '', ''],
       subDecrease: ['', '', ''],
       subIncrease: ['', '', ''],
+      subReset: ['', '', ''],
     });
   const [voiceCommandSettingsHydrated, setVoiceCommandSettingsHydrated] =
     useState(false);
@@ -275,12 +299,12 @@ const SettingsVoiceCommands: React.FC = () => {
                     textAlign="center"
                     fillWidth={false}
                     returnKeyType={
-                      config.key === 'subIncrease' && index === 2 ? 'done' : 'next'
+                      config.key === 'subReset' && index === 2 ? 'done' : 'next'
                     }
                     onSubmitEditing={() =>
                       handleVoiceCommandSubmitEditing(config.key, index)
                     }
-                    blurOnSubmit={config.key === 'subIncrease' && index === 2}
+                    blurOnSubmit={config.key === 'subReset' && index === 2}
                   />
                 );
               })}
@@ -318,9 +342,16 @@ const SettingsVoiceCommands: React.FC = () => {
               <Text className="text-base font-semibold text-black">
                 {section.title}
               </Text>
-              <Text className="pl-4 pt-1 text-base leading-6 text-black">
-                {section.description}
-              </Text>
+              <View className="pl-4 pt-1">
+                {section.descriptions.map((description) => (
+                  <Text
+                    key={`${section.title}-${description}`}
+                    className="text-base leading-6 text-black"
+                  >
+                    {description}
+                  </Text>
+                ))}
+              </View>
             </View>
           ))}
         </SettingsAccordion>

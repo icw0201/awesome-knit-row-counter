@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react';
 import { AppState, Platform } from 'react-native';
 import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
-import { VOICE_RESET_COMMAND_KEYWORDS } from '@constants/voiceCommandKeywords';
 import type { EffectiveVoiceCommandSetting } from '@storage/settings';
 
 const LOCALE = 'ko-KR';
@@ -40,7 +39,12 @@ const OFFLINE_MODEL_REQUIRED_MESSAGE =
 
 type VoiceCommandKeywordConfig = Pick<
   EffectiveVoiceCommandSetting,
-  'addKeywords' | 'subtractKeywords' | 'subAddKeywords' | 'subSubtractKeywords'
+  | 'addKeywords'
+  | 'subtractKeywords'
+  | 'subAddKeywords'
+  | 'subSubtractKeywords'
+  | 'mainResetKeywords'
+  | 'subResetKeywords'
 >;
 type VoiceCommandAction =
   | 'add'
@@ -268,8 +272,8 @@ export function useVoiceCommands(
       subtract: new Set(keywordConfig.subtractKeywords),
       subAdd: new Set(keywordConfig.subAddKeywords),
       subSubtract: new Set(keywordConfig.subSubtractKeywords),
-      mainReset: new Set(VOICE_RESET_COMMAND_KEYWORDS.main),
-      subReset: new Set(VOICE_RESET_COMMAND_KEYWORDS.sub),
+      mainReset: new Set(keywordConfig.mainResetKeywords),
+      subReset: new Set(keywordConfig.subResetKeywords),
     };
 
     // recognition session의 로컬 런타임 상태.
@@ -598,8 +602,8 @@ export function useVoiceCommands(
             ...keywordConfig.subtractKeywords,
             ...keywordConfig.subAddKeywords,
             ...keywordConfig.subSubtractKeywords,
-            ...VOICE_RESET_COMMAND_KEYWORDS.main,
-            ...VOICE_RESET_COMMAND_KEYWORDS.sub,
+            ...keywordConfig.mainResetKeywords,
+            ...keywordConfig.subResetKeywords,
           ],
           androidIntentOptions: {
             EXTRA_LANGUAGE_MODEL: 'web_search',
@@ -806,5 +810,7 @@ export function useVoiceCommands(
     keywordConfig.subtractKeywords,
     keywordConfig.subAddKeywords,
     keywordConfig.subSubtractKeywords,
+    keywordConfig.mainResetKeywords,
+    keywordConfig.subResetKeywords,
   ]);
 }

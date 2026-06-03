@@ -53,8 +53,10 @@ export type ColorThemeSetting =
 export interface CustomVoiceCommandInputsSetting {
   mainDecrease: [string, string, string];
   mainIncrease: [string, string, string];
+  mainReset: [string, string, string];
   subDecrease: [string, string, string];
   subIncrease: [string, string, string];
+  subReset: [string, string, string];
 }
 
 export interface EffectiveVoiceCommandSetting {
@@ -64,17 +66,23 @@ export interface EffectiveVoiceCommandSetting {
   subtractKeywords: string[];
   subAddKeywords: string[];
   subSubtractKeywords: string[];
+  mainResetKeywords: string[];
+  subResetKeywords: string[];
   addHint: string;
   subtractHint: string;
   subAddHint: string;
   subSubtractHint: string;
+  mainResetHint: string;
+  subResetHint: string;
 }
 
 const DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS: CustomVoiceCommandInputsSetting = {
   mainDecrease: ['', '', ''],
   mainIncrease: ['', '', ''],
+  mainReset: ['', '', ''],
   subDecrease: ['', '', ''],
   subIncrease: ['', '', ''],
+  subReset: ['', '', ''],
 };
 const STORED_CUSTOM_VOICE_COMMAND_MAX_LENGTH = 2;
 
@@ -126,8 +134,10 @@ const sanitizeStoredCustomVoiceCommandInputs = (
   return {
     mainDecrease: sanitizeStoredVoiceCommandTuple(value.mainDecrease),
     mainIncrease: sanitizeStoredVoiceCommandTuple(value.mainIncrease),
+    mainReset: sanitizeStoredVoiceCommandTuple(value.mainReset),
     subDecrease: sanitizeStoredVoiceCommandTuple(value.subDecrease),
     subIncrease: sanitizeStoredVoiceCommandTuple(value.subIncrease),
+    subReset: sanitizeStoredVoiceCommandTuple(value.subReset),
   };
 };
 
@@ -147,12 +157,18 @@ const normalizeCustomVoiceCommandInputs = (
     mainIncrease: isThreeStringTuple(candidate.mainIncrease)
       ? sanitizeStoredVoiceCommandTuple(candidate.mainIncrease)
       : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.mainIncrease,
+    mainReset: isThreeStringTuple(candidate.mainReset)
+      ? sanitizeStoredVoiceCommandTuple(candidate.mainReset)
+      : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.mainReset,
     subDecrease: isThreeStringTuple(candidate.subDecrease)
       ? sanitizeStoredVoiceCommandTuple(candidate.subDecrease)
       : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.subDecrease,
     subIncrease: isThreeStringTuple(candidate.subIncrease)
       ? sanitizeStoredVoiceCommandTuple(candidate.subIncrease)
       : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.subIncrease,
+    subReset: isThreeStringTuple(candidate.subReset)
+      ? sanitizeStoredVoiceCommandTuple(candidate.subReset)
+      : DEFAULT_CUSTOM_VOICE_COMMAND_INPUTS.subReset,
   };
 };
 
@@ -459,6 +475,8 @@ export const getEffectiveVoiceCommandSetting = (): EffectiveVoiceCommandSetting 
     const subtractKeywords = normalizeVoiceCommandKeywordList(customInputs.mainDecrease);
     const subAddKeywords = normalizeVoiceCommandKeywordList(customInputs.subIncrease);
     const subSubtractKeywords = normalizeVoiceCommandKeywordList(customInputs.subDecrease);
+    const mainResetKeywords = normalizeVoiceCommandKeywordList(customInputs.mainReset);
+    const subResetKeywords = normalizeVoiceCommandKeywordList(customInputs.subReset);
 
     return {
       mode,
@@ -467,10 +485,14 @@ export const getEffectiveVoiceCommandSetting = (): EffectiveVoiceCommandSetting 
       subtractKeywords,
       subAddKeywords,
       subSubtractKeywords,
+      mainResetKeywords,
+      subResetKeywords,
       addHint: customInputs.mainIncrease[0] ?? '',
       subtractHint: customInputs.mainDecrease[0] ?? '',
       subAddHint: customInputs.subIncrease[0] ?? '',
       subSubtractHint: customInputs.subDecrease[0] ?? '',
+      mainResetHint: customInputs.mainReset[0] ?? '',
+      subResetHint: customInputs.subReset[0] ?? '',
     };
   }
 
@@ -481,10 +503,14 @@ export const getEffectiveVoiceCommandSetting = (): EffectiveVoiceCommandSetting 
     subtractKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.subtract],
     subAddKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.subAdd],
     subSubtractKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.subSubtract],
+    mainResetKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.mainReset],
+    subResetKeywords: [...DEFAULT_VOICE_COMMAND_KEYWORDS.subReset],
     addHint: DEFAULT_VOICE_COMMAND_KEYWORDS.add[0],
     subtractHint: DEFAULT_VOICE_COMMAND_KEYWORDS.subtract[0],
     subAddHint: DEFAULT_VOICE_COMMAND_KEYWORDS.subAdd[0],
     subSubtractHint: DEFAULT_VOICE_COMMAND_KEYWORDS.subSubtract[0],
+    mainResetHint: DEFAULT_VOICE_COMMAND_KEYWORDS.mainReset[0],
+    subResetHint: DEFAULT_VOICE_COMMAND_KEYWORDS.subReset[0],
   };
 };
 
