@@ -245,7 +245,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
           setImportConfirmVisible(false);
           setPendingImportDocument(null);
         }}
-        title="데이터 불러오기"
+        title="전체 데이터 불러오기"
         description={importDescription}
         onConfirm={async () => {
           await handleImportConfirm();
