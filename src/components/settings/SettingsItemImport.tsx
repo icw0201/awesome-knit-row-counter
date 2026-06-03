@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import { CommonActions, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Star } from 'lucide-react-native';
@@ -21,11 +21,7 @@ import SettingsSectionHeader from './SettingsSectionHeader';
 
 interface SettingsItemImportProps {}
 
-const PREMIUM_OVERLAY_STYLE = StyleSheet.create({
-  overlay: {
-    mixBlendMode: 'multiply',
-  },
-}).overlay;
+const PREMIUM_OVERLAY_STYLE = { mixBlendMode: 'multiply' } as const;
 
 const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
   const navigation =
@@ -112,7 +108,6 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
     }
 
     setIsBusy(true);
-
     try {
       const document = await pickItemImportDocument();
 
