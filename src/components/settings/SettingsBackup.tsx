@@ -184,7 +184,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
         {/* IconBox 두 줄과, 미구독일 때만 씌우는 multiply·구매 진입·별 표시. */}
         <View className="relative">
           <IconBox
-            title={isBusy ? '처리 중...' : '데이터 내보내기'}
+            title={isBusy ? '처리 중...' : '전체 데이터 내보내기'}
             iconName="download"
             disabled={!premiumUnlocked}
             onPress={async () => {
@@ -192,7 +192,7 @@ const SettingsBackup: React.FC<SettingsBackupProps> = () => {
             }}
           />
           <IconBox
-            title={isBusy ? '처리 중...' : '데이터 불러오기'}
+            title={isBusy ? '처리 중...' : '전체 데이터 불러오기'}
             iconName="upload"
             disabled={!premiumUnlocked}
             onPress={async () => {
