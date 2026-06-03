@@ -267,7 +267,7 @@ const PremiumPurchase: React.FC = () => {
 
               <View className="items-center justify-center px-2 py-3">
                 <Text className="w-full text-center text-lg font-bold leading-[22px] tracking-tight text-black">
-                  도안 불러오기
+                  프로젝트 불러오기
                 </Text>
               </View>
               <View className={clsx('h-px w-[55%] self-center', appTheme.tw.bg.primary['200'])} />

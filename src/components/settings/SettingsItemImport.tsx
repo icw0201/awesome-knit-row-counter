@@ -235,7 +235,7 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
                 className="absolute -inset-2 z-[10] rounded-2xl"
                 onPress={() => navigation.navigate('PremiumPurchase')}
                 accessibilityRole="button"
-                accessibilityLabel="프로젝트 불러오기, 프리미엄 전용"
+                accessibilityLabel="프로젝트 불러오기"
                 accessibilityHint="탭하면 프리미엄 구매 화면으로 이동합니다."
               />
               <View className="pointer-events-none absolute inset-y-0 right-4 z-[20] w-6 items-center justify-center">
