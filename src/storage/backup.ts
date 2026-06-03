@@ -1224,6 +1224,12 @@ export const parseItemImportDocument = (json: string): ItemImportDocument => {
     throw new Error('프로젝트 데이터 버전 정보가 올바르지 않습니다.');
   }
 
+  // item-import는 restoreBackupDocument처럼 문서 버전에 맞춘 전체 복원 경로를 타지 않으므로,
+  // 현재 앱이 모르는 "미래 버전" 문서는 안전하게 해석할 수 없다고 보고 여기서 거부한다.
+  if (parsed.dataVersion > CURRENT_DATA_VERSION) {
+    throw new Error('이 버전의 앱에서는 더 최신 프로젝트 불러오기 파일을 지원하지 않습니다.');
+  }
+
   return {
     formatVersion: BACKUP_FORMAT_VERSION,
     appId: APP_ID,
