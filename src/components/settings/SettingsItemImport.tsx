@@ -7,6 +7,7 @@ import { Star } from 'lucide-react-native';
 import type { RootStackParamList } from '@navigation/AppNavigator';
 import { useIapContext } from '@provider/IapProvider';
 import { appTheme } from '@styles/appTheme';
+import { colorStyles } from '@styles/colorStyles';
 import IconBox from './IconBox';
 import SettingsSectionHeader from './SettingsSectionHeader';
 
@@ -22,7 +23,9 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
   const navigation =
     useNavigation<NativeStackNavigationProp<RootStackParamList>>();
   const { premiumUnlocked } = useIapContext();
+  const { containerClassName, textClassName } = colorStyles.light;
 
+  const handleSampleItemImportPress = () => {};
   const handleItemImportPress = () => {};
 
   return (
@@ -41,6 +44,19 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
         목표단수, 알림설정이 미리 세팅된 프로젝트 파일을{'\n'}
         불러올 수 있습니다.
       </Text>
+      {/* try it! 이 포함된 맛보기 블럭. 아이콘 자리에 text가 들어가서 IconBox 사용하지 않음. */}
+      <TouchableOpacity onPress={handleSampleItemImportPress} activeOpacity={0.7}>
+        <View className={`m-1.5 rounded-2xl p-4 ${containerClassName}`}>
+          <View className="flex-row items-center justify-between py-3">
+            <Text className={`text-base font-semibold ${textClassName}`}>
+              맛보기 프로젝트 불러오기
+            </Text>
+            <Text className={`text-sm font-bold ${appTheme.tw.text.primary['500']}`}>
+              try it!
+            </Text>
+          </View>
+        </View>
+      </TouchableOpacity>
       <View className="relative">
         <IconBox
           title="프로젝트 불러오기"
