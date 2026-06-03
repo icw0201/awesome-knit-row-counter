@@ -44,7 +44,7 @@ const SettingsItemImport: React.FC<SettingsItemImportProps> = () => {
         목표단수, 알림설정이 미리 세팅된 프로젝트 파일을{'\n'}
         불러올 수 있습니다.
       </Text>
-      {/* try it! 이 포함된 맛보기 블럭. 아이콘 자리에 text가 들어가서 IconBox 사용하지 않음. */}
+      {/* try it! 이 포함된 맛보기 블럭. 아이콘 자리에 text가 들어가서 IconBox 사용하지 않음.*/}
       <TouchableOpacity onPress={handleSampleItemImportPress} activeOpacity={0.7}>
         <View className={`m-1.5 rounded-2xl p-4 ${containerClassName}`}>
           <View className="flex-row items-center justify-between py-3">
