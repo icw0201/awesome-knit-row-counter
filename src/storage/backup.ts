@@ -1,6 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { createUniqueItemId } from '@utils/itemIdUtils';
 import type {
   Item,
   ItemImportCounter,
@@ -1085,16 +1086,21 @@ export const parseBackupDocument = (json: string): BackupDocument => {
 /**
  * 템플릿 문서의 ID를 현재 기기 전용 ID로 재발급하고,
  * import 대상에 없는 실행 상태 필드는 앱 기본값으로 보정한다.
+ * 기존 스토리지에 이미 있는 ID와도 충돌하지 않도록 현재 ID 집합을 함께 받는다.
  */
-const remapImportedItems = (items: ItemImportItem[]): Item[] => {
+const remapImportedItems = (
+  items: ItemImportItem[],
+  existingItems: Item[]
+): Item[] => {
   const baseTimestamp = Date.now();
   const oldIdToNewId = new Map<string, string>();
+  const reservedIds = new Set(existingItems.map((item) => item.id));
 
   // project/counter 모두 먼저 새 ID를 배정해 둬야 이후 참조 치환(counterIds/parentProjectId)이 단순해진다.
   items.forEach((item, index) => {
     const nextTimestamp = baseTimestamp + index;
     const prefix = item.type === 'project' ? 'proj' : 'counter';
-    oldIdToNewId.set(item.id, `${prefix}_${nextTimestamp}`);
+    oldIdToNewId.set(item.id, createUniqueItemId(prefix, reservedIds, nextTimestamp));
   });
 
   const normalizedItems = items.map((item, index): Item => {
@@ -1245,7 +1251,14 @@ export const getBundledItemImportDocument = (): ItemImportDocument => {
 
 /** 검증된 item-import 문서를 현재 MMKV 데이터 뒤에 병합한다. 전체 복원이 아니라 append 방식이다. */
 export const importItemImportDocument = async (document: ItemImportDocument): Promise<void> => {
-  const remappedItems = remapImportedItems(document.payload.knitItems);
+  const existingItems = getStoredItems();
+  const remappedItems = remapImportedItems(document.payload.knitItems, existingItems);
+
+  // import 묶음 자체뿐 아니라, 기존 데이터와 합쳐졌을 때도 참조/ID 무결성이 유지되는지 마지막으로 확인한다.
+  if (!hasValidItemSemantics([...existingItems, ...remappedItems])) {
+    throw new Error('프로젝트 불러오기 후 데이터 연결 구조가 올바르지 않습니다.');
+  }
+
   appendImportedItems(remappedItems);
   ensureDataMigration();
 };
