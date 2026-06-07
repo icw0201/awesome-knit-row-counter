@@ -6,7 +6,7 @@
   "payload": {
     "knitItems": [
       {
-        "id": "counter_template_bangulbread_keyring",
+        "id": "counter_template_bangulbread_keyring_000",
         "type": "counter",
         "title": "방울빵 키링",
         "count": 0,
@@ -121,13 +121,13 @@
         }
       },
       {
-        "id": "proj_template_kudos_bracelet",
+        "id": "proj_template_kudos_bracelet_000",
         "type": "project",
         "title": "쿠O다스 브레이슬렛",
         "counterIds": [
-          "counter_template_kudos_bracelet_notice",
-          "counter_template_kudos_bracelet_alert",
-          "counter_template_kudos_bracelet_full"
+          "counter_template_kudos_bracelet_notice_003",
+          "counter_template_kudos_bracelet_full_002",
+          "counter_template_kudos_bracelet_alert_001"
         ],
         "info": {
           "startDate": "",
@@ -139,28 +139,12 @@
         }
       },
       {
-        "id": "counter_template_kudos_bracelet_notice",
-        "type": "counter",
-        "title": "ⓘ 도안 설명 필독‼️",
-        "count": 0,
-        "targetCount": 0,
-        "parentProjectId": "proj_template_kudos_bracelet",
-        "subCount": 0,
-        "subRule": 0,
-        "subRuleIsActive": false,
-        "subModalIsOpen": false,
-        "mascotIsActive": false,
-        "wayIsChange": true,
-        "repeatRules": [],
-        "sectionModalIsOpen": false
-      },
-      {
-        "id": "counter_template_kudos_bracelet_alert",
+        "id": "counter_template_kudos_bracelet_alert_001",
         "type": "counter",
         "title": "[알림단만] 브레이슬렛",
         "count": 0,
         "targetCount": 0,
-        "parentProjectId": "proj_template_kudos_bracelet",
+        "parentProjectId": "proj_template_kudos_bracelet_000",
         "subCount": 0,
         "subRule": 0,
         "subRuleIsActive": false,
@@ -200,12 +184,12 @@
         "way": "back"
       },
       {
-        "id": "counter_template_kudos_bracelet_full",
+        "id": "counter_template_kudos_bracelet_full_002",
         "type": "counter",
         "title": "[전체도안] 브레이슬렛",
         "count": 0,
         "targetCount": 0,
-        "parentProjectId": "proj_template_kudos_bracelet",
+        "parentProjectId": "proj_template_kudos_bracelet_000",
         "subCount": 0,
         "subRule": 0,
         "subRuleIsActive": false,
@@ -288,6 +272,22 @@
         ],
         "sectionModalIsOpen": false,
         "way": "back"
+      },
+      {
+        "id": "counter_template_kudos_bracelet_notice_003",
+        "type": "counter",
+        "title": "ⓘ 도안 설명 필독‼️",
+        "count": 0,
+        "targetCount": 0,
+        "parentProjectId": "proj_template_kudos_bracelet_000",
+        "subCount": 0,
+        "subRule": 0,
+        "subRuleIsActive": false,
+        "subModalIsOpen": false,
+        "mascotIsActive": false,
+        "wayIsChange": true,
+        "repeatRules": [],
+        "sectionModalIsOpen": false
       }
     ]
   }
