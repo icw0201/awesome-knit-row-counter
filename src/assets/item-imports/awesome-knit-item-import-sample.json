@@ -20,7 +20,7 @@
         "wayIsChange": false,
         "repeatRules": [
           {
-            "message": "사슬3, 빼뜨, 사슬4,빼뜨",
+            "message": "사슬3,빼뜨,사슬4,빼뜨",
             "startNumber": 0,
             "endNumber": 0,
             "repeatCount": 1,
@@ -47,40 +47,13 @@
             "color": "#04BFAD"
           },
           {
-            "message": "짧뜨1, 늘리기1",
+            "message": "짧뜨1, 늘리기1 (21)",
             "startNumber": 3,
             "endNumber": 0,
             "repeatCount": 1,
             "endMode": "repeatCount",
             "ruleNumber": 1,
             "color": "#F2A922"
-          },
-          {
-            "message": "(21)",
-            "startNumber": 3,
-            "endNumber": 0,
-            "repeatCount": 1,
-            "endMode": "repeatCount",
-            "ruleNumber": 1,
-            "color": "#f2a922"
-          },
-          {
-            "message": "sc around",
-            "startNumber": 4,
-            "endNumber": 7,
-            "repeatCount": 0,
-            "endMode": "endNumber",
-            "ruleNumber": 1,
-            "color": "#D9B391"
-          },
-          {
-            "message": "(21)",
-            "startNumber": 4,
-            "endNumber": 7,
-            "repeatCount": 0,
-            "endMode": "endNumber",
-            "ruleNumber": 1,
-            "color": "#d9b391ff"
           },
           {
             "message": "실 색 변경",
@@ -92,17 +65,35 @@
             "color": "#A9CBD9"
           },
           {
-            "message": "짧뜨2, 줄이기",
+            "message": "솜 넣기",
+            "startNumber": 9,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#a9cbd9ff"
+          },
+          {
+            "message": "짧뜨 (21)",
+            "startNumber": 4,
+            "endNumber": 7,
+            "repeatCount": 0,
+            "endMode": "endNumber",
+            "ruleNumber": 1,
+            "color": "#D9B391"
+          },
+          {
+            "message": "짧뜨2, 줄이기(16)",
             "startNumber": 8,
             "endNumber": 0,
-            "repeatCount": 2,
+            "repeatCount": 1,
             "endMode": "repeatCount",
             "ruleNumber": 1,
             "color": "#D4E157"
           },
           {
-            "message": "줄이기 (6)",
-            "startNumber": 10,
+            "message": "짧뜨2, 줄이기(12)",
+            "startNumber": 9,
             "endNumber": 0,
             "repeatCount": 1,
             "endMode": "repeatCount",
@@ -110,17 +101,8 @@
             "color": "#DAC6E8"
           },
           {
-            "message": "(16)",
-            "startNumber": 8,
-            "endNumber": 0,
-            "repeatCount": 1,
-            "endMode": "repeatCount",
-            "ruleNumber": 1,
-            "color": "#d4e157"
-          },
-          {
-            "message": "(12)",
-            "startNumber": 9,
+            "message": "줄이기(6)",
+            "startNumber": 10,
             "endNumber": 0,
             "repeatCount": 1,
             "endMode": "repeatCount",
@@ -135,42 +117,50 @@
           "gauge": "",
           "yarn": "원작 : 얀메이크 착하면",
           "needle": "원작 : 튤립 에티모 모사용 4/0호 코바늘",
-          "notes": "원작 :\n셋업 단에서 만든 3사슬 고리를 매직링처럼 사용합니다. 1단에서 해당 고리에 짧은 뜨기를 합니다.\n완성한 뒤, 셋업 단에서 만든 4사슬 고리에 군번줄을 달아 마무리합니다. 고리가 필요하지 않다면 4사슬 고리는 생략해도 괜찮습니다.\n\n원작에서는 매 단 빼뜨기와 기둥코를 세웠지만, 빼뜨기 없이 나선형으로 떠도 무방합니다."
+          "notes": "원작 :\n- 셋업 단 추가 설명\n셋업 단에서 만든 3사슬 고리를 매직링처럼 사용합니다. 1단에서 해당 고리에 짧은 뜨기를 합니다.\n완성한 뒤, 셋업 단에서 만든 4사슬 고리에 군번줄을 달아 마무리합니다. 고리가 필요하지 않다면 4사슬 고리는 생략해도 괜찮습니다.\n\n- 매 단 빼뜨기, 기둥코\n원작에서는 매 단 빼뜨기와 기둥코를 세웠지만, 빼뜨기 없이 나선형으로 떠도 무방합니다.\n\n튜토리얼 영상 url : (영상 업데이트 예정)"
         }
       },
       {
-        "id": "proj_template_leaf_cuff",
+        "id": "proj_template_kudos_bracelet",
         "type": "project",
-        "title": "leaf cuff",
+        "title": "쿠O다스 브레이슬렛",
         "counterIds": [
-          "counter_template_leaf_cuff_a",
-          "counter_template_leaf_cuff_b"
-        ]
+          "counter_template_kudos_bracelet_notice",
+          "counter_template_kudos_bracelet_alert",
+          "counter_template_kudos_bracelet_full"
+        ],
+        "info": {
+          "startDate": "",
+          "endDate": "",
+          "gauge": "원작 : 20코 25단",
+          "yarn": "원작 : 1200m 100g 레이스사 2합\n혹은 다이소 루프 뜨개실",
+          "needle": "원작 : 3mm 대바늘",
+          "notes": "원작 : 쿠O다스 무늬로 바늘비우기 무늬가 들어가는 브레이슬렛입니다.\n색 있는 실을 사용해서 포인트로 삼거나, 흰 실에 단추를 포인트로 삼아 여름 패션에 더하기 좋습니다.\n---\n[전체도안] 카운터에는 단별 지시가 모두 적혀 있습니다.\n[알림단만] 카운터에는 무늬단 알림만 표시되어 있습니다.\n---\n15코를 잡습니다. 양 옆 4코씩과 무늬 7코입니다.\n폭 조절을 위해 사이드 코 갯수를 조절하셔도 좋습니다.\n사이드가 말리는 게 싫으시다면, 가터뜨기로 변형하셔도 좋습니다.\n\n2단까지 메리야스로 뜬 뒤, 무늬를 반복하는 도안입니다.\n🍒↖️ : YO, SSK, YO, SSK\n↗️🍒 : K2tog, YO, K2tog, YO\n\n원하는 길이만큼 떴다면, 코바늘(3/0호)로 테두리를 따라 짧은뜨기합니다. 단추구멍을 만들고 싶은 위치에서 사슬로 단추구멍을 만듭니다.\n단추를 달아 마무리합니다.\n\n도안 url : (업데이트 예정)\n튜토리얼 동영상 url : (업데이트 예정)"
+        }
       },
       {
-        "id": "counter_template_leaf_cuff_a",
+        "id": "counter_template_kudos_bracelet_notice",
         "type": "counter",
-        "title": "ㄱ",
-        "count": 4,
-        "targetCount": 20,
-        "parentProjectId": "proj_template_leaf_cuff",
+        "title": "ⓘ 도안 설명 필독‼️",
+        "count": 0,
+        "targetCount": 0,
+        "parentProjectId": "proj_template_kudos_bracelet",
         "subCount": 0,
         "subRule": 0,
         "subRuleIsActive": false,
         "subModalIsOpen": false,
-        "mascotIsActive": true,
+        "mascotIsActive": false,
         "wayIsChange": true,
         "repeatRules": [],
-        "sectionModalIsOpen": true,
-        "way": "front"
+        "sectionModalIsOpen": false
       },
       {
-        "id": "counter_template_leaf_cuff_b",
+        "id": "counter_template_kudos_bracelet_alert",
         "type": "counter",
-        "title": "ㄴ",
-        "count": 10,
+        "title": "[알림단만] 브레이슬렛",
+        "count": 0,
         "targetCount": 0,
-        "parentProjectId": "proj_template_leaf_cuff",
+        "parentProjectId": "proj_template_kudos_bracelet",
         "subCount": 0,
         "subRule": 0,
         "subRuleIsActive": false,
@@ -179,17 +169,125 @@
         "wayIsChange": true,
         "repeatRules": [
           {
-            "message": "늘림 단",
-            "startNumber": 10,
+            "message": "15코 CO",
+            "startNumber": 0,
             "endNumber": 0,
-            "repeatCount": 5,
+            "repeatCount": 1,
             "endMode": "repeatCount",
             "ruleNumber": 1,
             "color": "#EF5777"
+          },
+          {
+            "message": "메리야스",
+            "startNumber": 1,
+            "endNumber": 0,
+            "repeatCount": 2,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#574559"
+          },
+          {
+            "message": "무늬단",
+            "startNumber": 3,
+            "endNumber": 0,
+            "repeatCount": 0,
+            "endMode": null,
+            "ruleNumber": 2,
+            "color": "#04BFAD"
           }
         ],
         "sectionModalIsOpen": false,
-        "way": "front"
+        "way": "back"
+      },
+      {
+        "id": "counter_template_kudos_bracelet_full",
+        "type": "counter",
+        "title": "[전체도안] 브레이슬렛",
+        "count": 0,
+        "targetCount": 0,
+        "parentProjectId": "proj_template_kudos_bracelet",
+        "subCount": 0,
+        "subRule": 0,
+        "subRuleIsActive": false,
+        "subModalIsOpen": false,
+        "mascotIsActive": true,
+        "wayIsChange": true,
+        "repeatRules": [
+          {
+            "message": "15코 CO",
+            "startNumber": 0,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#EF5777"
+          },
+          {
+            "message": "메리야스",
+            "startNumber": 1,
+            "endNumber": 0,
+            "repeatCount": 2,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#574559"
+          },
+          {
+            "message": "5K,🍒↖️,6K",
+            "startNumber": 3,
+            "endNumber": 0,
+            "repeatCount": 1,
+            "endMode": "repeatCount",
+            "ruleNumber": 1,
+            "color": "#04BFAD"
+          },
+          {
+            "message": "6K,🍒↖️,5K",
+            "startNumber": 5,
+            "endNumber": 0,
+            "repeatCount": 0,
+            "endMode": null,
+            "ruleNumber": 8,
+            "color": "#04bfadff"
+          },
+          {
+            "message": "7K,🍒↖️,4K",
+            "startNumber": 7,
+            "endNumber": 0,
+            "repeatCount": 0,
+            "endMode": null,
+            "ruleNumber": 8,
+            "color": "#04bfadff"
+          },
+          {
+            "message": "5K,↗️🍒,6K",
+            "startNumber": 9,
+            "endNumber": 0,
+            "repeatCount": 0,
+            "endMode": null,
+            "ruleNumber": 8,
+            "color": "#F2A922"
+          },
+          {
+            "message": "4K,↗️🍒,7K",
+            "startNumber": 11,
+            "endNumber": 0,
+            "repeatCount": 0,
+            "endMode": null,
+            "ruleNumber": 8,
+            "color": "#f2a922ff"
+          },
+          {
+            "message": "P",
+            "startNumber": 4,
+            "endNumber": 0,
+            "repeatCount": 0,
+            "endMode": null,
+            "ruleNumber": 2,
+            "color": "#D9B391"
+          }
+        ],
+        "sectionModalIsOpen": false,
+        "way": "back"
       }
     ]
   }
