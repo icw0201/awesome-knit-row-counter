@@ -1,10 +1,12 @@
 // src/components/settings/SettingsSectionHeader.tsx
 import React from 'react';
 import { View, Text } from 'react-native';
+import QuestionMarkTooltip from '@components/counter/QuestionMarkTooltip';
 
 export interface SettingsSectionHeaderProps {
   title: string;
   titleClassName?: string;
+  tooltipText?: string;
 }
 
 /**
@@ -13,12 +15,20 @@ export interface SettingsSectionHeaderProps {
 const SettingsSectionHeader: React.FC<SettingsSectionHeaderProps> = ({
   title,
   titleClassName = 'text-darkgray',
+  tooltipText,
 }) => {
   return (
     <View className="mb-2 flex-row items-center px-2">
-      <Text className={`mr-3 text-sm font-semibold ${titleClassName}`}>
-        {title}
-      </Text>
+      <View className="mr-3 flex-row items-center">
+        <Text className={`text-sm font-semibold ${titleClassName}`}>
+          {title}
+        </Text>
+        {tooltipText ? (
+          <View className="ml-1">
+            <QuestionMarkTooltip tooltipText={tooltipText} />
+          </View>
+        ) : null}
+      </View>
       <View className="flex-1 border-b border-lightgray" />
     </View>
   );

@@ -112,3 +112,38 @@ export type Project = {
 
 // 모든 아이템의 공통 타입 (프로젝트 또는 카운터)
 export type Item = Project | Counter;
+
+// ===== 프로젝트 불러오기 타입 =====
+
+// item-import 문서는 앱 내부 저장 시각(updatedAt)을 포함하지 않는다.
+export type ItemImportProject = Omit<Project, 'updatedAt'>;
+
+// item-import 문서는 "세팅된 프로젝트"만 전달하므로,
+// 실행 중 상태(타이머/경과시간/활동기록)는 받지 않고 import 시 기본값으로 채운다.
+export type ItemImportCounter = Omit<
+  Counter,
+  'elapsedTime' | 'timerIsActive' | 'timerIsPlaying' | 'sectionRecords' | 'updatedAt'
+>;
+
+export type ItemImportItem = ItemImportProject | ItemImportCounter;
+
+// item-import는 설정/업데이트 프롬프트 없이 knitItems만 전달한다.
+export type ItemImportPayload = {
+  knitItems: ItemImportItem[];
+};
+
+// 도안/프로젝트 배포용 JSON의 루트 문서 형식.
+export type ItemImportDocument = {
+  formatVersion: 1;
+  appId: 'awesome-knit-row-counter';
+  importType: 'item-import';
+  dataVersion: number;
+  payload: ItemImportPayload;
+};
+
+// 확인 모달에 보여줄 최소 요약 정보.
+export type ItemImportSummary = {
+  totalItems: number;
+  projectCount: number;
+  counterCount: number;
+};

@@ -260,7 +260,14 @@ const PremiumPurchase: React.FC = () => {
 
               <View className="items-center justify-center px-2 py-3">
                 <Text className="w-full text-center text-lg font-bold leading-[22px] tracking-tight text-black">
-                  데이터 내보내기&파일 데이터 불러오기
+                  전체 데이터 내보내기&파일 데이터 불러오기
+                </Text>
+              </View>
+              <View className={clsx('h-px w-[55%] self-center', appTheme.tw.bg.primary['200'])} />
+
+              <View className="items-center justify-center px-2 py-3">
+                <Text className="w-full text-center text-lg font-bold leading-[22px] tracking-tight text-black">
+                  프로젝트 불러오기
                 </Text>
               </View>
               <View className={clsx('h-px w-[55%] self-center', appTheme.tw.bg.primary['200'])} />

@@ -8,6 +8,7 @@ import {
   SettingsCheckBoxes,
   SettingsColorThemeSelector,
   SettingsDataManagement,
+  SettingsItemImport,
   SettingsVersion,
   SettingsVoiceCommands,
 } from '@components/settings';
@@ -38,12 +39,13 @@ const Settings = () => {
           <SettingsVoiceCommands />
 
           <SettingsBackup />
+          <SettingsItemImport />
 
           <SettingsDataManagement />
 
           <SettingsAppInfo />
 
-          <SettingsVersion version="1.5.1" />
+          <SettingsVersion version="1.6.0" />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

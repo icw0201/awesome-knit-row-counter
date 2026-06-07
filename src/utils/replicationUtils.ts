@@ -1,4 +1,5 @@
 import { Counter, Item, Project } from '@storage/types';
+import { createUniqueItemId } from './itemIdUtils';
 
 const TITLE_MAX_LENGTH = 15;
 
@@ -122,7 +123,8 @@ export function buildReplicatedProjectBundle(
   allItems: Item[]
 ): ReplicatedProjectBundle {
   const baseTs = Date.now();
-  const newProjectId = `proj_${baseTs}`;
+  const reservedIds = new Set(allItems.map((item) => item.id));
+  const newProjectId = createUniqueItemId('proj', reservedIds, baseTs);
 
   const resolved: Counter[] = [];
   for (const oldId of source.counterIds) {
@@ -145,7 +147,7 @@ export function buildReplicatedProjectBundle(
   let offset = 0;
   for (const old of byCreatedAsc) {
     offset += 1;
-    oldIdToNewId.set(old.id, `counter_${baseTs + offset}`);
+    oldIdToNewId.set(old.id, createUniqueItemId('counter', reservedIds, baseTs + offset));
   }
 
   const counters: Counter[] = [];
