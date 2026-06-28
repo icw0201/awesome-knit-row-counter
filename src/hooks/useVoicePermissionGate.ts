@@ -43,6 +43,10 @@ class VoiceDiagnosticError extends Error {
 }
 
 function logVoicePermissionGate(message: string, payload?: unknown) {
+  if (!__DEV__) {
+    return;
+  }
+
   if (payload === undefined) {
     console.log(VOICE_PERMISSION_LOG_PREFIX, message);
     return;
