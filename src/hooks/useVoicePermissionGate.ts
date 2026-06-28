@@ -12,6 +12,90 @@ import {
 const MIN_ANDROID_ON_DEVICE_SPEECH_API_LEVEL = 33;
 const ANDROID_ON_DEVICE_SERVICE = 'com.google.android.as';
 const REQUIRED_ON_DEVICE_LOCALE = 'ko-KR';
+const VOICE_PERMISSION_LOG_PREFIX = '[voice-permission-gate]';
+const VOICE_PERMISSION_TIMEOUT_MS = 5000;
+const VOICE_LOCALES_TIMEOUT_MS = 5000;
+
+type VoiceDiagnosticCode =
+  | 'VOICE_PERMISSION_TIMEOUT'
+  | 'VOICE_PERMISSION_REQUEST_TIMEOUT'
+  | 'VOICE_PERMISSION_CHECK_FAILED'
+  | 'VOICE_PERMISSION_REQUEST_FAILED'
+  | 'VOICE_ANDROID_API_UNSUPPORTED'
+  | 'VOICE_ON_DEVICE_UNSUPPORTED'
+  | 'VOICE_LOCALES_TIMEOUT'
+  | 'VOICE_LOCALES_CHECK_FAILED'
+  | 'VOICE_KO_LOCALE_UNAVAILABLE';
+
+interface VoicePrerequisiteResult {
+  canStart: boolean;
+  diagnosticCode?: VoiceDiagnosticCode;
+}
+
+class VoiceDiagnosticError extends Error {
+  diagnosticCode: VoiceDiagnosticCode;
+
+  constructor(diagnosticCode: VoiceDiagnosticCode, message: string) {
+    super(message);
+    this.name = 'VoiceDiagnosticError';
+    this.diagnosticCode = diagnosticCode;
+  }
+}
+
+function logVoicePermissionGate(message: string, payload?: unknown) {
+  if (!__DEV__) {
+    return;
+  }
+
+  if (payload === undefined) {
+    console.log(VOICE_PERMISSION_LOG_PREFIX, message);
+    return;
+  }
+
+  console.log(VOICE_PERMISSION_LOG_PREFIX, message, payload);
+}
+
+function isVoiceDiagnosticError(error: unknown): error is VoiceDiagnosticError {
+  return error instanceof VoiceDiagnosticError;
+}
+
+function appendDiagnosticCode(
+  description: string,
+  diagnosticCode?: VoiceDiagnosticCode
+): string {
+  if (!diagnosticCode) {
+    return description;
+  }
+
+  return `${description}\n\n진단 코드: ${diagnosticCode}`;
+}
+
+function withVoiceTimeout<T>(
+  promise: Promise<T>,
+  timeoutMs: number,
+  diagnosticCode: VoiceDiagnosticCode
+): Promise<T> {
+  return new Promise<T>((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(
+        new VoiceDiagnosticError(
+          diagnosticCode,
+          `Voice recognition native call timed out: ${diagnosticCode}`
+        )
+      );
+    }, timeoutMs);
+
+    promise
+      .then((value) => {
+        clearTimeout(timeout);
+        resolve(value);
+      })
+      .catch((error) => {
+        clearTimeout(timeout);
+        reject(error);
+      });
+  });
+}
 
 function normalizeLocaleTag(locale: string): string {
   return locale.trim().replace(/_/g, '-').toLowerCase();
@@ -117,9 +201,14 @@ export function useVoicePermissionGate() {
   }, []);
 
   // 시스템 권한이 막혀 있을 때 보여줄 설정 이동 안내 모달 상태를 구성한다.
-  const showVoicePermissionSettingsModal = useCallback(() => {
+  const showVoicePermissionSettingsModal = useCallback((diagnosticCode?: VoiceDiagnosticCode) => {
     setVoicePermissionModalTitle('음성 인식 권한');
-    setVoicePermissionModalDescription('음성인식 기능을 위해 설정에서 음성 인식 권한을 허용해 주세요.');
+    setVoicePermissionModalDescription(
+      appendDiagnosticCode(
+        '음성인식 기능을 위해 설정에서 음성 인식 권한을 허용해 주세요.',
+        diagnosticCode
+      )
+    );
     setVoicePermissionModalConfirmText('설정 열기');
     setVoicePermissionModalCancelText('닫기');
     setShouldOpenSettingsOnModalConfirm(true);
@@ -127,9 +216,14 @@ export function useVoicePermissionGate() {
   }, []);
 
   // 권한은 있어도 한국어 온디바이스 인식을 지원하지 않아 기능 자체를 켤 수 없을 때 사용한다.
-  const showVoiceUnavailableModal = useCallback(() => {
+  const showVoiceUnavailableModal = useCallback((diagnosticCode?: VoiceDiagnosticCode) => {
     setVoicePermissionModalTitle('음성 인식 사용 불가');
-    setVoicePermissionModalDescription('음성 인식을 사용할 수 없습니다. 한국어 온디바이스 음성 인식을 지원하지 않는 Android 버전·기기이거나, 필수 음성 인식 서비스가 비활성화된 상태일 수 있습니다. Android 13 이상에서만 지원됩니다.');
+    setVoicePermissionModalDescription(
+      appendDiagnosticCode(
+        '음성 인식을 사용할 수 없습니다. 한국어 온디바이스 음성 인식을 지원하지 않는 Android 버전·기기이거나, 필수 음성 인식 서비스가 비활성화된 상태일 수 있습니다. Android 13 이상에서만 지원됩니다.',
+        diagnosticCode
+      )
+    );
     setVoicePermissionModalConfirmText('확인');
     setVoicePermissionModalCancelText('');
     setShouldOpenSettingsOnModalConfirm(false);
@@ -164,26 +258,55 @@ export function useVoicePermissionGate() {
    * - 모델이 아직 설치되지 않았더라도 지원 locale이면 true로 보고,
    *   실제 다운로드 안내는 음성 인식 시작 후 라이브러리 오류 흐름에서 처리한다.
    */
-  const checkOnDeviceSpeechPrerequisites = useCallback(async (): Promise<boolean> => {
+  const checkOnDeviceSpeechPrerequisites = useCallback(async (): Promise<VoicePrerequisiteResult> => {
+    logVoicePermissionGate('prereq:start', {
+      platform: Platform.OS,
+      platformVersion: Platform.Version,
+    });
+
     if (Platform.OS !== 'android') {
-      return true;
+      logVoicePermissionGate('prereq:skip-non-android');
+      return { canStart: true };
     }
 
-    if (getAndroidApiLevel() < MIN_ANDROID_ON_DEVICE_SPEECH_API_LEVEL) {
-      return false;
+    const androidApiLevel = getAndroidApiLevel();
+    logVoicePermissionGate('prereq:android-api-level', androidApiLevel);
+
+    if (androidApiLevel < MIN_ANDROID_ON_DEVICE_SPEECH_API_LEVEL) {
+      const diagnosticCode = 'VOICE_ANDROID_API_UNSUPPORTED';
+      logVoicePermissionGate('prereq:unsupported-api-level', diagnosticCode);
+      return { canStart: false, diagnosticCode };
     }
 
     try {
-      if (!ExpoSpeechRecognitionModule.supportsOnDeviceRecognition()) {
-        return false;
+      logVoicePermissionGate('prereq:before supportsOnDeviceRecognition');
+      const supportsOnDeviceRecognition =
+        ExpoSpeechRecognitionModule.supportsOnDeviceRecognition();
+      logVoicePermissionGate(
+        'prereq:after supportsOnDeviceRecognition',
+        supportsOnDeviceRecognition
+      );
+
+      if (!supportsOnDeviceRecognition) {
+        const diagnosticCode = 'VOICE_ON_DEVICE_UNSUPPORTED';
+        logVoicePermissionGate('prereq:on-device-unsupported', diagnosticCode);
+        return { canStart: false, diagnosticCode };
       }
 
+      logVoicePermissionGate('prereq:before getSupportedLocales', {
+        androidRecognitionServicePackage: ANDROID_ON_DEVICE_SERVICE,
+      });
       const supportedLocales =
-        await ExpoSpeechRecognitionModule.getSupportedLocales({
-          androidRecognitionServicePackage: ANDROID_ON_DEVICE_SERVICE,
-        });
+        await withVoiceTimeout(
+          ExpoSpeechRecognitionModule.getSupportedLocales({
+            androidRecognitionServicePackage: ANDROID_ON_DEVICE_SERVICE,
+          }),
+          VOICE_LOCALES_TIMEOUT_MS,
+          'VOICE_LOCALES_TIMEOUT'
+        );
+      logVoicePermissionGate('prereq:after getSupportedLocales', supportedLocales);
 
-      return (
+      const hasRequiredLocale = (
         hasMatchingOnDeviceLocale(
           supportedLocales.installedLocales ?? [],
           REQUIRED_ON_DEVICE_LOCALE
@@ -193,8 +316,24 @@ export function useVoicePermissionGate() {
           REQUIRED_ON_DEVICE_LOCALE
         )
       );
-    } catch {
-      return false;
+      logVoicePermissionGate('prereq:result', hasRequiredLocale);
+
+      if (!hasRequiredLocale) {
+        return {
+          canStart: false,
+          diagnosticCode: 'VOICE_KO_LOCALE_UNAVAILABLE',
+        };
+      }
+
+      return { canStart: true };
+    } catch (error) {
+      logVoicePermissionGate('prereq:error', error);
+      return {
+        canStart: false,
+        diagnosticCode: isVoiceDiagnosticError(error)
+          ? error.diagnosticCode
+          : 'VOICE_LOCALES_CHECK_FAILED',
+      };
     }
   }, []);
 
@@ -210,20 +349,26 @@ export function useVoicePermissionGate() {
 
   // 권한 거절 상태를 저장소/UI에 함께 반영한다.
   // showModal=true면 사용자를 설정 이동 안내 모달로 유도한다.
-  const applyDeniedVoicePermission = useCallback((showModal: boolean) => {
+  const applyDeniedVoicePermission = useCallback((
+    showModal: boolean,
+    diagnosticCode?: VoiceDiagnosticCode
+  ) => {
     setVoiceRecognitionPermissionStatusSetting('denied');
     setVoiceCommandsEnabledSetting(false);
     setVoiceCommandsEnabled(false);
     setVoicePermissionGranted(false);
     if (showModal) {
-      showVoicePermissionSettingsModal();
+      showVoicePermissionSettingsModal(diagnosticCode);
     } else {
       setVoicePermissionModalVisible(false);
     }
     setVoicePermissionError('');
   }, [showVoicePermissionSettingsModal]);
 
-  const applyUnavailableVoiceRecognition = useCallback((showModal: boolean) => {
+  const applyUnavailableVoiceRecognition = useCallback((
+    showModal: boolean,
+    diagnosticCode?: VoiceDiagnosticCode
+  ) => {
     // OS 권한은 이미 허용된 상태이므로 granted를 유지해야,
     // 나중에 모델이 설치되어도 사용자가 끈 설정(false)이 임의로 true로 복원되지 않는다.
     setVoiceRecognitionPermissionStatusSetting('granted');
@@ -231,7 +376,7 @@ export function useVoicePermissionGate() {
     setVoiceCommandsEnabled(false);
     setVoicePermissionGranted(false);
     if (showModal) {
-      showVoiceUnavailableModal();
+      showVoiceUnavailableModal(diagnosticCode);
     } else {
       setVoicePermissionModalVisible(false);
     }
@@ -240,15 +385,31 @@ export function useVoicePermissionGate() {
 
   // 토글 ON 직전 시스템 권한을 확인하고, 아직 없으면 OS 권한 요청을 띄운다.
   const requestVoicePermission = useCallback(async (): Promise<boolean> => {
+    logVoicePermissionGate('request-permission:before getPermissionsAsync');
     const currentPermission =
-      await ExpoSpeechRecognitionModule.getPermissionsAsync();
+      await withVoiceTimeout(
+        ExpoSpeechRecognitionModule.getPermissionsAsync(),
+        VOICE_PERMISSION_TIMEOUT_MS,
+        'VOICE_PERMISSION_TIMEOUT'
+      );
+    logVoicePermissionGate('request-permission:after getPermissionsAsync', currentPermission);
 
     if (currentPermission.granted) {
+      logVoicePermissionGate('request-permission:already-granted');
       return true;
     }
 
+    logVoicePermissionGate('request-permission:before requestPermissionsAsync');
     const requestedPermission =
-      await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      await withVoiceTimeout(
+        ExpoSpeechRecognitionModule.requestPermissionsAsync(),
+        VOICE_PERMISSION_TIMEOUT_MS,
+        'VOICE_PERMISSION_REQUEST_TIMEOUT'
+      );
+    logVoicePermissionGate(
+      'request-permission:after requestPermissionsAsync',
+      requestedPermission
+    );
 
     return requestedPermission.granted;
   }, []);
@@ -258,35 +419,59 @@ export function useVoicePermissionGate() {
    * 기능 ON/OFF, granted/denied, 모달 노출 상태를 다시 맞춘다.
    */
   const syncVoicePermission = useCallback(async () => {
+    logVoicePermissionGate('sync:start');
     // 권한 팝업이 열리고 닫히는 동안 AppState 이벤트가 다시 들어올 수 있어
     // 동일한 권한 요청 흐름이 중복 실행되지 않도록 막는다.
     if (isSyncingPermissionRef.current) {
+      logVoicePermissionGate('sync:skip-already-syncing');
       return;
     }
     if (isVoiceMicPrimerOpenRef.current) {
+      logVoicePermissionGate('sync:skip-mic-primer-open');
       return;
     }
 
     isSyncingPermissionRef.current = true;
     const storedStatus = getVoiceRecognitionPermissionStatusSetting();
+    logVoicePermissionGate('sync:stored-status', storedStatus);
 
     try {
+      logVoicePermissionGate('sync:before getPermissionsAsync');
       const currentPermission =
-        await ExpoSpeechRecognitionModule.getPermissionsAsync();
+        await withVoiceTimeout(
+          ExpoSpeechRecognitionModule.getPermissionsAsync(),
+          VOICE_PERMISSION_TIMEOUT_MS,
+          'VOICE_PERMISSION_TIMEOUT'
+        );
+      logVoicePermissionGate('sync:after getPermissionsAsync', currentPermission);
 
       // 이미 허용된 경우: 저장소에 남아 있던 enabled 여부를 기준으로 복원한다.
       // 단, 최초 허용 직후처럼 저장 상태가 없으면 기본값을 true로 둔다.
       if (currentPermission.granted) {
-        const canStartOnDeviceSpeech = await checkOnDeviceSpeechPrerequisites();
+        logVoicePermissionGate('sync:permission-granted');
+        logVoicePermissionGate('sync:before checkOnDeviceSpeechPrerequisites');
+        const prerequisite = await checkOnDeviceSpeechPrerequisites();
+        logVoicePermissionGate(
+          'sync:after checkOnDeviceSpeechPrerequisites',
+          prerequisite
+        );
 
-        if (!canStartOnDeviceSpeech) {
-          applyUnavailableVoiceRecognition(getVoiceCommandsEnabledSetting());
+        if (!prerequisite.canStart) {
+          logVoicePermissionGate('sync:apply-unavailable', {
+            showModal: getVoiceCommandsEnabledSetting(),
+            diagnosticCode: prerequisite.diagnosticCode,
+          });
+          applyUnavailableVoiceRecognition(
+            getVoiceCommandsEnabledSetting(),
+            prerequisite.diagnosticCode
+          );
           return;
         }
 
         const shouldEnable = storedStatus === 'granted'
           ? getVoiceCommandsEnabledSetting()
           : true;
+        logVoicePermissionGate('sync:apply-granted', shouldEnable);
         applyGrantedVoicePermission(shouldEnable);
         return;
       }
@@ -294,49 +479,90 @@ export function useVoicePermissionGate() {
       // 이미 처리된 거절/권한 철회 상태에서는 화면 재진입만으로
       // 시스템 권한 요청 팝업을 다시 띄우지 않는다.
       if (storedStatus === 'granted' || storedStatus === 'denied') {
+        logVoicePermissionGate('sync:apply-denied-without-modal');
         applyDeniedVoicePermission(false);
         return;
       }
 
       // 더 이상 canAskAgain이 불가능하면 설정 앱 이동만 남는다.
       if (currentPermission.canAskAgain === false) {
+        logVoicePermissionGate('sync:apply-denied-with-modal');
         applyDeniedVoicePermission(true);
         return;
       }
 
+      logVoicePermissionGate('sync:show-mic-primer');
       showMicPrimerThen(async () => {
+        logVoicePermissionGate('sync-primer:continue');
         isSyncingPermissionRef.current = true;
         try {
+          logVoicePermissionGate('sync-primer:before requestPermissionsAsync');
           const requestedPermission =
-            await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+            await withVoiceTimeout(
+              ExpoSpeechRecognitionModule.requestPermissionsAsync(),
+              VOICE_PERMISSION_TIMEOUT_MS,
+              'VOICE_PERMISSION_REQUEST_TIMEOUT'
+            );
+          logVoicePermissionGate(
+            'sync-primer:after requestPermissionsAsync',
+            requestedPermission
+          );
 
           if (requestedPermission.granted) {
-            const canStartOnDeviceSpeech = await checkOnDeviceSpeechPrerequisites();
+            logVoicePermissionGate('sync-primer:permission-granted');
+            logVoicePermissionGate('sync-primer:before checkOnDeviceSpeechPrerequisites');
+            const prerequisite = await checkOnDeviceSpeechPrerequisites();
+            logVoicePermissionGate(
+              'sync-primer:after checkOnDeviceSpeechPrerequisites',
+              prerequisite
+            );
 
-            if (!canStartOnDeviceSpeech) {
-              applyUnavailableVoiceRecognition(true);
+            if (!prerequisite.canStart) {
+              logVoicePermissionGate(
+                'sync-primer:apply-unavailable',
+                prerequisite.diagnosticCode
+              );
+              applyUnavailableVoiceRecognition(true, prerequisite.diagnosticCode);
               return;
             }
 
+            logVoicePermissionGate('sync-primer:apply-granted');
             applyGrantedVoicePermission(true);
             return;
           }
 
+          logVoicePermissionGate('sync-primer:apply-denied');
           applyDeniedVoicePermission(true);
-        } catch {
+        } catch (error) {
+          const diagnosticCode = isVoiceDiagnosticError(error)
+            ? error.diagnosticCode
+            : 'VOICE_PERMISSION_REQUEST_FAILED';
+          logVoicePermissionGate('sync-primer:error', {
+            error,
+            diagnosticCode,
+          });
+          setVoiceCommandsEnabledSetting(false);
           setVoiceCommandsEnabled(false);
           setVoicePermissionGranted(false);
-          showVoicePermissionSettingsModal();
+          showVoicePermissionSettingsModal(diagnosticCode);
           setVoicePermissionError('음성 인식 권한을 확인할 수 없습니다');
         } finally {
           isSyncingPermissionRef.current = false;
         }
       });
       return;
-    } catch {
+    } catch (error) {
+      const diagnosticCode = isVoiceDiagnosticError(error)
+        ? error.diagnosticCode
+        : 'VOICE_PERMISSION_CHECK_FAILED';
+      logVoicePermissionGate('sync:error', {
+        error,
+        diagnosticCode,
+      });
+      setVoiceCommandsEnabledSetting(false);
       setVoiceCommandsEnabled(false);
       setVoicePermissionGranted(false);
-      showVoicePermissionSettingsModal();
+      showVoicePermissionSettingsModal(diagnosticCode);
       setVoicePermissionError('음성 인식 권한을 확인할 수 없습니다');
     } finally {
       isSyncingPermissionRef.current = false;
@@ -388,7 +614,14 @@ export function useVoicePermissionGate() {
    * - 그 외에는 시스템 권한을 요청하고 결과에 따라 granted/denied 적용
    */
   const toggleVoiceCommands = useCallback(async () => {
-    if (voiceCommandsEnabled) {
+    const voiceCommandsActuallyEnabled = voiceCommandsEnabled && voicePermissionGranted;
+    logVoicePermissionGate('toggle:start', {
+      voiceCommandsEnabled,
+      voicePermissionGranted,
+      voiceCommandsActuallyEnabled,
+    });
+    if (voiceCommandsActuallyEnabled) {
+      logVoicePermissionGate('toggle:disable');
       setVoiceCommandsEnabledSetting(false);
       setVoiceCommandsEnabled(false);
       setVoicePermissionError('');
@@ -396,57 +629,101 @@ export function useVoicePermissionGate() {
     }
 
     try {
+      logVoicePermissionGate('toggle:before getPermissionsAsync');
       const currentPermission =
-        await ExpoSpeechRecognitionModule.getPermissionsAsync();
+        await withVoiceTimeout(
+          ExpoSpeechRecognitionModule.getPermissionsAsync(),
+          VOICE_PERMISSION_TIMEOUT_MS,
+          'VOICE_PERMISSION_TIMEOUT'
+        );
+      logVoicePermissionGate('toggle:after getPermissionsAsync', currentPermission);
 
       if (currentPermission.granted) {
-        const canStartOnDeviceSpeech = await checkOnDeviceSpeechPrerequisites();
+        logVoicePermissionGate('toggle:permission-granted');
+        logVoicePermissionGate('toggle:before checkOnDeviceSpeechPrerequisites');
+        const prerequisite = await checkOnDeviceSpeechPrerequisites();
+        logVoicePermissionGate(
+          'toggle:after checkOnDeviceSpeechPrerequisites',
+          prerequisite
+        );
 
-        if (!canStartOnDeviceSpeech) {
-          applyUnavailableVoiceRecognition(true);
+        if (!prerequisite.canStart) {
+          logVoicePermissionGate('toggle:apply-unavailable', prerequisite.diagnosticCode);
+          applyUnavailableVoiceRecognition(true, prerequisite.diagnosticCode);
           return;
         }
 
+        logVoicePermissionGate('toggle:apply-granted');
         applyGrantedVoicePermission(true);
         return;
       }
 
       if (currentPermission.canAskAgain === false) {
+        logVoicePermissionGate('toggle:apply-denied-with-modal');
         applyDeniedVoicePermission(true);
         return;
       }
 
+      logVoicePermissionGate('toggle:show-mic-primer');
       showMicPrimerThen(async () => {
+        logVoicePermissionGate('toggle-primer:continue');
         try {
+          logVoicePermissionGate('toggle-primer:before requestVoicePermission');
           const granted = await requestVoicePermission();
+          logVoicePermissionGate('toggle-primer:after requestVoicePermission', granted);
 
           if (granted) {
-            const canStartOnDeviceSpeech = await checkOnDeviceSpeechPrerequisites();
+            logVoicePermissionGate('toggle-primer:before checkOnDeviceSpeechPrerequisites');
+            const prerequisite = await checkOnDeviceSpeechPrerequisites();
+            logVoicePermissionGate(
+              'toggle-primer:after checkOnDeviceSpeechPrerequisites',
+              prerequisite
+            );
 
-            if (!canStartOnDeviceSpeech) {
-              applyUnavailableVoiceRecognition(true);
+            if (!prerequisite.canStart) {
+              logVoicePermissionGate(
+                'toggle-primer:apply-unavailable',
+                prerequisite.diagnosticCode
+              );
+              applyUnavailableVoiceRecognition(true, prerequisite.diagnosticCode);
               return;
             }
 
+            logVoicePermissionGate('toggle-primer:apply-granted');
             applyGrantedVoicePermission(true);
             return;
           }
 
+          logVoicePermissionGate('toggle-primer:apply-denied');
           applyDeniedVoicePermission(true);
-        } catch {
+        } catch (error) {
+          const diagnosticCode = isVoiceDiagnosticError(error)
+            ? error.diagnosticCode
+            : 'VOICE_PERMISSION_REQUEST_FAILED';
+          logVoicePermissionGate('toggle-primer:error', {
+            error,
+            diagnosticCode,
+          });
           setVoiceCommandsEnabledSetting(false);
           setVoiceCommandsEnabled(false);
           setVoicePermissionGranted(false);
-          showVoicePermissionSettingsModal();
+          showVoicePermissionSettingsModal(diagnosticCode);
           setVoicePermissionError('음성 인식 권한을 확인할 수 없습니다');
         }
       });
       return;
-    } catch {
+    } catch (error) {
+      const diagnosticCode = isVoiceDiagnosticError(error)
+        ? error.diagnosticCode
+        : 'VOICE_PERMISSION_CHECK_FAILED';
+      logVoicePermissionGate('toggle:error', {
+        error,
+        diagnosticCode,
+      });
       setVoiceCommandsEnabledSetting(false);
       setVoiceCommandsEnabled(false);
       setVoicePermissionGranted(false);
-      showVoicePermissionSettingsModal();
+      showVoicePermissionSettingsModal(diagnosticCode);
       setVoicePermissionError('음성 인식 권한을 확인할 수 없습니다');
     }
   }, [
@@ -458,6 +735,7 @@ export function useVoicePermissionGate() {
     showMicPrimerThen,
     showVoicePermissionSettingsModal,
     voiceCommandsEnabled,
+    voicePermissionGranted,
   ]);
 
   return {
