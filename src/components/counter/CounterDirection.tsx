@@ -99,6 +99,10 @@ const buildRuleKey = (rule: RepeatRule) =>
     rule.color,
   ].join(':');
 
+// 화면 크기별 폰트 크기와 메시지를 조합해 텍스트 실측값을 구분한다.
+const buildTextMeasurementKey = (message: string, fontSize: number) =>
+  `${fontSize}:${message}`;
+
 /**
  * 현재 단의 규칙 적용 여부와 방향 토글 가능 여부에 따라 마스코트 방향 이미지를 선택한다.
  */
@@ -144,6 +148,10 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     stageHeight / COMPOSITION_HEIGHT_RATIO;
   const imageHeight = Math.min(maxImageHeightByWidth, maxImageHeightByHeight);
   const imageWidth = imageHeight * DIRECTION_IMAGE_ASPECT_RATIO;
+  const minimumBubbleWidth = imageWidth * BUBBLE_SIZE_SCALE;
+  const bubbleBaseHeight = imageHeight * BUBBLE_SIZE_SCALE;
+  const textFontSize = bubbleBaseHeight * BUBBLE_TEXT_FONT_SIZE_RATIO;
+  const textLineHeight = bubbleBaseHeight * BUBBLE_TEXT_LINE_HEIGHT_RATIO;
   const compositionWidth = imageWidth * COMPOSITION_WIDTH_RATIO;
   const imageOriginLeft =
     (stageWidth - compositionWidth) / 2 - imageWidth * COMPOSITION_LEFT_RATIO;
@@ -257,21 +265,23 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
 
   const currentRule = visibleRules[0]?.rule;
   const currentMessage = currentRule?.message ?? '';
-  const [measuredMessage, setMeasuredMessage] = useState({ message: '', width: 0 });
+  const currentTextMeasurementKey = buildTextMeasurementKey(currentMessage, textFontSize);
+  const [measuredMessageWidths, setMeasuredMessageWidths] = useState<Record<string, number>>({});
+  // 모든 적용 규칙의 너비를 미리 저장해 말풍선이 앞으로 올 때 크기 측정 지연을 없앤다.
   const handleMessageTextLayout = useCallback(
-    (event: NativeSyntheticEvent<TextLayoutEventData>) => {
+    (
+      measurementKey: string,
+      event: NativeSyntheticEvent<TextLayoutEventData>
+    ) => {
       const measuredWidth = event.nativeEvent.lines[0]?.width ?? 0;
-      setMeasuredMessage((previous) => {
-        if (
-          previous.message === currentMessage &&
-          Math.abs(previous.width - measuredWidth) < 0.5
-        ) {
+      setMeasuredMessageWidths((previous) => {
+        if (Math.abs((previous[measurementKey] ?? 0) - measuredWidth) < 0.5) {
           return previous;
         }
-        return { message: currentMessage, width: measuredWidth };
+        return { ...previous, [measurementKey]: measuredWidth };
       });
     },
-    [currentMessage]
+    []
   );
   // 사용자에게 보여줄 1-based 인덱스는 순환값 사용
   const displayRuleIndex =
@@ -335,12 +345,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   // 현재 단의 규칙 적용 여부와 방향 토글 가능 여부에 따라 마스코트 이미지 선택
   const imageSource = resolveDirectionImage(isRuleAppliedToCurrentCount, wayIsChange, way);
 
-  const minimumBubbleWidth = imageWidth * BUBBLE_SIZE_SCALE;
-  const bubbleBaseHeight = imageHeight * BUBBLE_SIZE_SCALE;
-  const textFontSize = bubbleBaseHeight * BUBBLE_TEXT_FONT_SIZE_RATIO;
-  const textLineHeight = bubbleBaseHeight * BUBBLE_TEXT_LINE_HEIGHT_RATIO;
-  const measuredTextWidth =
-    measuredMessage.message === currentMessage ? measuredMessage.width : 0;
+  const measuredTextWidth = measuredMessageWidths[currentTextMeasurementKey] ?? 0;
   const textContainerLeft = minimumBubbleWidth * TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO;
   const textContainerRight =
     minimumBubbleWidth *
@@ -353,10 +358,6 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     minimumBubbleWidth,
     Math.min(stageWidth, desiredBubbleWidth)
   );
-  // 현재 말풍선이 늘어나더라도 기존 중심축을 유지하도록 좌측 위치를 보정한다.
-  const currentBubbleLeft =
-    imageWidth * BUBBLE_BASE_LEFT_RATIO -
-    (currentBubbleWidth - minimumBubbleWidth) / 2;
   const bubbleBaseTop = imageHeight * BUBBLE_STACK_TOP_RATIO;
   const textContainerWidth = Math.max(
     0,
@@ -365,24 +366,28 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
 
   return (
     <View style={{ width: stageWidth, height: stageHeight }}>
-      {!!currentMessage && (
-        <Text
-          key={currentMessage}
-          className="absolute font-bold"
-          style={{
-            fontSize: textFontSize,
-            lineHeight: textLineHeight,
-            opacity: 0,
-          }}
-          numberOfLines={1}
-          allowFontScaling={false}
-          pointerEvents="none"
-          accessible={false}
-          onTextLayout={handleMessageTextLayout}
-        >
-          {currentMessage}
-        </Text>
-      )}
+      {/* 적용된 모든 메시지를 숨겨서 실측해 순환 전에 말풍선 너비를 준비한다. */}
+      {appliedRules.map((rule, ruleIndex) => {
+        const measurementKey = buildTextMeasurementKey(rule.message, textFontSize);
+        return (
+          <Text
+            key={`measurement-${buildRuleKey(rule)}-${ruleIndex}`}
+            className="absolute font-bold"
+            style={{
+              fontSize: textFontSize,
+              lineHeight: textLineHeight,
+              opacity: 0,
+            }}
+            numberOfLines={1}
+            allowFontScaling={false}
+            pointerEvents="none"
+            accessible={false}
+            onTextLayout={(event) => handleMessageTextLayout(measurementKey, event)}
+          >
+            {rule.message}
+          </Text>
+        );
+      })}
       <Pressable
         onPress={wayIsChange ? onToggleWay : undefined}
         onLongPress={onLongPress}
@@ -437,10 +442,8 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                   const renderedBubbleWidth = isCurrentBubble
                     ? currentBubbleWidth
                     : minimumBubbleWidth;
-                  // 뒤쪽 말풍선은 기본 위치를 사용하고 현재 말풍선만 확장된 너비만큼 중앙을 보정한다.
-                  const renderedBubbleLeft = isCurrentBubble
-                    ? currentBubbleLeft
-                    : imageWidth * BUBBLE_BASE_LEFT_RATIO;
+                  // 모든 내부 말풍선을 화면 너비의 동일한 중심축에 배치한다.
+                  const renderedBubbleLeft = (stageWidth - renderedBubbleWidth) / 2;
                   const shouldAnimate = hasMountedStackRef.current && !preferReducedMotion;
                   /**
                    * 꼬리(가장 뒤)에서 새로 들어오는 말풍선은 떠오름 애니메이션을 적용
@@ -463,10 +466,10 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                       pointerEvents="none"
                       style={{
                         position: 'absolute',
-                        width: renderedBubbleWidth,
+                        width: stageWidth,
                         height: bubbleBaseHeight,
                         top: bubbleTop,
-                        left: renderedBubbleLeft,
+                        left: -imageOriginLeft,
                         zIndex: 1,
                       }}
                     >
@@ -477,7 +480,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                         style={{
                           position: 'absolute',
                           top: 0,
-                          left: 0,
+                          left: renderedBubbleLeft,
                           width: renderedBubbleWidth,
                           height: bubbleBaseHeight,
                           opacity: 0,
@@ -509,6 +512,8 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                       {/* 본체 말풍선 아이콘 (스택 깊이에 따라 scale 적용) */}
                       <View
                         style={{
+                          position: 'absolute',
+                          left: renderedBubbleLeft,
                           width: renderedBubbleWidth,
                           height: bubbleBaseHeight,
                           transform: [{ scale }],
@@ -527,7 +532,8 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                           style={{
                             position: 'absolute',
                             top: 0,
-                            left: textContainerLeft,
+                            // 전체 너비 외부 박스 안에서 현재 말풍선의 텍스트 영역에 맞춘다.
+                            left: renderedBubbleLeft + textContainerLeft,
                             width: textContainerWidth,
                             height: bubbleBaseHeight,
                             justifyContent: 'center',
