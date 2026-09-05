@@ -206,7 +206,7 @@
 
 ### 반복 규칙 필드 설명
 
-- `message`: 규칙 메시지, 최대 15자
+- `message`: 규칙 메시지, 최대 30자
 - `startNumber`: 0 이상의 정수 또는 `null`
 - `endNumber`: 0 이상의 정수
 - `repeatCount`: 0 이상의 정수, `endMode`가 `"repeatCount"`이면 1 이상이어야 함
