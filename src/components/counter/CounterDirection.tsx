@@ -41,6 +41,7 @@ const TEXT_CONTAINER_LEFT_RATIO = 0.2; // 텍스트 컨테이너의 좌측 오�
 const TEXT_CONTAINER_WIDTH_RATIO = 0.6; // 텍스트 컨테이너의 너비 비율 (이미지 너비 대비)
 const BUBBLE_TEXT_FONT_SIZE_RATIO = 0.26; // 말풍선 높이 대비 고정 폰트 크기
 const BUBBLE_TEXT_LINE_HEIGHT_RATIO = 0.32;
+const OVERFLOWING_BUBBLE_TEXT_SCALE = 0.82; // 기본 크기로 한 줄에 담기지 않는 메시지의 글자 크기 배율
 
 // 다중 규칙 라벨 위치 (말풍선 스택 위쪽에 분리 표시)
 const MULTI_RULE_LABEL_BASE_TOP_RATIO = -1.3;
@@ -351,6 +352,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     minimumBubbleWidth,
     measuredTextWidth + textContainerLeft + textContainerRight
   );
+  const shouldShrinkCurrentMessage = desiredBubbleWidth > stageWidth;
   const currentBubbleWidth = Math.max(
     minimumBubbleWidth,
     Math.min(stageWidth, desiredBubbleWidth)
@@ -541,13 +543,19 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                           <Text
                             className="font-bold text-center"
                             style={{
-                              fontSize: textFontSize,
-                              lineHeight: textLineHeight,
+                              fontSize: shouldShrinkCurrentMessage
+                                ? textFontSize * OVERFLOWING_BUBBLE_TEXT_SCALE
+                                : textFontSize,
+                              lineHeight: shouldShrinkCurrentMessage
+                                ? textLineHeight * OVERFLOWING_BUBBLE_TEXT_SCALE
+                                : textLineHeight,
                               color: isDarkColor(rule.color)
                                 ? appTheme.colors.white
                                 : appTheme.colors.black,
                             }}
                             numberOfLines={1}
+                            adjustsFontSizeToFit={shouldShrinkCurrentMessage}
+                            minimumFontScale={0.5}
                             allowFontScaling={false}
                           >
                             {rule.message}

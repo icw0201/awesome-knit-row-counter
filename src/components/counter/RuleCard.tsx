@@ -6,6 +6,7 @@ import CircleIcon from '@components/common/CircleIcon';
 import CircleRadioButtons, { type CircleRadioOption } from '@components/common/CircleRadioButtons';
 import TextInputBox, { TextInputBoxRef } from '@components/common/TextInputBox';
 import ColorPicker from '@components/counter/ColorPicker';
+import { RULE_MESSAGE_MAX_LENGTH } from '@constants/inputLimits';
 import { appTheme } from '@styles/appTheme';
 import { getActiveRuleValues, calculateRulePreviewSummary, calculateRuleRepeatCount } from '@utils/ruleUtils';
 import { RuleEndMode } from '@storage/types';
@@ -493,6 +494,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
               value={editMessage}
               onChangeText={setEditMessage}
               type="text"
+              maxLength={RULE_MESSAGE_MAX_LENGTH}
               containerClassName="mt-1"
               returnKeyType="next"
               onSubmitEditing={() => startNumberInputRef.current?.focus()}

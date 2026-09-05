@@ -1,0 +1,1 @@
+export const RULE_MESSAGE_MAX_LENGTH = 30;

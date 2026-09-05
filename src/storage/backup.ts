@@ -1,6 +1,7 @@
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
+import { RULE_MESSAGE_MAX_LENGTH } from '@constants/inputLimits';
 import { createUniqueItemId } from '@utils/itemIdUtils';
 import type {
   Item,
@@ -380,7 +381,7 @@ const isRepeatRule = (value: unknown, dataVersion: number): boolean => {
     return false;
   }
 
-  const hasBaseShape = isTrimmedNonEmptyStringWithinLength(value.message, MAX_TITLE_LENGTH)
+  const hasBaseShape = isTrimmedNonEmptyStringWithinLength(value.message, RULE_MESSAGE_MAX_LENGTH)
     && isNonNegativeInteger(value.endNumber)
     && isNonNegativeInteger(value.ruleNumber)
     && isHexColor(value.color)
