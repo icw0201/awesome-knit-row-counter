@@ -1,14 +1,20 @@
 // src/components/counter/CounterDirection.tsx
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Image, Pressable, Text } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  View,
+  Image,
+  NativeSyntheticEvent,
+  Pressable,
+  Text,
+  TextLayoutEventData,
+} from 'react-native';
 import Animated, { Keyframe, LinearTransition } from 'react-native-reanimated';
 import { Way, RepeatRule } from '@storage/types';
 import { directionImages } from '@assets/images';
-import EmphasisBubbleIcon from '@assets/images/way/emphasis_bubble.svg';
 import { usePreferReducedMotion } from '@hooks/usePreferReducedMotion';
 import { appTheme } from '@styles/appTheme';
 import { isRuleApplied, isDarkColor } from '@utils/ruleUtils';
-import { calculateInitialFontSize } from '@utils/textUtils';
+import StretchableEmphasisBubble from './StretchableEmphasisBubble';
 
 interface CounterDirectionProps {
   mascotIsActive: boolean;
@@ -33,7 +39,8 @@ const BUBBLE_STACK_TOP_RATIO = -0.8; // 스택 맨 앞(stackIndex=0) 말풍선�
 // 텍스트 컨테이너 위치 상수
 const TEXT_CONTAINER_LEFT_RATIO = 0.2; // 텍스트 컨테이너의 좌측 오프셋 비율 (이미지 너비 대비)
 const TEXT_CONTAINER_WIDTH_RATIO = 0.6; // 텍스트 컨테이너의 너비 비율 (이미지 너비 대비)
-const DEFAULT_TEXT_FONT_SIZE_RATIO = 0.3; // 메시지가 없을 때 사용할 기본 폰트 크기 (이미지 높이 비율)
+const BUBBLE_TEXT_FONT_SIZE_RATIO = 0.26; // 말풍선 높이 대비 고정 폰트 크기
+const BUBBLE_TEXT_LINE_HEIGHT_RATIO = 0.32;
 
 // 다중 규칙 라벨 위치 (말풍선 스택 위쪽에 분리 표시)
 const MULTI_RULE_LABEL_BASE_TOP_RATIO = -1.3;
@@ -249,6 +256,23 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   }, [appliedRules, rotationCount]);
 
   const currentRule = visibleRules[0]?.rule;
+  const currentMessage = currentRule?.message ?? '';
+  const [measuredMessage, setMeasuredMessage] = useState({ message: '', width: 0 });
+  const handleMessageTextLayout = useCallback(
+    (event: NativeSyntheticEvent<TextLayoutEventData>) => {
+      const measuredWidth = event.nativeEvent.lines[0]?.width ?? 0;
+      setMeasuredMessage((previous) => {
+        if (
+          previous.message === currentMessage &&
+          Math.abs(previous.width - measuredWidth) < 0.5
+        ) {
+          return previous;
+        }
+        return { message: currentMessage, width: measuredWidth };
+      });
+    },
+    [currentMessage]
+  );
   // 사용자에게 보여줄 1-based 인덱스는 순환값 사용
   const displayRuleIndex =
     appliedRules.length > 0 ? (rotationCount % appliedRules.length) + 1 : 0;
@@ -256,14 +280,6 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   useEffect(() => {
     hasMountedStackRef.current = true;
   }, []);
-
-  // 텍스트 길이에 따라 폰트 크기를 미리 계산
-  const textFontSize = useMemo(() => {
-    if (!currentRule?.message) {
-      return imageHeight * DEFAULT_TEXT_FONT_SIZE_RATIO;
-    }
-    return calculateInitialFontSize(currentRule.message.length, imageWidth, imageHeight);
-  }, [currentRule?.message, imageHeight, imageWidth]);
 
   const disappearingBubbleExitAnimation = useMemo(
     () =>
@@ -319,13 +335,54 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   // 현재 단의 규칙 적용 여부와 방향 토글 가능 여부에 따라 마스코트 이미지 선택
   const imageSource = resolveDirectionImage(isRuleAppliedToCurrentCount, wayIsChange, way);
 
-  const bubbleBaseWidth = imageWidth * BUBBLE_SIZE_SCALE;
+  const minimumBubbleWidth = imageWidth * BUBBLE_SIZE_SCALE;
   const bubbleBaseHeight = imageHeight * BUBBLE_SIZE_SCALE;
-  const bubbleBaseLeft = imageWidth * BUBBLE_BASE_LEFT_RATIO;
+  const textFontSize = bubbleBaseHeight * BUBBLE_TEXT_FONT_SIZE_RATIO;
+  const textLineHeight = bubbleBaseHeight * BUBBLE_TEXT_LINE_HEIGHT_RATIO;
+  const measuredTextWidth =
+    measuredMessage.message === currentMessage ? measuredMessage.width : 0;
+  const textContainerLeft = minimumBubbleWidth * TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO;
+  const textContainerRight =
+    minimumBubbleWidth *
+    (1 - TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO - TEXT_CONTAINER_IN_BUBBLE_WIDTH_RATIO);
+  const desiredBubbleWidth = Math.max(
+    minimumBubbleWidth,
+    measuredTextWidth + textContainerLeft + textContainerRight
+  );
+  const currentBubbleWidth = Math.max(
+    minimumBubbleWidth,
+    Math.min(stageWidth, desiredBubbleWidth)
+  );
+  // 현재 말풍선이 늘어나더라도 기존 중심축을 유지하도록 좌측 위치를 보정한다.
+  const currentBubbleLeft =
+    imageWidth * BUBBLE_BASE_LEFT_RATIO -
+    (currentBubbleWidth - minimumBubbleWidth) / 2;
   const bubbleBaseTop = imageHeight * BUBBLE_STACK_TOP_RATIO;
+  const textContainerWidth = Math.max(
+    0,
+    currentBubbleWidth - textContainerLeft - textContainerRight
+  );
 
   return (
     <View style={{ width: stageWidth, height: stageHeight }}>
+      {!!currentMessage && (
+        <Text
+          key={currentMessage}
+          className="absolute font-bold"
+          style={{
+            fontSize: textFontSize,
+            lineHeight: textLineHeight,
+            opacity: 0,
+          }}
+          numberOfLines={1}
+          allowFontScaling={false}
+          pointerEvents="none"
+          accessible={false}
+          onTextLayout={handleMessageTextLayout}
+        >
+          {currentMessage}
+        </Text>
+      )}
       <Pressable
         onPress={wayIsChange ? onToggleWay : undefined}
         onLongPress={onLongPress}
@@ -376,6 +433,14 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                   const scale = 1 - STACK_SCALE_STEP * stackIndex;
                   const bubbleTop = bubbleBaseTop - imageHeight * STACK_VERTICAL_GAP_RATIO * stackIndex;
                   const isCurrentBubble = stackIndex === 0;
+                  // 현재 말풍선만 텍스트 길이에 맞추고 뒤쪽 말풍선은 기본 너비로 고정한다.
+                  const renderedBubbleWidth = isCurrentBubble
+                    ? currentBubbleWidth
+                    : minimumBubbleWidth;
+                  // 뒤쪽 말풍선은 기본 위치를 사용하고 현재 말풍선만 확장된 너비만큼 중앙을 보정한다.
+                  const renderedBubbleLeft = isCurrentBubble
+                    ? currentBubbleLeft
+                    : imageWidth * BUBBLE_BASE_LEFT_RATIO;
                   const shouldAnimate = hasMountedStackRef.current && !preferReducedMotion;
                   /**
                    * 꼬리(가장 뒤)에서 새로 들어오는 말풍선은 떠오름 애니메이션을 적용
@@ -398,10 +463,10 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                       pointerEvents="none"
                       style={{
                         position: 'absolute',
-                        width: bubbleBaseWidth,
+                        width: renderedBubbleWidth,
                         height: bubbleBaseHeight,
                         top: bubbleTop,
-                        left: bubbleBaseLeft,
+                        left: renderedBubbleLeft,
                         zIndex: 1,
                       }}
                     >
@@ -413,7 +478,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                           position: 'absolute',
                           top: 0,
                           left: 0,
-                          width: bubbleBaseWidth,
+                          width: renderedBubbleWidth,
                           height: bubbleBaseHeight,
                           opacity: 0,
                         }}
@@ -426,15 +491,16 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                               position: 'absolute',
                               top: imageHeight * layer.verticalOffsetRatio,
                               left: 0,
-                              width: bubbleBaseWidth,
+                              width: renderedBubbleWidth,
                               height: bubbleBaseHeight,
                               opacity: layer.opacity,
                               transform: [{ scale: layer.scale }],
                             }}
                           >
-                            <EmphasisBubbleIcon
-                              width={bubbleBaseWidth}
+                            <StretchableEmphasisBubble
+                              width={renderedBubbleWidth}
                               height={bubbleBaseHeight}
+                              minimumWidth={minimumBubbleWidth}
                               color={rule.color}
                             />
                           </View>
@@ -443,14 +509,15 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                       {/* 본체 말풍선 아이콘 (스택 깊이에 따라 scale 적용) */}
                       <View
                         style={{
-                          width: bubbleBaseWidth,
+                          width: renderedBubbleWidth,
                           height: bubbleBaseHeight,
                           transform: [{ scale }],
                         }}
                       >
-                        <EmphasisBubbleIcon
-                          width={bubbleBaseWidth}
+                        <StretchableEmphasisBubble
+                          width={renderedBubbleWidth}
                           height={bubbleBaseHeight}
+                          minimumWidth={minimumBubbleWidth}
                           color={rule.color}
                         />
                       </View>
@@ -460,8 +527,8 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                           style={{
                             position: 'absolute',
                             top: 0,
-                            left: bubbleBaseWidth * TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO,
-                            width: bubbleBaseWidth * TEXT_CONTAINER_IN_BUBBLE_WIDTH_RATIO,
+                            left: textContainerLeft,
+                            width: textContainerWidth,
                             height: bubbleBaseHeight,
                             justifyContent: 'center',
                             alignItems: 'center',
@@ -471,10 +538,12 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                             className="font-bold text-center"
                             style={{
                               fontSize: textFontSize,
+                              lineHeight: textLineHeight,
                               color: isDarkColor(rule.color)
                                 ? appTheme.colors.white
                                 : appTheme.colors.black,
                             }}
+                            numberOfLines={1}
                             allowFontScaling={false}
                           >
                             {rule.message}
