@@ -1,14 +1,20 @@
 // src/components/counter/CounterDirection.tsx
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Image, Pressable, Text } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  View,
+  Image,
+  NativeSyntheticEvent,
+  Pressable,
+  Text,
+  TextLayoutEventData,
+} from 'react-native';
 import Animated, { Keyframe, LinearTransition } from 'react-native-reanimated';
 import { Way, RepeatRule } from '@storage/types';
 import { directionImages } from '@assets/images';
-import EmphasisBubbleIcon from '@assets/images/way/emphasis_bubble.svg';
 import { usePreferReducedMotion } from '@hooks/usePreferReducedMotion';
 import { appTheme } from '@styles/appTheme';
 import { isRuleApplied, isDarkColor } from '@utils/ruleUtils';
-import { calculateInitialFontSize } from '@utils/textUtils';
+import StretchableEmphasisBubble from './StretchableEmphasisBubble';
 
 interface CounterDirectionProps {
   mascotIsActive: boolean;
@@ -16,13 +22,14 @@ interface CounterDirectionProps {
   way: Way;
   currentCount: number;
   repeatRules: RepeatRule[];
-  imageWidth: number;
-  imageHeight: number;
+  availableWidth: number;
+  availableHeight: number;
   onToggleWay: () => void;
   onLongPress?: () => void;
 }
 
 // 버블 이미지 크기 상수
+const DIRECTION_IMAGE_ASPECT_RATIO = 189 / 90;
 const BUBBLE_SIZE_SCALE = 1.15; // 버블 이미지 크기 배율
 const MAX_VISIBLE_RULE_BUBBLES = 3; // 현재 포함 최대 3개의 말풍선만 노출
 const STACK_VERTICAL_GAP_RATIO = 0.14; // 말풍선 스택 간 세로 간격
@@ -32,10 +39,14 @@ const BUBBLE_STACK_TOP_RATIO = -0.8; // 스택 맨 앞(stackIndex=0) 말풍선�
 // 텍스트 컨테이너 위치 상수
 const TEXT_CONTAINER_LEFT_RATIO = 0.2; // 텍스트 컨테이너의 좌측 오프셋 비율 (이미지 너비 대비)
 const TEXT_CONTAINER_WIDTH_RATIO = 0.6; // 텍스트 컨테이너의 너비 비율 (이미지 너비 대비)
-const DEFAULT_TEXT_FONT_SIZE_RATIO = 0.3; // 메시지가 없을 때 사용할 기본 폰트 크기 (이미지 높이 비율)
+const BUBBLE_TEXT_FONT_SIZE_RATIO = 0.26; // 말풍선 높이 대비 고정 폰트 크기
+const BUBBLE_TEXT_LINE_HEIGHT_RATIO = 0.32;
 
 // 다중 규칙 라벨 위치 (말풍선 스택 위쪽에 분리 표시)
 const MULTI_RULE_LABEL_BASE_TOP_RATIO = -1.3;
+const MULTI_RULE_LABEL_DOWNWARD_OFFSET_RATIO = 0.2; // 라벨을 스택 쪽으로 내려 간격을 줄이는 비율
+const MULTI_RULE_LABEL_FONT_SIZE_RATIO = 0.26;
+const MULTI_RULE_LABEL_LINE_HEIGHT_RATIO = 0.32;
 
 // 규칙 순회 간격
 const RULE_ROTATION_INTERVAL_MS = 2000; // 규칙 순회 간격 (밀리초)
@@ -48,6 +59,16 @@ const BUBBLE_BASE_LEFT_RATIO = 0.05 + 0.5 - BUBBLE_SIZE_SCALE / 2;
 const TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO =
   (TEXT_CONTAINER_LEFT_RATIO - BUBBLE_BASE_LEFT_RATIO) / BUBBLE_SIZE_SCALE;
 const TEXT_CONTAINER_IN_BUBBLE_WIDTH_RATIO = TEXT_CONTAINER_WIDTH_RATIO / BUBBLE_SIZE_SCALE;
+// 최대 말풍선 스택과 라벨이 표시될 때의 전체 시각 경계를 항상 예약해 크기 변경을 방지한다.
+const COMPOSITION_LEFT_RATIO = BUBBLE_BASE_LEFT_RATIO;
+const COMPOSITION_RIGHT_RATIO = BUBBLE_BASE_LEFT_RATIO + BUBBLE_SIZE_SCALE;
+const COMPOSITION_TOP_RATIO =
+  MULTI_RULE_LABEL_BASE_TOP_RATIO -
+  STACK_VERTICAL_GAP_RATIO * Math.max(0, MAX_VISIBLE_RULE_BUBBLES - 2) +
+  DIRECTION_VERTICAL_OFFSET_RATIO;
+const COMPOSITION_BOTTOM_RATIO = 1 + DIRECTION_VERTICAL_OFFSET_RATIO;
+const COMPOSITION_WIDTH_RATIO = COMPOSITION_RIGHT_RATIO - COMPOSITION_LEFT_RATIO;
+const COMPOSITION_HEIGHT_RATIO = COMPOSITION_BOTTOM_RATIO - COMPOSITION_TOP_RATIO;
 
 /**
  * 퇴장 시 재생되는 블러 잔상 레이어 구성
@@ -78,6 +99,10 @@ const buildRuleKey = (rule: RepeatRule) =>
     rule.message,
     rule.color,
   ].join(':');
+
+// 화면 크기별 폰트 크기와 메시지를 조합해 텍스트 실측값을 구분한다.
+const buildTextMeasurementKey = (message: string, fontSize: number) =>
+  `${fontSize}:${message}`;
 
 /**
  * 현재 단의 규칙 적용 여부와 방향 토글 가능 여부에 따라 마스코트 방향 이미지를 선택한다.
@@ -110,18 +135,45 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   way,
   currentCount,
   repeatRules,
-  imageWidth,
-  imageHeight,
+  availableWidth,
+  availableHeight,
   onToggleWay,
   onLongPress,
 }) => {
   const preferReducedMotion = usePreferReducedMotion();
+  const stageWidth = Math.max(0, availableWidth);
+  const stageHeight = Math.max(0, availableHeight);
+  const maxImageHeightByWidth =
+    stageWidth / (DIRECTION_IMAGE_ASPECT_RATIO * COMPOSITION_WIDTH_RATIO);
+  const maxImageHeightByHeight =
+    stageHeight / COMPOSITION_HEIGHT_RATIO;
+  const imageHeight = Math.min(maxImageHeightByWidth, maxImageHeightByHeight);
+  const imageWidth = imageHeight * DIRECTION_IMAGE_ASPECT_RATIO;
+  const minimumBubbleWidth = imageWidth * BUBBLE_SIZE_SCALE;
+  const bubbleBaseHeight = imageHeight * BUBBLE_SIZE_SCALE;
+  const textFontSize = bubbleBaseHeight * BUBBLE_TEXT_FONT_SIZE_RATIO;
+  const textLineHeight = bubbleBaseHeight * BUBBLE_TEXT_LINE_HEIGHT_RATIO;
+  const compositionWidth = imageWidth * COMPOSITION_WIDTH_RATIO;
+  const imageOriginLeft =
+    (stageWidth - compositionWidth) / 2 - imageWidth * COMPOSITION_LEFT_RATIO;
   /**
    * 현재 단수에 적용되는 규칙들
    * - 여러 규칙이 한 단에 동시에 적용될 수 있음
    */
   const appliedRules = repeatRules.filter((rule) => isRuleApplied(currentCount, rule));
   const isRuleAppliedToCurrentCount = appliedRules.length > 0;
+  // 라벨과 뒤쪽 스택을 중앙 정렬 계산에서 제외해 규칙 개수가 바뀌어도 본체 위치를 유지한다.
+  const visibleCompositionTopRatio =
+    !isRuleAppliedToCurrentCount
+      ? DIRECTION_VERTICAL_OFFSET_RATIO
+      : BUBBLE_STACK_TOP_RATIO + DIRECTION_VERTICAL_OFFSET_RATIO;
+  const visibleCompositionHeightRatio =
+    COMPOSITION_BOTTOM_RATIO - visibleCompositionTopRatio;
+  const visibleCompositionHeight = imageHeight * visibleCompositionHeightRatio;
+  // 규칙 적용 중에는 앞쪽 말풍선과 마스코트만 기준으로 영역의 세로 중앙에 둔다.
+  const imageOriginTop =
+    (stageHeight - visibleCompositionHeight) / 2 -
+    imageHeight * visibleCompositionTopRatio;
 
   /**
    * appliedRules가 "내용상" 바뀌었는지 감지하기 위한 키
@@ -209,6 +261,25 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   }, [appliedRules, rotationCount]);
 
   const currentRule = visibleRules[0]?.rule;
+  const currentMessage = currentRule?.message ?? '';
+  const currentTextMeasurementKey = buildTextMeasurementKey(currentMessage, textFontSize);
+  const [measuredMessageWidths, setMeasuredMessageWidths] = useState<Record<string, number>>({});
+  // 모든 적용 규칙의 너비를 미리 저장해 말풍선이 앞으로 올 때 크기 측정 지연을 없앤다.
+  const handleMessageTextLayout = useCallback(
+    (
+      measurementKey: string,
+      event: NativeSyntheticEvent<TextLayoutEventData>
+    ) => {
+      const measuredWidth = event.nativeEvent.lines[0]?.width ?? 0;
+      setMeasuredMessageWidths((previous) => {
+        if (Math.abs((previous[measurementKey] ?? 0) - measuredWidth) < 0.5) {
+          return previous;
+        }
+        return { ...previous, [measurementKey]: measuredWidth };
+      });
+    },
+    []
+  );
   // 사용자에게 보여줄 1-based 인덱스는 순환값 사용
   const displayRuleIndex =
     appliedRules.length > 0 ? (rotationCount % appliedRules.length) + 1 : 0;
@@ -216,14 +287,6 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   useEffect(() => {
     hasMountedStackRef.current = true;
   }, []);
-
-  // 텍스트 길이에 따라 폰트 크기를 미리 계산
-  const textFontSize = useMemo(() => {
-    if (!currentRule?.message) {
-      return imageHeight * DEFAULT_TEXT_FONT_SIZE_RATIO;
-    }
-    return calculateInitialFontSize(currentRule.message.length, imageWidth, imageHeight);
-  }, [currentRule?.message, imageHeight, imageWidth]);
 
   const disappearingBubbleExitAnimation = useMemo(
     () =>
@@ -279,17 +342,58 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   // 현재 단의 규칙 적용 여부와 방향 토글 가능 여부에 따라 마스코트 이미지 선택
   const imageSource = resolveDirectionImage(isRuleAppliedToCurrentCount, wayIsChange, way);
 
-  const bubbleBaseWidth = imageWidth * BUBBLE_SIZE_SCALE;
-  const bubbleBaseHeight = imageHeight * BUBBLE_SIZE_SCALE;
-  const bubbleBaseLeft = imageWidth * BUBBLE_BASE_LEFT_RATIO;
+  const measuredTextWidth = measuredMessageWidths[currentTextMeasurementKey] ?? 0;
+  const textContainerLeft = minimumBubbleWidth * TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO;
+  const textContainerRight =
+    minimumBubbleWidth *
+    (1 - TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO - TEXT_CONTAINER_IN_BUBBLE_WIDTH_RATIO);
+  const desiredBubbleWidth = Math.max(
+    minimumBubbleWidth,
+    measuredTextWidth + textContainerLeft + textContainerRight
+  );
+  const currentBubbleWidth = Math.max(
+    minimumBubbleWidth,
+    Math.min(stageWidth, desiredBubbleWidth)
+  );
   const bubbleBaseTop = imageHeight * BUBBLE_STACK_TOP_RATIO;
+  const textContainerWidth = Math.max(
+    0,
+    currentBubbleWidth - textContainerLeft - textContainerRight
+  );
 
   return (
-    <View style={{ height: imageHeight }}>
+    <View style={{ width: stageWidth, height: stageHeight }}>
+      {/* 적용된 모든 메시지를 숨겨서 실측해 순환 전에 말풍선 너비를 준비한다. */}
+      {appliedRules.map((rule, ruleIndex) => {
+        const measurementKey = buildTextMeasurementKey(rule.message, textFontSize);
+        return (
+          <Text
+            key={`measurement-${buildRuleKey(rule)}-${ruleIndex}`}
+            className="absolute font-bold"
+            style={{
+              fontSize: textFontSize,
+              lineHeight: textLineHeight,
+              opacity: 0,
+            }}
+            numberOfLines={1}
+            allowFontScaling={false}
+            pointerEvents="none"
+            accessible={false}
+            onTextLayout={(event) => handleMessageTextLayout(measurementKey, event)}
+          >
+            {rule.message}
+          </Text>
+        );
+      })}
       <Pressable
         onPress={wayIsChange ? onToggleWay : undefined}
         onLongPress={onLongPress}
-        style={{ transform: [{ translateY: imageHeight * DIRECTION_VERTICAL_OFFSET_RATIO }] }}
+        style={{
+          position: 'absolute',
+          left: imageOriginLeft,
+          top: imageOriginTop,
+          transform: [{ translateY: imageHeight * DIRECTION_VERTICAL_OFFSET_RATIO }],
+        }}
         focusable={false}
         accessible={false}
         importantForAccessibility="no-hide-descendants"
@@ -306,12 +410,20 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                     top:
                       imageHeight *
                       (MULTI_RULE_LABEL_BASE_TOP_RATIO -
-                        STACK_VERTICAL_GAP_RATIO * Math.max(0, visibleRules.length - 2)),
+                        STACK_VERTICAL_GAP_RATIO * Math.max(0, visibleRules.length - 2) +
+                        MULTI_RULE_LABEL_DOWNWARD_OFFSET_RATIO),
                     zIndex: 1,
                   }}
                   pointerEvents="none"
                 >
-                  <Text className="text-sm text-darkgray text-center font-bold">
+                  <Text
+                    className="text-darkgray text-center font-bold"
+                    style={{
+                      fontSize: imageHeight * MULTI_RULE_LABEL_FONT_SIZE_RATIO,
+                      lineHeight: imageHeight * MULTI_RULE_LABEL_LINE_HEIGHT_RATIO,
+                    }}
+                    allowFontScaling={false}
+                  >
                     {displayRuleIndex}/{appliedRules.length}
                   </Text>
                 </View>
@@ -324,6 +436,12 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                   const scale = 1 - STACK_SCALE_STEP * stackIndex;
                   const bubbleTop = bubbleBaseTop - imageHeight * STACK_VERTICAL_GAP_RATIO * stackIndex;
                   const isCurrentBubble = stackIndex === 0;
+                  // 현재 말풍선만 텍스트 길이에 맞추고 뒤쪽 말풍선은 기본 너비로 고정한다.
+                  const renderedBubbleWidth = isCurrentBubble
+                    ? currentBubbleWidth
+                    : minimumBubbleWidth;
+                  // 모든 내부 말풍선을 화면 너비의 동일한 중심축에 배치한다.
+                  const renderedBubbleLeft = (stageWidth - renderedBubbleWidth) / 2;
                   const shouldAnimate = hasMountedStackRef.current && !preferReducedMotion;
                   /**
                    * 꼬리(가장 뒤)에서 새로 들어오는 말풍선은 떠오름 애니메이션을 적용
@@ -346,10 +464,10 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                       pointerEvents="none"
                       style={{
                         position: 'absolute',
-                        width: bubbleBaseWidth,
+                        width: stageWidth,
                         height: bubbleBaseHeight,
                         top: bubbleTop,
-                        left: bubbleBaseLeft,
+                        left: -imageOriginLeft,
                         zIndex: 1,
                       }}
                     >
@@ -360,8 +478,8 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                         style={{
                           position: 'absolute',
                           top: 0,
-                          left: 0,
-                          width: bubbleBaseWidth,
+                          left: renderedBubbleLeft,
+                          width: renderedBubbleWidth,
                           height: bubbleBaseHeight,
                           opacity: 0,
                         }}
@@ -374,15 +492,16 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                               position: 'absolute',
                               top: imageHeight * layer.verticalOffsetRatio,
                               left: 0,
-                              width: bubbleBaseWidth,
+                              width: renderedBubbleWidth,
                               height: bubbleBaseHeight,
                               opacity: layer.opacity,
                               transform: [{ scale: layer.scale }],
                             }}
                           >
-                            <EmphasisBubbleIcon
-                              width={bubbleBaseWidth}
+                            <StretchableEmphasisBubble
+                              width={renderedBubbleWidth}
                               height={bubbleBaseHeight}
+                              minimumWidth={minimumBubbleWidth}
                               color={rule.color}
                             />
                           </View>
@@ -391,14 +510,17 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                       {/* 본체 말풍선 아이콘 (스택 깊이에 따라 scale 적용) */}
                       <View
                         style={{
-                          width: bubbleBaseWidth,
+                          position: 'absolute',
+                          left: renderedBubbleLeft,
+                          width: renderedBubbleWidth,
                           height: bubbleBaseHeight,
                           transform: [{ scale }],
                         }}
                       >
-                        <EmphasisBubbleIcon
-                          width={bubbleBaseWidth}
+                        <StretchableEmphasisBubble
+                          width={renderedBubbleWidth}
                           height={bubbleBaseHeight}
+                          minimumWidth={minimumBubbleWidth}
                           color={rule.color}
                         />
                       </View>
@@ -408,8 +530,9 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                           style={{
                             position: 'absolute',
                             top: 0,
-                            left: bubbleBaseWidth * TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO,
-                            width: bubbleBaseWidth * TEXT_CONTAINER_IN_BUBBLE_WIDTH_RATIO,
+                            // 전체 너비 외부 박스 안에서 현재 말풍선의 텍스트 영역에 맞춘다.
+                            left: renderedBubbleLeft + textContainerLeft,
+                            width: textContainerWidth,
                             height: bubbleBaseHeight,
                             justifyContent: 'center',
                             alignItems: 'center',
@@ -419,10 +542,12 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                             className="font-bold text-center"
                             style={{
                               fontSize: textFontSize,
+                              lineHeight: textLineHeight,
                               color: isDarkColor(rule.color)
                                 ? appTheme.colors.white
                                 : appTheme.colors.black,
                             }}
+                            numberOfLines={1}
                             allowFontScaling={false}
                           >
                             {rule.message}
