@@ -16,13 +16,14 @@ interface CounterDirectionProps {
   way: Way;
   currentCount: number;
   repeatRules: RepeatRule[];
-  imageWidth: number;
-  imageHeight: number;
+  availableWidth: number;
+  availableHeight: number;
   onToggleWay: () => void;
   onLongPress?: () => void;
 }
 
 // 버블 이미지 크기 상수
+const DIRECTION_IMAGE_ASPECT_RATIO = 189 / 90;
 const BUBBLE_SIZE_SCALE = 1.15; // 버블 이미지 크기 배율
 const MAX_VISIBLE_RULE_BUBBLES = 3; // 현재 포함 최대 3개의 말풍선만 노출
 const STACK_VERTICAL_GAP_RATIO = 0.14; // 말풍선 스택 간 세로 간격
@@ -36,6 +37,8 @@ const DEFAULT_TEXT_FONT_SIZE_RATIO = 0.3; // 메시지가 없을 때 사용할 �
 
 // 다중 규칙 라벨 위치 (말풍선 스택 위쪽에 분리 표시)
 const MULTI_RULE_LABEL_BASE_TOP_RATIO = -1.3;
+const MULTI_RULE_LABEL_FONT_SIZE_RATIO = 0.26;
+const MULTI_RULE_LABEL_LINE_HEIGHT_RATIO = 0.32;
 
 // 규칙 순회 간격
 const RULE_ROTATION_INTERVAL_MS = 2000; // 규칙 순회 간격 (밀리초)
@@ -48,6 +51,16 @@ const BUBBLE_BASE_LEFT_RATIO = 0.05 + 0.5 - BUBBLE_SIZE_SCALE / 2;
 const TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO =
   (TEXT_CONTAINER_LEFT_RATIO - BUBBLE_BASE_LEFT_RATIO) / BUBBLE_SIZE_SCALE;
 const TEXT_CONTAINER_IN_BUBBLE_WIDTH_RATIO = TEXT_CONTAINER_WIDTH_RATIO / BUBBLE_SIZE_SCALE;
+// 최대 말풍선 스택과 라벨이 표시될 때의 전체 시각 경계를 항상 예약해 크기 변경을 방지한다.
+const COMPOSITION_LEFT_RATIO = BUBBLE_BASE_LEFT_RATIO;
+const COMPOSITION_RIGHT_RATIO = BUBBLE_BASE_LEFT_RATIO + BUBBLE_SIZE_SCALE;
+const COMPOSITION_TOP_RATIO =
+  MULTI_RULE_LABEL_BASE_TOP_RATIO -
+  STACK_VERTICAL_GAP_RATIO * Math.max(0, MAX_VISIBLE_RULE_BUBBLES - 2) +
+  DIRECTION_VERTICAL_OFFSET_RATIO;
+const COMPOSITION_BOTTOM_RATIO = 1 + DIRECTION_VERTICAL_OFFSET_RATIO;
+const COMPOSITION_WIDTH_RATIO = COMPOSITION_RIGHT_RATIO - COMPOSITION_LEFT_RATIO;
+const COMPOSITION_HEIGHT_RATIO = COMPOSITION_BOTTOM_RATIO - COMPOSITION_TOP_RATIO;
 
 /**
  * 퇴장 시 재생되는 블러 잔상 레이어 구성
@@ -110,12 +123,26 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   way,
   currentCount,
   repeatRules,
-  imageWidth,
-  imageHeight,
+  availableWidth,
+  availableHeight,
   onToggleWay,
   onLongPress,
 }) => {
   const preferReducedMotion = usePreferReducedMotion();
+  const stageWidth = Math.max(0, availableWidth);
+  const stageHeight = Math.max(0, availableHeight);
+  const maxImageHeightByWidth =
+    stageWidth / (DIRECTION_IMAGE_ASPECT_RATIO * COMPOSITION_WIDTH_RATIO);
+  const maxImageHeightByHeight =
+    stageHeight / COMPOSITION_HEIGHT_RATIO;
+  const imageHeight = Math.min(maxImageHeightByWidth, maxImageHeightByHeight);
+  const imageWidth = imageHeight * DIRECTION_IMAGE_ASPECT_RATIO;
+  const compositionWidth = imageWidth * COMPOSITION_WIDTH_RATIO;
+  const compositionHeight = imageHeight * COMPOSITION_HEIGHT_RATIO;
+  const imageOriginLeft =
+    (stageWidth - compositionWidth) / 2 - imageWidth * COMPOSITION_LEFT_RATIO;
+  const imageOriginTop =
+    (stageHeight - compositionHeight) / 2 - imageHeight * COMPOSITION_TOP_RATIO;
   /**
    * 현재 단수에 적용되는 규칙들
    * - 여러 규칙이 한 단에 동시에 적용될 수 있음
@@ -285,11 +312,16 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   const bubbleBaseTop = imageHeight * BUBBLE_STACK_TOP_RATIO;
 
   return (
-    <View style={{ height: imageHeight }}>
+    <View style={{ width: stageWidth, height: stageHeight }}>
       <Pressable
         onPress={wayIsChange ? onToggleWay : undefined}
         onLongPress={onLongPress}
-        style={{ transform: [{ translateY: imageHeight * DIRECTION_VERTICAL_OFFSET_RATIO }] }}
+        style={{
+          position: 'absolute',
+          left: imageOriginLeft,
+          top: imageOriginTop,
+          transform: [{ translateY: imageHeight * DIRECTION_VERTICAL_OFFSET_RATIO }],
+        }}
         focusable={false}
         accessible={false}
         importantForAccessibility="no-hide-descendants"
@@ -311,7 +343,14 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                   }}
                   pointerEvents="none"
                 >
-                  <Text className="text-sm text-darkgray text-center font-bold">
+                  <Text
+                    className="text-darkgray text-center font-bold"
+                    style={{
+                      fontSize: imageHeight * MULTI_RULE_LABEL_FONT_SIZE_RATIO,
+                      lineHeight: imageHeight * MULTI_RULE_LABEL_LINE_HEIGHT_RATIO,
+                    }}
+                    allowFontScaling={false}
+                  >
                     {displayRuleIndex}/{appliedRules.length}
                   </Text>
                 </View>
