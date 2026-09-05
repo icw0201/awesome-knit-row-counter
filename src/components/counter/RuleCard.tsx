@@ -493,6 +493,7 @@ const RuleCard: React.FC<RuleCardProps> = ({
               value={editMessage}
               onChangeText={setEditMessage}
               type="text"
+              maxLength={30}
               containerClassName="mt-1"
               returnKeyType="next"
               onSubmitEditing={() => startNumberInputRef.current?.focus()}
