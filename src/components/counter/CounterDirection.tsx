@@ -138,17 +138,30 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   const imageHeight = Math.min(maxImageHeightByWidth, maxImageHeightByHeight);
   const imageWidth = imageHeight * DIRECTION_IMAGE_ASPECT_RATIO;
   const compositionWidth = imageWidth * COMPOSITION_WIDTH_RATIO;
-  const compositionHeight = imageHeight * COMPOSITION_HEIGHT_RATIO;
   const imageOriginLeft =
     (stageWidth - compositionWidth) / 2 - imageWidth * COMPOSITION_LEFT_RATIO;
-  const imageOriginTop =
-    (stageHeight - compositionHeight) / 2 - imageHeight * COMPOSITION_TOP_RATIO;
   /**
    * 현재 단수에 적용되는 규칙들
    * - 여러 규칙이 한 단에 동시에 적용될 수 있음
    */
   const appliedRules = repeatRules.filter((rule) => isRuleApplied(currentCount, rule));
   const isRuleAppliedToCurrentCount = appliedRules.length > 0;
+  const visibleBubbleCount = Math.min(MAX_VISIBLE_RULE_BUBBLES, appliedRules.length);
+  const visibleCompositionTopRatio =
+    visibleBubbleCount === 0
+      ? DIRECTION_VERTICAL_OFFSET_RATIO
+      : visibleBubbleCount === 1
+        ? BUBBLE_STACK_TOP_RATIO + DIRECTION_VERTICAL_OFFSET_RATIO
+        : MULTI_RULE_LABEL_BASE_TOP_RATIO -
+          STACK_VERTICAL_GAP_RATIO * Math.max(0, visibleBubbleCount - 2) +
+          DIRECTION_VERTICAL_OFFSET_RATIO;
+  const visibleCompositionHeightRatio =
+    COMPOSITION_BOTTOM_RATIO - visibleCompositionTopRatio;
+  const visibleCompositionHeight = imageHeight * visibleCompositionHeightRatio;
+  // 최대 구성 기준 크기는 유지하되, 현재 실제로 보이는 구성만 영역의 세로 중앙에 둔다.
+  const imageOriginTop =
+    (stageHeight - visibleCompositionHeight) / 2 -
+    imageHeight * visibleCompositionTopRatio;
 
   /**
    * appliedRules가 "내용상" 바뀌었는지 감지하기 위한 키
