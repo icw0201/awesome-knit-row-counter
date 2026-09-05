@@ -39,8 +39,11 @@ export const getProgressPercentage = (item: Item): number => {
       const countersWithTarget = childCounters.filter((counter) => counter.targetCount > 0);
 
       if (countersWithTarget.length > 0) {
-        // count 합과 targetCount 합 계산
-        const totalCount = countersWithTarget.reduce((sum, counter) => sum + counter.count, 0);
+        // 개별 카운터의 진행률을 100%로 제한한 count 합과 targetCount 합 계산
+        const totalCount = countersWithTarget.reduce(
+          (sum, counter) => sum + Math.min(counter.count, counter.targetCount),
+          0
+        );
         const totalTargetCount = countersWithTarget.reduce((sum, counter) => sum + counter.targetCount, 0);
 
         // targetCount 지정된 카운터들의 진행률 계산 (100% 제한)
