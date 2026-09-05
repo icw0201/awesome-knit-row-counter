@@ -44,6 +44,7 @@ const BUBBLE_TEXT_LINE_HEIGHT_RATIO = 0.32;
 
 // 다중 규칙 라벨 위치 (말풍선 스택 위쪽에 분리 표시)
 const MULTI_RULE_LABEL_BASE_TOP_RATIO = -1.3;
+const MULTI_RULE_LABEL_DOWNWARD_OFFSET_RATIO = 0.2; // 라벨을 스택 쪽으로 내려 간격을 줄이는 비율
 const MULTI_RULE_LABEL_FONT_SIZE_RATIO = 0.26;
 const MULTI_RULE_LABEL_LINE_HEIGHT_RATIO = 0.32;
 
@@ -161,19 +162,15 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
    */
   const appliedRules = repeatRules.filter((rule) => isRuleApplied(currentCount, rule));
   const isRuleAppliedToCurrentCount = appliedRules.length > 0;
-  const visibleBubbleCount = Math.min(MAX_VISIBLE_RULE_BUBBLES, appliedRules.length);
+  // 라벨과 뒤쪽 스택을 중앙 정렬 계산에서 제외해 규칙 개수가 바뀌어도 본체 위치를 유지한다.
   const visibleCompositionTopRatio =
-    visibleBubbleCount === 0
+    !isRuleAppliedToCurrentCount
       ? DIRECTION_VERTICAL_OFFSET_RATIO
-      : visibleBubbleCount === 1
-        ? BUBBLE_STACK_TOP_RATIO + DIRECTION_VERTICAL_OFFSET_RATIO
-        : MULTI_RULE_LABEL_BASE_TOP_RATIO -
-          STACK_VERTICAL_GAP_RATIO * Math.max(0, visibleBubbleCount - 2) +
-          DIRECTION_VERTICAL_OFFSET_RATIO;
+      : BUBBLE_STACK_TOP_RATIO + DIRECTION_VERTICAL_OFFSET_RATIO;
   const visibleCompositionHeightRatio =
     COMPOSITION_BOTTOM_RATIO - visibleCompositionTopRatio;
   const visibleCompositionHeight = imageHeight * visibleCompositionHeightRatio;
-  // 최대 구성 기준 크기는 유지하되, 현재 실제로 보이는 구성만 영역의 세로 중앙에 둔다.
+  // 규칙 적용 중에는 앞쪽 말풍선과 마스코트만 기준으로 영역의 세로 중앙에 둔다.
   const imageOriginTop =
     (stageHeight - visibleCompositionHeight) / 2 -
     imageHeight * visibleCompositionTopRatio;
@@ -413,7 +410,8 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                     top:
                       imageHeight *
                       (MULTI_RULE_LABEL_BASE_TOP_RATIO -
-                        STACK_VERTICAL_GAP_RATIO * Math.max(0, visibleRules.length - 2)),
+                        STACK_VERTICAL_GAP_RATIO * Math.max(0, visibleRules.length - 2) +
+                        MULTI_RULE_LABEL_DOWNWARD_OFFSET_RATIO),
                     zIndex: 1,
                   }}
                   pointerEvents="none"
