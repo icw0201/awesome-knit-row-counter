@@ -4,6 +4,7 @@ import { Text, View } from 'react-native';
 
 interface SettingsVersionProps {
   version?: string;
+  onLongPress?: () => void;
 }
 
 /**
@@ -11,12 +12,18 @@ interface SettingsVersionProps {
  */
 const SettingsVersion: React.FC<SettingsVersionProps> = ({
   version,
+  onLongPress,
 }) => {
   return (
     <View
       className="items-center mt-4"
     >
-      <Text className="text-s text-darkgray">Ver {version}</Text>
+      <Text
+        className="text-s text-darkgray"
+        onLongPress={onLongPress}
+      >
+        Ver {version}
+      </Text>
     </View>
   );
 };

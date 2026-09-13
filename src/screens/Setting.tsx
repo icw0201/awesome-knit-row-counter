@@ -1,5 +1,7 @@
 // src/screens/Setting.tsx
 import { ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -13,6 +15,7 @@ import {
   SettingsVoiceCommands,
 } from '@components/settings';
 import { useAppThemeSync } from '@hooks/useAppThemeSync';
+import type { RootStackParamList } from '@navigation/AppNavigator';
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
 
 /**
@@ -21,6 +24,8 @@ import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
  */
 const Settings = () => {
   useAppThemeSync();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<RootStackParamList>>();
 
   return (
     <SafeAreaView style={screenStyles.flex1} edges={safeAreaEdges}>
@@ -45,7 +50,10 @@ const Settings = () => {
 
           <SettingsAppInfo />
 
-          <SettingsVersion version="1.6.1" />
+          <SettingsVersion
+            version="1.6.1"
+            onLongPress={() => navigation.navigate('PremiumPurchase')}
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

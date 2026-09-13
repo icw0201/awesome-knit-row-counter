@@ -25,6 +25,7 @@ import {
 import { screenStyles, safeAreaEdges } from '@styles/screenStyles';
 import RoundedButton from '@components/common/RoundedButton';
 import { useIapContext } from '@provider/IapProvider';
+import { setPremiumUnlocked } from '@storage/settings';
 
 // 유료 기능 설명 줄에 붙는 추가 테마 색상 칩(4종) 데이터
 const PREMIUM_EXTRA_THEME_CHIP_OPTIONS: AppColorThemeOption[] = (
@@ -179,6 +180,11 @@ const PremiumPurchase: React.FC = () => {
     void restorePremium();
   };
 
+  const handleResetPremiumForTesting = () => {
+    clearLastError();
+    setPremiumUnlocked(false);
+  };
+
   const screenBackgroundColor = appTheme.colors.premiumPurchaseScreenBackground;
   const premiumFeaturesPanelShadowColors = [
     PREMIUM_FEATURES_PANEL_SHADOW_GRADIENT_TOP,
@@ -223,6 +229,18 @@ const PremiumPurchase: React.FC = () => {
               <Text className="text-center text-base font-semibold text-black">
                 이 기기에서 프리미엄이 활성화되어 있습니다.
               </Text>
+              <TouchableOpacity
+                onPress={handleResetPremiumForTesting}
+                activeOpacity={0.7}
+                className={clsx(
+                  'mt-3 items-center rounded-lg border px-3 py-2',
+                  appTheme.tw.border.primary['300']
+                )}
+              >
+                <Text className={clsx('text-sm font-semibold', appTheme.tw.text.emphasisRed)}>
+                  테스트용: 미구매 상태로 전환
+                </Text>
+              </TouchableOpacity>
             </View>
           ) : null}
 
