@@ -1,5 +1,5 @@
 import * as DocumentPicker from 'expo-document-picker';
-import * as FileSystem from 'expo-file-system';
+import { Directory, File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { RULE_MESSAGE_MAX_LENGTH } from '@constants/inputLimits';
 import { createUniqueItemId } from '@utils/itemIdUtils';
@@ -971,15 +971,9 @@ const getCurrentDataVersion = (): number => {
     : CURRENT_DATA_VERSION;
 };
 
-/** 임시 백업 파일을 생성할 디렉터리 URI를 계산한다. */
-const getBackupDirectoryUri = (): string => {
-  const baseDirectory = FileSystem.cacheDirectory ?? FileSystem.documentDirectory;
-
-  if (!baseDirectory) {
-    throw new Error('백업 파일을 생성할 저장 공간을 찾을 수 없습니다.');
-  }
-
-  return `${baseDirectory}${BACKUP_DIRECTORY_NAME}/`;
+/** 임시 백업 파일을 생성할 캐시 디렉터리 객체를 만든다. */
+const getBackupDirectory = (): Directory => {
+  return new Directory(Paths.cache, BACKUP_DIRECTORY_NAME);
 };
 
 /** ISO 시각 문자열을 파일명에 안전한 timestamp 형태로 변환한다. */
@@ -1186,9 +1180,8 @@ const pickJsonDocumentContents = async (): Promise<string | null> => {
   }
 
   const [asset] = result.assets;
-  return FileSystem.readAsStringAsync(asset.uri, {
-    encoding: FileSystem.EncodingType.UTF8,
-  });
+  const file = new File(asset.uri);
+  return file.text();
 };
 
 /** 프로젝트 불러오기 전용 문서를 파싱하고, 앱이 신뢰할 수 있는 최소 형식인지 검증한다. */
@@ -1342,18 +1335,17 @@ export const exportBackupToTemporaryFile = async (): Promise<{
 }> => {
   const document = createBackupDocument();
   const json = serializeBackupDocument(document);
-  const directoryUri = getBackupDirectoryUri();
+  const directory = getBackupDirectory();
   const fileName = getBackupFileName(document.exportedAt);
-  const fileUri = `${directoryUri}${fileName}`;
+  const file = new File(directory, fileName);
 
-  await FileSystem.makeDirectoryAsync(directoryUri, { intermediates: true });
-  await FileSystem.writeAsStringAsync(fileUri, json, {
-    encoding: FileSystem.EncodingType.UTF8,
-  });
+  directory.create({ intermediates: true, idempotent: true });
+  file.create({ overwrite: true });
+  file.write(json);
 
   return {
     fileName,
-    fileUri,
+    fileUri: file.uri,
     document,
   };
 };
