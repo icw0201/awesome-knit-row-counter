@@ -79,6 +79,13 @@
 <img src="https://img.shields.io/badge/Reactnatvie-61DAFB?style=for-the-badge&logo=React&logoColor=white"> <img src="https://img.shields.io/badge/tailwindCss-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white"> <img src="https://img.shields.io/badge/typescript-3178C6?style=for-the-badge&logo=typescript&logoColor=white"> <img src="https://img.shields.io/badge/github-181717?style=for-the-badge&logo=github&logoColor=white">
 
 
+### 개발 환경
+
+- Expo SDK 54
+- React Native 0.81.5
+- React 19.1
+- Android `compileSdkVersion` 36 / `targetSdkVersion` 36
+
 ### DESIGN
 
 <img src="https://img.shields.io/badge/figma-F24E1E?style=for-the-badge&logo=figma&logoColor=white">
