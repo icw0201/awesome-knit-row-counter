@@ -41,7 +41,8 @@ const TEXT_CONTAINER_LEFT_RATIO = 0.2; // 텍스트 컨테이너의 좌측 오�
 const TEXT_CONTAINER_WIDTH_RATIO = 0.6; // 텍스트 컨테이너의 너비 비율 (이미지 너비 대비)
 const BUBBLE_TEXT_FONT_SIZE_RATIO = 0.26; // 말풍선 높이 대비 고정 폰트 크기
 const BUBBLE_TEXT_LINE_HEIGHT_RATIO = 0.32;
-const OVERFLOWING_BUBBLE_TEXT_SCALE = 0.82; // 기본 크기로 한 줄에 담기지 않는 메시지의 글자 크기 배율
+const TEXT_MEASUREMENT_WIDTH = 10000; // 최대 30자 메시지를 줄임 없이 실측하기 위한 충분한 너비
+const TEXT_FIT_SAFETY_RATIO = 0.9; // 이모지 조합과 Android 소수점 반올림 오차를 흡수할 가로 여유
 
 // 다중 규칙 라벨 위치 (말풍선 스택 위쪽에 분리 표시)
 const MULTI_RULE_LABEL_BASE_TOP_RATIO = -1.3;
@@ -344,15 +345,17 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   const imageSource = resolveDirectionImage(isRuleAppliedToCurrentCount, wayIsChange, way);
 
   const measuredTextWidth = measuredMessageWidths[currentTextMeasurementKey] ?? 0;
+  // 실측값과 컨테이너 너비가 같을 때 생기는 말줄임을 막도록 측정값에 안전 여유를 더한다.
+  const requiredTextWidth =
+    measuredTextWidth > 0 ? measuredTextWidth / TEXT_FIT_SAFETY_RATIO : 0;
   const textContainerLeft = minimumBubbleWidth * TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO;
   const textContainerRight =
     minimumBubbleWidth *
     (1 - TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO - TEXT_CONTAINER_IN_BUBBLE_WIDTH_RATIO);
   const desiredBubbleWidth = Math.max(
     minimumBubbleWidth,
-    measuredTextWidth + textContainerLeft + textContainerRight
+    requiredTextWidth + textContainerLeft + textContainerRight
   );
-  const shouldShrinkCurrentMessage = desiredBubbleWidth > stageWidth;
   const currentBubbleWidth = Math.max(
     minimumBubbleWidth,
     Math.min(stageWidth, desiredBubbleWidth)
@@ -362,6 +365,13 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     0,
     currentBubbleWidth - textContainerLeft - textContainerRight
   );
+  // 말풍선을 최대 너비까지 늘린 뒤에도 넘치는 부분만 실제 실측 너비 비율로 축소한다.
+  const fittedTextScale =
+    requiredTextWidth > textContainerWidth && requiredTextWidth > 0
+      ? Math.min(1, textContainerWidth / requiredTextWidth)
+      : 1;
+  const fittedTextFontSize = textFontSize * fittedTextScale;
+  const fittedTextLineHeight = textLineHeight * fittedTextScale;
 
   return (
     <View style={{ width: stageWidth, height: stageHeight }}>
@@ -375,6 +385,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
             style={{
               fontSize: textFontSize,
               lineHeight: textLineHeight,
+              width: TEXT_MEASUREMENT_WIDTH,
               opacity: 0,
             }}
             numberOfLines={1}
@@ -543,19 +554,13 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                           <Text
                             className="font-bold text-center"
                             style={{
-                              fontSize: shouldShrinkCurrentMessage
-                                ? textFontSize * OVERFLOWING_BUBBLE_TEXT_SCALE
-                                : textFontSize,
-                              lineHeight: shouldShrinkCurrentMessage
-                                ? textLineHeight * OVERFLOWING_BUBBLE_TEXT_SCALE
-                                : textLineHeight,
+                              fontSize: fittedTextFontSize,
+                              lineHeight: fittedTextLineHeight,
                               color: isDarkColor(rule.color)
                                 ? appTheme.colors.white
                                 : appTheme.colors.black,
                             }}
                             numberOfLines={1}
-                            adjustsFontSizeToFit={shouldShrinkCurrentMessage}
-                            minimumFontScale={0.5}
                             allowFontScaling={false}
                           >
                             {rule.message}
