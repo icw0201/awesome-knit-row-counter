@@ -2,8 +2,6 @@ import { useEffect, useRef } from 'react';
 import { View, Text } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
-import { appTheme } from '@styles/appTheme';
-
 const DIGITS = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9] as const;
 const DIGIT_WIDTH_RATIO = 0.6;
 const DIGIT_HORIZONTAL_PADDING_RATIO = 0.04;

@@ -45,7 +45,9 @@ const Settings = () => {
 
           <SettingsAppInfo />
 
-          <SettingsVersion version="1.6.1" />
+          <SettingsVersion
+            version="1.7.0"
+          />
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

@@ -189,9 +189,6 @@ const CounterDetail = () => {
     flashHighlight: flashSubTouchAreaHighlight,
   } = useTimedHighlight(100);
 
-  // 방향 이미지 크기 계산 (원본 비율 90 / 189 유지)
-  const imageWidth = iconSize * 1.4;
-  const imageHeight = iconSize * (90 / 189) * 1.4;
   const handleLayout = useCallback((event: LayoutChangeEvent) => {
     const { height: nextHeight, width: nextWidth } = event.nativeEvent.layout;
     setLayoutHeight((prev) => (prev !== nextHeight ? nextHeight : prev));
@@ -229,6 +226,7 @@ const CounterDetail = () => {
       contentEndPercent,
       shouldStartContentFromTop,
     });
+  const directionSectionHeightPx = contentHeightPx * directionSectionFlex;
   const voiceBannerHeightPx = contentHeightPx * voiceBannerSectionFlex;
   const countSectionHeightPx = contentHeightPx * countSectionFlex;
   const shouldFillCountVertically = mascotIsActive && showVoiceBanner;
@@ -514,8 +512,8 @@ const CounterDetail = () => {
                     way={way}
                     currentCount={counter.count}
                     repeatRules={counter.repeatRules || []}
-                    imageWidth={imageWidth}
-                    imageHeight={imageHeight}
+                    availableWidth={resolvedWidth}
+                    availableHeight={directionSectionHeightPx}
                     onToggleWay={toggleWay}
                     onLongPress={() => navigation.navigate('WaySetting', { counterId: counter.id })}
                   />
