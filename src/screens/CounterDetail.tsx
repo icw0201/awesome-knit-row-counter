@@ -530,6 +530,7 @@ const CounterDetail = () => {
                     repeatRules={counter.repeatRules || []}
                     availableWidth={resolvedWidth}
                     availableHeight={directionSectionHeightPx}
+                    allowTwoLineMessage={reclaimedSegmentAreaHeightPx > 0}
                     onToggleWay={toggleWay}
                     onLongPress={() => navigation.navigate('WaySetting', { counterId: counter.id })}
                   />
