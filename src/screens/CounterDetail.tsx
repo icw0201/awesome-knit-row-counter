@@ -226,7 +226,20 @@ const CounterDetail = () => {
       contentEndPercent,
       shouldStartContentFromTop,
     });
-  const directionSectionHeightPx = contentHeightPx * directionSectionFlex;
+  const baseDirectionSectionHeightPx = contentHeightPx * directionSectionFlex;
+  const isSegmentRecordModalOpen =
+    screenSize === ScreenSize.LARGE &&
+    subSlideModalsEnabled &&
+    (counter?.sectionModalIsOpen ?? false);
+  // LARGE에서 활동 기록 패널이 닫혀 있으면 예약된 세로 간격을 방향 컴포넌트가 사용한다.
+  const reclaimedSegmentAreaHeightPx =
+    screenSize === ScreenSize.LARGE && !isSegmentRecordModalOpen
+      ? Math.max(0, gapBetweenTimerAndContentPx)
+      : 0;
+  const directionSectionHeightPx =
+    baseDirectionSectionHeightPx + reclaimedSegmentAreaHeightPx;
+  // 확장된 높이의 절반만큼 래퍼를 올리면 기존 하단은 유지되고 상단만 확장된다.
+  const directionSectionTranslateYPx = -reclaimedSegmentAreaHeightPx / 2;
   const voiceBannerHeightPx = contentHeightPx * voiceBannerSectionFlex;
   const countSectionHeightPx = contentHeightPx * countSectionFlex;
   const shouldFillCountVertically = mascotIsActive && showVoiceBanner;
@@ -504,7 +517,10 @@ const CounterDetail = () => {
               {mascotIsActive && (
                 <View
                   className="w-full items-center justify-center"
-                  style={{ flex: directionSectionFlex }}
+                  style={{
+                    flex: directionSectionFlex,
+                    transform: [{ translateY: directionSectionTranslateYPx }],
+                  }}
                 >
                   <CounterDirection
                     mascotIsActive={mascotIsActive}
