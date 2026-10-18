@@ -24,6 +24,7 @@ interface CounterDirectionProps {
   repeatRules: RepeatRule[];
   availableWidth: number;
   availableHeight: number;
+  allowTwoLineMessage?: boolean;
   onToggleWay: () => void;
   onLongPress?: () => void;
 }
@@ -43,6 +44,8 @@ const BUBBLE_TEXT_FONT_SIZE_RATIO = 0.26; // 말풍선 높이 대비 고정 폰�
 const BUBBLE_TEXT_LINE_HEIGHT_RATIO = 0.32;
 const TEXT_MEASUREMENT_WIDTH = 10000; // 최대 30자 메시지를 줄임 없이 실측하기 위한 충분한 너비
 const TEXT_FIT_SAFETY_RATIO = 0.9; // 이모지 조합과 Android 소수점 반올림 오차를 흡수할 가로 여유
+const TWO_LINE_ACTIVATION_SCALE = 0.85; // 한 줄 글자가 이 비율보다 작아질 때 두 줄로 전환
+const TWO_LINE_WIDTH_CAPACITY_RATIO = 1.8; // 줄별 길이 차이를 고려한 두 줄의 안전 가로 수용 배율
 
 // 다중 규칙 라벨 위치 (말풍선 스택 위쪽에 분리 표시)
 const MULTI_RULE_LABEL_BASE_TOP_RATIO = -1.3;
@@ -139,6 +142,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   repeatRules,
   availableWidth,
   availableHeight,
+  allowTwoLineMessage = false,
   onToggleWay,
   onLongPress,
 }) => {
@@ -366,10 +370,21 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
     currentBubbleWidth - textContainerLeft - textContainerRight
   );
   // 말풍선을 최대 너비까지 늘린 뒤에도 넘치는 부분만 실제 실측 너비 비율로 축소한다.
-  const fittedTextScale =
+  const singleLineTextScale =
     requiredTextWidth > textContainerWidth && requiredTextWidth > 0
       ? Math.min(1, textContainerWidth / requiredTextWidth)
       : 1;
+  // 확장된 세로 공간에서는 한 줄 글자가 지나치게 작아질 때만 최대 두 줄을 사용한다.
+  const shouldUseTwoLineMessage =
+    allowTwoLineMessage && singleLineTextScale < TWO_LINE_ACTIVATION_SCALE;
+  // 두 줄로도 들어가지 않는 메시지는 두 줄 수용 폭을 기준으로 마지막 축소를 적용한다.
+  const fittedTextScale =
+    shouldUseTwoLineMessage && requiredTextWidth > 0
+      ? Math.min(
+        1,
+        (textContainerWidth * TWO_LINE_WIDTH_CAPACITY_RATIO) / requiredTextWidth
+      )
+      : singleLineTextScale;
   const fittedTextFontSize = textFontSize * fittedTextScale;
   const fittedTextLineHeight = textLineHeight * fittedTextScale;
 
@@ -552,7 +567,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                           }}
                         >
                           <Text
-                            className="font-bold text-center"
+                            className="w-full font-bold text-center"
                             style={{
                               fontSize: fittedTextFontSize,
                               lineHeight: fittedTextLineHeight,
@@ -560,7 +575,8 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                                 ? appTheme.colors.white
                                 : appTheme.colors.black,
                             }}
-                            numberOfLines={1}
+                            numberOfLines={shouldUseTwoLineMessage ? 2 : 1}
+                            textBreakStrategy={shouldUseTwoLineMessage ? 'balanced' : 'simple'}
                             allowFontScaling={false}
                           >
                             {rule.message}
