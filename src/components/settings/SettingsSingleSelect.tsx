@@ -35,7 +35,7 @@ const SettingsSingleSelect = <T extends string>({
   onLockedOptionPress,
 }: SettingsSingleSelectProps<T>) => {
   // 칩 한 변 길이(화면 너비 기준)와 잠금 시 회색 multiply 오버레이에 쓰는 blend 설정.
-  const chipSize = (Dimensions.get('window').width - 32 - 16) / 4.5;
+  const chipSize = Math.min((Dimensions.get('window').width - 32 - 16) / 4.5, 88);
 
   /** RN 타입에는 없을 수 있으나 새 아키텍처/플랫폼에서 multiply 합성에 사용됨 */
   const multiplyOverlayBlend = { mixBlendMode: 'multiply' as const };
