@@ -168,15 +168,14 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
    */
   const appliedRules = repeatRules.filter((rule) => isRuleApplied(currentCount, rule));
   const isRuleAppliedToCurrentCount = appliedRules.length > 0;
-  // 라벨과 뒤쪽 스택을 중앙 정렬 계산에서 제외해 규칙 개수가 바뀌어도 본체 위치를 유지한다.
+  // 말풍선이 없는 단에서도 앞쪽 말풍선 영역을 예약해 마스코트의 세로 위치를 유지한다.
+  // 라벨과 뒤쪽 스택은 중앙 정렬 계산에서 제외해 규칙 개수가 바뀌어도 본체 위치를 유지한다.
   const visibleCompositionTopRatio =
-    !isRuleAppliedToCurrentCount
-      ? DIRECTION_VERTICAL_OFFSET_RATIO
-      : BUBBLE_STACK_TOP_RATIO + DIRECTION_VERTICAL_OFFSET_RATIO;
+    BUBBLE_STACK_TOP_RATIO + DIRECTION_VERTICAL_OFFSET_RATIO;
   const visibleCompositionHeightRatio =
     COMPOSITION_BOTTOM_RATIO - visibleCompositionTopRatio;
   const visibleCompositionHeight = imageHeight * visibleCompositionHeightRatio;
-  // 규칙 적용 중에는 앞쪽 말풍선과 마스코트만 기준으로 영역의 세로 중앙에 둔다.
+  // 앞쪽 말풍선과 마스코트를 기준으로 영역의 세로 중앙에 둔다.
   const imageOriginTop =
     (stageHeight - visibleCompositionHeight) / 2 -
     imageHeight * visibleCompositionTopRatio;
