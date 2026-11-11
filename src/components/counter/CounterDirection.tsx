@@ -588,7 +588,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                                 ? appTheme.colors.white
                                 : appTheme.colors.black,
                             }}
-                            numberOfLines={shouldUseTwoLineMessage ? 2 : 1}
+                            // numberOfLines를 주면 기본 ellipsizeMode='tail' 쓰지 않고 전체 문구 유지하도록 함
                             textBreakStrategy={shouldUseTwoLineMessage ? 'balanced' : 'simple'}
                             allowFontScaling={false}
                           >
