@@ -46,6 +46,8 @@ const TEXT_MEASUREMENT_WIDTH = 10000; // 최대 30자 메시지를 줄임 없이
 const TEXT_FIT_SAFETY_RATIO = 0.9; // 이모지 조합과 Android 소수점 반올림 오차를 흡수할 가로 여유
 const TWO_LINE_ACTIVATION_SCALE = 0.85; // 한 줄 글자가 이 비율보다 작아질 때 두 줄로 전환
 const TWO_LINE_WIDTH_CAPACITY_RATIO = 1.8; // 줄별 길이 차이를 고려한 두 줄의 안전 가로 수용 배율
+// 실측 전 추정용. bold 라틴 문자 너비를 다소 넓게 잡아 과소평가로 인한 말줄임(...)을 막는다.
+const MEASUREMENT_FALLBACK_CHAR_WIDTH_RATIO = 0.62;
 
 // 다중 규칙 라벨 위치 (말풍선 스택 위쪽에 분리 표시)
 const MULTI_RULE_LABEL_BASE_TOP_RATIO = -1.3;
@@ -168,15 +170,14 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
    */
   const appliedRules = repeatRules.filter((rule) => isRuleApplied(currentCount, rule));
   const isRuleAppliedToCurrentCount = appliedRules.length > 0;
-  // 라벨과 뒤쪽 스택을 중앙 정렬 계산에서 제외해 규칙 개수가 바뀌어도 본체 위치를 유지한다.
+  // 말풍선이 없는 단에서도 앞쪽 말풍선 영역을 예약해 마스코트의 세로 위치를 유지한다.
+  // 라벨과 뒤쪽 스택은 중앙 정렬 계산에서 제외해 규칙 개수가 바뀌어도 본체 위치를 유지한다.
   const visibleCompositionTopRatio =
-    !isRuleAppliedToCurrentCount
-      ? DIRECTION_VERTICAL_OFFSET_RATIO
-      : BUBBLE_STACK_TOP_RATIO + DIRECTION_VERTICAL_OFFSET_RATIO;
+    BUBBLE_STACK_TOP_RATIO + DIRECTION_VERTICAL_OFFSET_RATIO;
   const visibleCompositionHeightRatio =
     COMPOSITION_BOTTOM_RATIO - visibleCompositionTopRatio;
   const visibleCompositionHeight = imageHeight * visibleCompositionHeightRatio;
-  // 규칙 적용 중에는 앞쪽 말풍선과 마스코트만 기준으로 영역의 세로 중앙에 둔다.
+  // 앞쪽 말풍선과 마스코트를 기준으로 영역의 세로 중앙에 둔다.
   const imageOriginTop =
     (stageHeight - visibleCompositionHeight) / 2 -
     imageHeight * visibleCompositionTopRatio;
@@ -349,9 +350,17 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
   const imageSource = resolveDirectionImage(isRuleAppliedToCurrentCount, wayIsChange, way);
 
   const measuredTextWidth = measuredMessageWidths[currentTextMeasurementKey] ?? 0;
+  const hasMeasuredTextWidth = measuredTextWidth > 0;
+  // onTextLayout 전(또는 누락)에는 문자 수 과대 추정으로 같은 피팅 파이프라인을 탄다.
+  // 너비 0을 "한 줄에 다 들어감"으로 취급하면 풀 사이즈 1행 + numberOfLines=1 → ... 가 잠깐/오래 보인다.
+  const estimatedTextWidth =
+    currentMessage.length * textFontSize * MEASUREMENT_FALLBACK_CHAR_WIDTH_RATIO;
+  const effectiveTextWidth = hasMeasuredTextWidth
+    ? measuredTextWidth
+    : estimatedTextWidth;
   // 실측값과 컨테이너 너비가 같을 때 생기는 말줄임을 막도록 측정값에 안전 여유를 더한다.
   const requiredTextWidth =
-    measuredTextWidth > 0 ? measuredTextWidth / TEXT_FIT_SAFETY_RATIO : 0;
+    effectiveTextWidth > 0 ? effectiveTextWidth / TEXT_FIT_SAFETY_RATIO : 0;
   const textContainerLeft = minimumBubbleWidth * TEXT_CONTAINER_IN_BUBBLE_LEFT_RATIO;
   const textContainerRight =
     minimumBubbleWidth *
@@ -375,8 +384,11 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
       ? Math.min(1, textContainerWidth / requiredTextWidth)
       : 1;
   // 확장된 세로 공간에서는 한 줄 글자가 지나치게 작아질 때만 최대 두 줄을 사용한다.
+  // 실측 전에는 한 줄에 넘칠 것으로 보이면 바로 두 줄 축소 경로를 써서 ... 를 피한다.
   const shouldUseTwoLineMessage =
-    allowTwoLineMessage && singleLineTextScale < TWO_LINE_ACTIVATION_SCALE;
+    allowTwoLineMessage &&
+    (singleLineTextScale < TWO_LINE_ACTIVATION_SCALE ||
+      (!hasMeasuredTextWidth && singleLineTextScale < 1));
   // 두 줄로도 들어가지 않는 메시지는 두 줄 수용 폭을 기준으로 마지막 축소를 적용한다.
   const fittedTextScale =
     shouldUseTwoLineMessage && requiredTextWidth > 0
@@ -575,7 +587,7 @@ const CounterDirection: React.FC<CounterDirectionProps> = ({
                                 ? appTheme.colors.white
                                 : appTheme.colors.black,
                             }}
-                            numberOfLines={shouldUseTwoLineMessage ? 2 : 1}
+                            // numberOfLines를 주면 기본 ellipsizeMode='tail' 쓰지 않고 전체 문구 유지하도록 함
                             textBreakStrategy={shouldUseTwoLineMessage ? 'balanced' : 'simple'}
                             allowFontScaling={false}
                           >
